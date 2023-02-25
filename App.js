@@ -1,85 +1,39 @@
 import React from "react";
-import {
-  Text,
-  Link,
-  HStack,
-  Center,
-  Heading,
-  Switch,
-  useColorMode,
-  NativeBaseProvider,
-  extendTheme,
-  VStack,
-  Box,
-} from "native-base";
-import NativeBaseIcon from "./components/NativeBaseIcon";
-import { Platform } from "react-native";
+import { NativeBaseProvider, extendTheme } from "native-base";
+import HomePage from "./components/HomePage";
+import LoadingPage from "./components/LoadingPage";
+import { StatusBar } from "react-native";
+import { LinearGradient } from "expo-linear-gradient"
+import { useFonts } from 'expo-font'
+import themes from "./assets/themes";
 
 // Define the config
 const config = {
-  useSystemColorMode: false,
-  initialColorMode: "dark",
+  dependencies: {
+    'linear-gradient': LinearGradient
+  },
 };
 
 // extend the theme
-export const theme = extendTheme({ config });
+const theme = extendTheme(themes); 
 
 export default function App() {
-  return (
-    <NativeBaseProvider>
-      <Center
-        _dark={{ bg: "blueGray.900" }}
-        _light={{ bg: "blueGray.50" }}
-        px={4}
-        flex={1}
-      >
-        <VStack space={5} alignItems="center">
-          <NativeBaseIcon />
-          <Heading size="lg">Welcome to NativeBase</Heading>
-          <HStack space={2} alignItems="center">
-            <Text>Edit</Text>
-            <Box
-              _web={{
-                _text: {
-                  fontFamily: "monospace",
-                  fontSize: "sm",
-                },
-              }}
-              px={2}
-              py={1}
-              _dark={{ bg: "blueGray.800" }}
-              _light={{ bg: "blueGray.200" }}
-            >
-              App.js
-            </Box>
-            <Text>and save to reload.</Text>
-          </HStack>
-          <Link href="https://docs.nativebase.io" isExternal>
-            <Text color="primary.500" underline fontSize={"xl"}>
-              Learn NativeBase
-            </Text>
-          </Link>
-          <ToggleDarkMode />
-        </VStack>
-      </Center>
-    </NativeBaseProvider>
-  );
-}
+  const [loadedFonts] = useFonts({
+    'Quicksand-Light': require("./assets/font/Quicksand-Light.ttf"),
+    'Quicksand-Regular': require("./assets/font/Quicksand-Regular.ttf"),
+    'Quicksand-Medium': require("./assets/font/Quicksand-Medium.ttf"),
+    'Quicksand-Bold': require("./assets/font/Quicksand-Bold.ttf"),
+    'Manrope-Light': require("./assets/font/Manrope-Light.ttf"),
+    'Manrope-LightItalic': require("./assets/font/Manrope-LightItalic.ttf"),
+    'Manrope-Regular': require("./assets/font/Manrope-Regular.ttf"),
+    'Manrope-Medium': require("./assets/font/Manrope-Medium.ttf"),
+    'Manrope-Bold': require("./assets/font/Manrope-Bold.ttf"),
+  });
 
-// Color Switch Component
-function ToggleDarkMode() {
-  const { colorMode, toggleColorMode } = useColorMode();
   return (
-    <HStack space={2} alignItems="center">
-      <Text>Dark</Text>
-      <Switch
-        isChecked={colorMode === "light"}
-        onToggle={toggleColorMode}
-        aria-label={
-          colorMode === "light" ? "switch to dark mode" : "switch to light mode"
-        }
-      />
-      <Text>Light</Text>
-    </HStack>
+    <NativeBaseProvider theme={theme} config={config}>
+      <StatusBar/>
+      {loadedFonts ? <HomePage/> : <LoadingPage/>}
+    </NativeBaseProvider> 
   );
 }
