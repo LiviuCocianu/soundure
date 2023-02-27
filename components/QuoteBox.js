@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Box, Pressable, Text } from 'native-base'
-import { ImageBackground } from 'react-native'
+import { ImageBackground, Animated } from 'react-native'
 
 const QuoteBox = () => {
+  const progress = useRef(new Animated.Value(0)).current;
   const [quote, setQuote] = useState("There's nothing like music to relieve the soul and uplift it.");
   const [author, setAuthor] = useState("Mickey Hart");
   const [generated, setGenerated] = useState(false);
@@ -17,7 +18,11 @@ const QuoteBox = () => {
           }
         }).then(res => res.json())
         .then(res => {
-          setQuote(res[0].quote);
+          const quote = res[0].quote > 75 
+                        ? quote.slice(0, 70) + "..." 
+                        : res[0].quote;
+
+          setQuote(quote);
           setAuthor(res[0].author);
           setGenerated(true);
         });
@@ -26,6 +31,12 @@ const QuoteBox = () => {
 
   useEffect(() => {
     //getQuote();
+
+    Animated.timing(progress, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
   }, []);
 
   return (
@@ -37,11 +48,14 @@ const QuoteBox = () => {
           resizeMode="cover"
           h="100%"
         >
-          <Box w="100%" h="100%" justifyContent="center" alignItems="center" px="10">
-            <Text color="white" fontFamily="quicksand_b" fontSize="xl">Citatul zilei!</Text>
-            <Text color="white" fontFamily="manrope_li">"{quote}"</Text>
-            <Text color="white" fontFamily="manrope_m" alignSelf="flex-end">- {author}</Text>
-          </Box>
+          <Box w="100%" h="100%" position="absolute" bg="black" opacity="50"></Box>
+          <Animated.View style={{opacity: progress}}>
+            <Box w="100%" h="100%" justifyContent="center" alignItems="center" px="10">
+              <Text color="white" fontFamily="quicksand_b" fontSize="xl">Citatul zilei!</Text>
+              <Text color="white" fontFamily="manrope_li">"{quote}"</Text>
+              <Text color="white" fontFamily="manrope_m" alignSelf="flex-end">- {author}</Text>
+            </Box>
+          </Animated.View>
         </ImageBackground>
       </Pressable>
     </Box>
