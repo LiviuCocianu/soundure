@@ -6,7 +6,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon/icon.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/images/soundure_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -27,6 +27,14 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Aplicația are nevoie de acces la galerie."
+        }
+      ]
+    ]
   }
 }

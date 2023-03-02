@@ -1,20 +1,18 @@
 import React from "react";
 import { NativeBaseProvider, extendTheme } from "native-base";
-import HomePage from "./components/HomePage";
+import HomePage from "./components/screens/HomePage";
 import LoadingPage from "./components/LoadingPage";
 import { StatusBar } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"
 import { useFonts } from 'expo-font'
 import themes from "./assets/themes";
 
-// Define the config
 const config = {
   dependencies: {
     'linear-gradient': LinearGradient
   },
 };
 
-// extend the theme
 const theme = extendTheme(themes); 
 
 export default function App() {

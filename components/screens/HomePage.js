@@ -1,13 +1,17 @@
 import { Box, Button, ScrollView, Text, Icon } from 'native-base'
-import React from 'react'
-import QuoteBox from './QuoteBox'
+import React, { useState } from 'react'
+import QuoteBox from '../QuoteBox'
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faFolderPlus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import PlaylistsCategory from './PlaylistsCategory';
-import HistoryCategory from './HistoryCategory';
+import PlaylistsCategory from '../PlaylistsCategory';
+import HistoryCategory from '../HistoryCategory';
+import FavoriteCategory from '../FavoriteCategory';
+import CreatePlaylist from '../modals/CreatePlaylist';
 
 const HomePage = () => {
-  const HeaderButton = ({text, icon}) => (
+  const [createModalOpened, toggleCreateModal] = useState(false);
+
+  const HeaderButton = ({text, icon, onPress}) => (
     <Button 
       bg="transparent" 
       borderColor="white" 
@@ -26,23 +30,24 @@ const HomePage = () => {
       }}
       leftIcon={<Icon as={FontAwesomeIcon} icon={icon} color="primary.500"></Icon>}
       size="sm"
+      onPress={onPress}
     >{text}</Button>
   )
 
   return (
-    <ScrollView w="100%" h="100%" _contentContainerStyle={{flexGrow: 1}}>
+    <ScrollView w="100%" h="100%" 
+      _contentContainerStyle={{flexGrow: 1}}
+    >
+      {/* Modals */}
+      <CreatePlaylist 
+        isOpen={createModalOpened} 
+        closeHandle={toggleCreateModal}
+      />
+
       <QuoteBox/>
-      <Box bg={{
-          linearGradient: {
-            colors: ["black", "primary.900"],
-            start: [0, 0],
-            end: [0, 1]
-          }
-        }} 
-        w="100%" 
-        h="100%" 
-        mt="140"
-        pb="10"
+      <Box w="100%" h="100%" 
+        mt="140" pb="10"
+        bg="black"
         borderTopLeftRadius="2xl" 
         borderTopRightRadius="2xl" 
         zIndex={5}
@@ -55,12 +60,13 @@ const HomePage = () => {
           flexDir="row" 
           justifyContent="space-around"
         >
-          <HeaderButton text="Creează playlist" icon={faFolderPlus}/>
+          <HeaderButton text="Creează playlist" icon={faFolderPlus} onPress={() => toggleCreateModal(true)}/>
           <HeaderButton text="Adaugă o piesă" icon={faPlus}/>
         </Box>
 
         <PlaylistsCategory/>
         <HistoryCategory/>
+        <FavoriteCategory/>
       </Box>
     </ScrollView>
   )

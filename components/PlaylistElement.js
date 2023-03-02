@@ -2,11 +2,14 @@ import React from 'react';
 import { Box, Image, AspectRatio, HStack, VStack, Text, Pressable } from 'native-base';
 
 const PlaylistElement = ({
-    coverURI=require("../assets/icon/icon.png"),
-    title="Titlu playlist",
-    seconds=3600,
-    trackCount=50
+    data={}
 }) => {
+    const {
+        coverURI = require("../assets/icon/icon.png"),
+        title = "Titlu playlist",
+        seconds = 3600,
+        trackCount = 50,
+    } = data;
     const tracks = trackCount > 1 ? "piese" : "piesă";
 
     return (
@@ -25,7 +28,7 @@ const PlaylistElement = ({
                 shadow="2"
             >
                 <HStack alignItems="center" h="100%" w="100%">
-                    <AspectRatio ratio="4/4" h="90%" ml="2" opacity="50">
+                    <AspectRatio ratio="4/4" h="90%" ml="2">
                         <Image 
                             source={coverURI} 
                             alt="playlist cover"

@@ -43,14 +43,14 @@ const QuoteBox = () => {
     <Box w="100%" h="150" position="absolute">
       <Pressable onPress={() => console.log("test")}>
         <ImageBackground
+          h="100%"
           source={require("../assets/images/soundure_banner_dark.png")}
           alt="quotecover"
           resizeMode="cover"
-          h="100%"
         >
           <Box w="100%" h="100%" position="absolute" bg="black" opacity="50"></Box>
           <Animated.View style={{opacity: progress}}>
-            <Box w="100%" h="100%" justifyContent="center" alignItems="center" px="10">
+            <Box w="100%" h="100%" px="10" justifyContent="center" alignItems="center">
               <Text color="white" fontFamily="quicksand_b" fontSize="xl">Citatul zilei!</Text>
               <Text color="white" fontFamily="manrope_li">"{quote}"</Text>
               <Text color="white" fontFamily="manrope_m" alignSelf="flex-end">- {author}</Text>

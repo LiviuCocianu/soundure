@@ -1,8 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text, ScrollView } from 'native-base';
+import { VirtualizedList } from 'react-native';
 import PlaylistElement from './PlaylistElement';
 
 const PlaylistsCategory = () => {
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+      setData([
+        {
+          id: 1,
+          title: "Un playlist",
+          seconds: 523,
+        },
+        {
+          id: 2,
+          title: "Un alt playlist",
+          seconds: 6342,
+          trackCount: 40
+        },
+        {
+          id: 3,
+          title: "fmkmsjdfjjngljsvjsdjfsdfwvn",
+          seconds: 9563,
+          trackCount: 46
+        },
+        {
+          id: 4,
+          seconds: 9563,
+          trackCount: 46
+        },
+      ])
+    }, []);
+
     return (
         <Box bg="primary.900"
           w="90%" h="350" 
@@ -18,13 +48,13 @@ const PlaylistsCategory = () => {
           </Box>
 
           <ScrollView 
+            w="90%" mt="4"
             _contentContainerStyle={{flexGrow: 1}} 
             showsVerticalScrollIndicator={false}
-            flex="0.8" w="90%" mt="4"
+            nestedScrollEnabled
+            flex="0.8"
           >
-            <PlaylistElement/>
-            <PlaylistElement/>
-            <PlaylistElement/>
+            {data.map((item) => <PlaylistElement data={item} key={item.id}/>)}
           </ScrollView>
         </Box>
     );
