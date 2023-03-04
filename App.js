@@ -26,6 +26,7 @@ export default function App() {
     'Manrope-Regular': require("./assets/font/Manrope-Regular.ttf"),
     'Manrope-Medium': require("./assets/font/Manrope-Medium.ttf"),
     'Manrope-Bold': require("./assets/font/Manrope-Bold.ttf"),
+    'IcoMoon': require("./assets/font/icomoon.ttf"),
   });
 
   String.prototype.toHHMMSS = function () {

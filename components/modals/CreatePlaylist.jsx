@@ -12,6 +12,8 @@ const CreatePlaylist = ({
     const [description, setDescription] = useState("playlist_description");
     const [coverURI, setCoverURI] = useState("");
 
+    const [errors, setErrors] = useState({});
+
     const ImageNB = Factory(ImageBackground);
 
     const handleCoverChoice = async () => {
@@ -28,13 +30,31 @@ const CreatePlaylist = ({
     }
 
     const handleSubmit = () => {
+        let err = {...errors};
 
+        if(title.length < 3) {
+            err = { ...err,
+                title: "Denumire mai mică de 3 caractere"
+            };
+        } else if(title.length > 64) {
+            err = { ...err,
+                title: "Denumire prea lungă"
+            };
+        } else err = {};
+
+        setErrors(err);
+
+        // All validation have passed
+        if (Object.keys(err).length == 0) {
+            
+        }
     }
 
     const handleClose = () => {
         setTitle("");
         setDescription("");
         setCoverURI("");
+        setErrors({})
 
         closeHandle(false);
     }
@@ -47,17 +67,11 @@ const CreatePlaylist = ({
                 borderColor="primary.600" 
                 borderWidth="2"
             >
-                <Modal.CloseButton _icon={{
-                    color: "white"
-                }}/>
-
-                <Box 
-                    w="100%" h="100%"
-                    flex="1"
-                >
+                <Modal.CloseButton _icon={{ color: "white" }}/>
+                <Box w="100%" h="100%" flex="1">
                     {
                         coverURI === "" ? (
-                            <NoCoverImage flex="0.35" bg="red.100"/>
+                            <NoCoverImage flex="0.35"/>
                         ) : (
                             <ImageNB
                                 w="100%"
@@ -78,7 +92,7 @@ const CreatePlaylist = ({
                         <VStack 
                             w="100%" h="100%" 
                             px="5" pt="5"
-                            space="md"
+                            space="lg"
                         >
                             <Text 
                                 pb="2"
@@ -89,7 +103,7 @@ const CreatePlaylist = ({
                                 borderBottomWidth="1"
                             >Creează un playlist nou!</Text>
 
-                            <FormControl h="35" isRequired>
+                            <FormControl h="35" isRequired isInvalid={"title" in errors}>
                                 <Input
                                     variant="underlined" 
                                     placeholder="Denumire playlist"
@@ -99,14 +113,16 @@ const CreatePlaylist = ({
                                     fontFamily="manrope_r"
                                     onChangeText={setTitle}
                                 />
+                                <FormControl.ErrorMessage mt="0">{'title' in errors ? errors.title : ""}</FormControl.ErrorMessage>
                             </FormControl>
 
-                            <FormControl isRequired>
+                            <FormControl>
                                 <FormControl.Label _text={{
                                     fontFamily: "manrope_r",
                                     fontSize: "xs",
                                     color: "gray.400"
                                 }}>Descriere</FormControl.Label>
+
                                 <TextArea 
                                     h="50"
                                     borderColor="primary.50"
@@ -120,17 +136,17 @@ const CreatePlaylist = ({
                             </FormControl>
 
                             <FormControl
-                                flex="0.30"
+                                flex="0.4"
                                 flexDir="row"
                                 alignItems="center"
                                 justifyContent="space-between"
-                                isRequired
                             >
                                 <FormControl.Label _text={{
                                     fontFamily: "manrope_r",
                                     fontSize: "xs",
                                     color: "gray.400"
                                 }}>Poză de copertă</FormControl.Label>
+
                                 <Button h="30" 
                                     p="0" px="6" 
                                     _text={{

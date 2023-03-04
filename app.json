@@ -23,7 +23,11 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon/foreground_icon.png",
         "backgroundImage": "./assets/icon/background_icon.png"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "io.github.idoomful.Soundure.android"
     },
     "web": {
       "favicon": "./assets/favicon.png"

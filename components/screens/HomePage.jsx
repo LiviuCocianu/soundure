@@ -7,9 +7,11 @@ import PlaylistsCategory from '../PlaylistsCategory';
 import HistoryCategory from '../HistoryCategory';
 import FavoriteCategory from '../FavoriteCategory';
 import CreatePlaylist from '../modals/CreatePlaylist';
+import UploadTrack from '../modals/UploadTrack';
 
 const HomePage = () => {
   const [createModalOpened, toggleCreateModal] = useState(false);
+  const [uploadModalOpened, toggleUploadModal] = useState(false);
 
   const HeaderButton = ({text, icon, onPress}) => (
     <Button 
@@ -43,6 +45,10 @@ const HomePage = () => {
         isOpen={createModalOpened} 
         closeHandle={toggleCreateModal}
       />
+      <UploadTrack
+        isOpen={uploadModalOpened}
+        closeHandle={toggleUploadModal}
+      />
 
       <QuoteBox/>
       <Box w="100%" h="100%" 
@@ -61,7 +67,7 @@ const HomePage = () => {
           justifyContent="space-around"
         >
           <HeaderButton text="Creează playlist" icon={faFolderPlus} onPress={() => toggleCreateModal(true)}/>
-          <HeaderButton text="Adaugă o piesă" icon={faPlus}/>
+          <HeaderButton text="Adaugă o piesă" icon={faPlus} onPress={() => toggleUploadModal(true)}/>
         </Box>
 
         <PlaylistsCategory/>

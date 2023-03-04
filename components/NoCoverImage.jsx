@@ -8,7 +8,7 @@ const NoCoverImage = (props) => {
     return (
         <ImageNB 
             w="100%"
-            imageStyle={{height: "100%"}}
+            imageStyle={{height: "100%", borderRadius: props.borderRadius}}
             source={require("../assets/images/soundure_banner_dark.png")}
             resizeMode="cover"
             {...props}
@@ -18,7 +18,7 @@ const NoCoverImage = (props) => {
                 justifyContent="center"
                 alignItems="center"
             >
-                <Box w="100%" h="100%" position="absolute" bg="black" opacity="50"/>
+                <Box w="100%" h="100%" position="absolute" bg="black" opacity="50" {...props}/>
                 <Text 
                     position="absolute" 
                     color="gray.400" 
