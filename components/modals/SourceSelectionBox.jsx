@@ -4,12 +4,22 @@ import {
   FormControl,
   Input,
   Radio,
-  Icon
+  Icon,
+  Button
 } from 'native-base'
 import React from 'react'
 import CustomIcon from "../../icons"
 
-const SourceSelectionBox = () => {
+const SourceSelectionBox = ({
+  url,
+  setURL,
+  platform,
+  setPlatform
+}) => {
+  const handleURLRequest = async () => {
+
+  }
+
   return (
     <Box
       mt="6" p="4" pb="6"
@@ -33,10 +43,12 @@ const SourceSelectionBox = () => {
           color="primary.50"
           fontFamily="manrope_r"
           placeholder="https://"
+          value={url}
+          onChange={setURL}
           _focus={{
             bg: "primary.700"
           }}
-        ></Input>
+        />
       </FormControl>
 
       <Text
@@ -48,7 +60,7 @@ const SourceSelectionBox = () => {
       </Text>
 
       <FormControl isRequired w="auto">
-        <Radio.Group defaultValue="1">
+        <Radio.Group value={platform} onChange={setPlatform}>
           <SourceRadio id="spotify" name="Spotify" color="green.400" value="1" />
           <Box mb="1.5" />
           <SourceRadio id="soundcloud" name="Soundcloud" color="orange.400" value="2" />
@@ -56,6 +68,14 @@ const SourceSelectionBox = () => {
           <SourceRadio id="youtube" name="Youtube" color="red.400" value="3" />
         </Radio.Group>
       </FormControl>
+
+      <Button w="80%" mt="6"
+        onPress={handleURLRequest}
+        _text={{
+          fontFamily: "quicksand_b",
+          fontSize: "xs"
+        }}
+      >Confirmă</Button>
     </Box>
   )
 }

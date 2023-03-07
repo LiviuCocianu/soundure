@@ -1,12 +1,24 @@
 import React, { useState } from 'react';
-import { Box, FormControl, Modal, VStack, Text, Input, TextArea, Button, Factory } from 'native-base';
+import { 
+    Box, 
+    FormControl, 
+    Modal, 
+    VStack, 
+    Text, 
+    Input, 
+    TextArea, 
+    Button, 
+    Factory, 
+    ScrollView 
+} from 'native-base';
 import { ImageBackground, Dimensions } from 'react-native'
 import NoCoverImage from '../NoCoverImage';
 import * as ImagePicker from 'expo-image-picker'
 
 const CreatePlaylist = ({
     isOpen,
-    closeHandle
+    closeHandle,
+    db
 }) => {
     const [title, setTitle] = useState("playlist_title");
     const [description, setDescription] = useState("playlist_description");
@@ -40,7 +52,13 @@ const CreatePlaylist = ({
             err = { ...err,
                 title: "Denumire prea lungă"
             };
-        } else err = {};
+        } else delete err.title;
+        
+        if(description.length > 500) {
+            err = { ...err,
+                description: "Descriere prea lungă"
+            };
+        } else delete err.description;
 
         setErrors(err);
 
@@ -68,14 +86,14 @@ const CreatePlaylist = ({
                 borderWidth="2"
             >
                 <Modal.CloseButton _icon={{ color: "white" }}/>
-                <Box w="100%" h="100%" flex="1">
+                <Box w="100%" h="100%">
                     {
                         coverURI === "" ? (
-                            <NoCoverImage flex="0.35"/>
+                            <NoCoverImage h="35%"/>
                         ) : (
                             <ImageNB
                                 w="100%"
-                                flex="0.35"
+                                h="35%"
                                 imageStyle={{height: "100%"}}
                                 source={{uri: coverURI}}
                                 resizeMode="cover"
@@ -83,11 +101,13 @@ const CreatePlaylist = ({
                         )
                     }
                     
-                    <Box
+                    <ScrollView
                         w="100%"
-                        flex="0.75"
-                        justifyContent="center"
-                        alignItems="center"
+                        h="70%"
+                        _contentContainerStyle={{
+                            flexGrow: 1,
+                            alignItems: "center"
+                        }}
                     >
                         <VStack 
                             w="100%" h="100%" 
@@ -116,7 +136,7 @@ const CreatePlaylist = ({
                                 <FormControl.ErrorMessage mt="0">{'title' in errors ? errors.title : ""}</FormControl.ErrorMessage>
                             </FormControl>
 
-                            <FormControl>
+                            <FormControl isInvalid={"description" in errors}>
                                 <FormControl.Label _text={{
                                     fontFamily: "manrope_r",
                                     fontSize: "xs",
@@ -124,7 +144,7 @@ const CreatePlaylist = ({
                                 }}>Descriere</FormControl.Label>
 
                                 <TextArea 
-                                    h="50"
+                                    h="100"
                                     borderColor="primary.50"
                                     color="primary.50"
                                     fontFamily="manrope_r"
@@ -132,11 +152,11 @@ const CreatePlaylist = ({
                                     _focus={{
                                         borderColor: "primary.50"
                                     }}
-                                />
+                                />  
+                                <FormControl.ErrorMessage mt="0">{"description" in errors ? errors.description : ""}</FormControl.ErrorMessage>
                             </FormControl>
 
                             <FormControl
-                                flex="0.4"
                                 flexDir="row"
                                 alignItems="center"
                                 justifyContent="space-between"
@@ -166,7 +186,15 @@ const CreatePlaylist = ({
                                 Creează
                             </Button>
                         </VStack>
-                    </Box>
+                    </ScrollView>
+                    {/* <Box
+                        w="100%"
+                        flex="0.75"
+                        justifyContent="center"
+                        alignItems="center"
+                    >
+                        
+                    </Box> */}
                 </Box>
             </Modal.Content>
         </Modal>

@@ -9,7 +9,7 @@ import FavoriteCategory from '../FavoriteCategory';
 import CreatePlaylist from '../modals/CreatePlaylist';
 import UploadTrack from '../modals/UploadTrack';
 
-const HomePage = () => {
+const HomePage = ({db}) => {
   const [createModalOpened, toggleCreateModal] = useState(false);
   const [uploadModalOpened, toggleUploadModal] = useState(false);
 
@@ -44,10 +44,12 @@ const HomePage = () => {
       <CreatePlaylist 
         isOpen={createModalOpened} 
         closeHandle={toggleCreateModal}
+        db={db}
       />
       <UploadTrack
         isOpen={uploadModalOpened}
         closeHandle={toggleUploadModal}
+        db={db}
       />
 
       <QuoteBox/>
@@ -70,7 +72,7 @@ const HomePage = () => {
           <HeaderButton text="Adaugă o piesă" icon={faPlus} onPress={() => toggleUploadModal(true)}/>
         </Box>
 
-        <PlaylistsCategory/>
+        <PlaylistsCategory db={db}/>
         <HistoryCategory/>
         <FavoriteCategory/>
       </Box>

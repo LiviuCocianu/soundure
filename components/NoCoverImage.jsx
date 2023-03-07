@@ -18,7 +18,7 @@ const NoCoverImage = (props) => {
                 justifyContent="center"
                 alignItems="center"
             >
-                <Box w="100%" h="100%" position="absolute" bg="black" opacity="50" {...props}/>
+                <Box {...props} w="100%" h="100%" position="absolute" bg="black" opacity="50"/>
                 <Text 
                     position="absolute" 
                     color="gray.400" 

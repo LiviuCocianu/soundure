@@ -1,36 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text, ScrollView } from 'native-base';
-import { VirtualizedList } from 'react-native';
 import PlaylistElement from './PlaylistElement';
 
-const PlaylistsCategory = () => {
+const PlaylistsCategory = ({db}) => {
     const [data, setData] = useState([]);
 
     useEffect(() => {
-      setData([
-        {
-          id: 1,
-          title: "Un playlist",
-          seconds: 523,
-        },
-        {
-          id: 2,
-          title: "Un alt playlist",
-          seconds: 6342,
-          trackCount: 40
-        },
-        {
-          id: 3,
-          title: "fmkmsjdfjjngljsvjsdjfsdfwvn",
-          seconds: 9563,
-          trackCount: 46
-        },
-        {
-          id: 4,
-          seconds: 9563,
-          trackCount: 46
-        },
-      ])
+      db.select("Playlist", "*").then(setData);
     }, []);
 
     return (

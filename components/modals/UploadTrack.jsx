@@ -19,15 +19,19 @@ import SourceSelectionBox from './SourceSelectionBox'
 
 const UploadTrack = ({
     isOpen,
-    closeHandle
+    closeHandle,
+    db
 }) => {
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("Necunoscut");
   const defaultCoverURI = require("../../assets/images/soundure_banner_dark.png");
   const [coverURI, setCoverURI] = useState(defaultCoverURI);
   const [fileURI, setFileURI] = useState();
-  const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
+  const [url, setURL] = useState("");
+  const [platform, setPlatform] = useState("1");
 
+  const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
+  const [sourceHelper, setSourceHelper] = useState("");
   const [sheetIsOpen, toggleSheet] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -53,12 +57,20 @@ const UploadTrack = ({
 
     if (result.type == "success") {
       setFileURI({ uri: result.uri });
-      console.log(result.uri);
+      setSourceHelper(result.name);
+
+      if(title === "") {
+        setTitle(result.name.split(".")[0]);
+      }
     }
   }
 
   const handleSourceChoice = () => {
     toggleSheet(true);
+  }
+
+  const handleSubmit = () => {
+
   }
   
   const handleClose = () => {
@@ -149,6 +161,7 @@ const UploadTrack = ({
                 placeholderTextColor="gray.400"
                 fontFamily="manrope_r"
                 onChangeText={setTitle}
+                value={title}
               />
               <FormControl.ErrorMessage mt="0">{'title' in errors ? errors.title : ""}</FormControl.ErrorMessage>
             </FormControl>
@@ -162,6 +175,7 @@ const UploadTrack = ({
                 placeholderTextColor="gray.400"
                 fontFamily="manrope_r"
                 onChangeText={setArtist}
+                value={artist}
               />
               <FormControl.ErrorMessage mt="0">{'artist' in errors ? errors.artist : ""}</FormControl.ErrorMessage>
             </FormControl>
@@ -190,32 +204,45 @@ const UploadTrack = ({
 
             <FormControl
               mt="6"
-              flexDir="row"
-              alignItems="center"
-              justifyContent="space-between"
               isRequired
             >
-              <FormControl.Label _text={{
-                fontFamily: "manrope_r",
-                fontSize: "xs",
-                color: "gray.400"
-              }}>Sursă piesă</FormControl.Label>
-
-              <Button h="30"
-                p="0" px="6"
-                _text={{
+              <Box
+                flexDir="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <FormControl.Label _text={{
                   fontFamily: "manrope_r",
-                  fontSize: "xs"
-                }}
-                onPress={handleSourceChoice}
-              >Alege</Button>
+                  fontSize: "xs",
+                  color: "gray.400"
+                }}>Sursă piesă</FormControl.Label>
+
+                <Button h="30"
+                  p="0" px="6"
+                  _text={{
+                    fontFamily: "manrope_r",
+                    fontSize: "xs"
+                  }}
+                  onPress={handleSourceChoice}
+                >Alege</Button>
+              </Box>
+              <FormControl.HelperText>{sourceHelper}</FormControl.HelperText>
             </FormControl>
 
             {
               sourceSelectionBox ? (
-                <SourceSelectionBox/>
+                <SourceSelectionBox 
+                  url={url}
+                  setURL={setURL}
+                  platform={platform}
+                  setPlatform={setPlatform}
+                />
               ) : null
             }
+
+            <Button mt="6" onPress={handleSubmit} _text={{
+              fontFamily: "quicksand_b"
+            }}>Încarcă</Button>
           </ScrollView>
         </Box>
       </Modal.Content>
@@ -227,12 +254,12 @@ const SourceActionsheetItem = ({text, onPress}) => (
   <Actionsheet.Item
     bg="primary.700"
     borderBottomWidth="1"
-    borderBottomColor="primary.800"
+    borderBottomColor="primary.200"
     onPress={onPress}
     _text={{
       color: "white",
       fontFamily: "manrope_r",
-      fontSize: "sm"
+      fontSize: "xs"
     }}
   >{text}</Actionsheet.Item>
 );

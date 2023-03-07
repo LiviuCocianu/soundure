@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { NativeBaseProvider, extendTheme } from "native-base";
 import HomePage from "./components/screens/HomePage";
 import LoadingPage from "./components/LoadingPage";
@@ -6,6 +6,7 @@ import { StatusBar } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"
 import { useFonts } from 'expo-font'
 import themes from "./assets/themes";
+import Database from './database'
 
 const config = {
   dependencies: {
@@ -13,7 +14,8 @@ const config = {
   },
 };
 
-const theme = extendTheme(themes); 
+const theme = extendTheme(themes);
+const db = new Database();
 
 export default function App() {
   const [loadedFonts] = useFonts({
@@ -28,6 +30,7 @@ export default function App() {
     'Manrope-Bold': require("./assets/font/Manrope-Bold.ttf"),
     'IcoMoon': require("./assets/font/icomoon.ttf"),
   });
+  const [loadedDatabase, setLoadedDatabase] = useState(false);
 
   String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10);
@@ -41,10 +44,14 @@ export default function App() {
     return (parseInt(hours) < 1 ? "" : (hours+':'))+minutes+':'+seconds;
   }
 
+  useEffect(() => {
+    db.init().then(() => setLoadedDatabase(true));
+  }, []);
+
   return (
     <NativeBaseProvider theme={theme} config={config}>
       <StatusBar/>
-      {loadedFonts ? <HomePage/> : <LoadingPage/>}
-    </NativeBaseProvider> 
+      {(loadedFonts && loadedDatabase) ? <HomePage db={db}/> : <LoadingPage/>}
+    </NativeBaseProvider>
   );
 }

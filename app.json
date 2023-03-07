@@ -4,7 +4,7 @@
     "slug": "Soundure",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon/icon.png",
+    "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/images/soundure_logo.png",
       "resizeMode": "contain",

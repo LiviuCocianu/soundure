@@ -4,12 +4,14 @@ import { Box, Image, AspectRatio, HStack, VStack, Text, Pressable } from 'native
 const PlaylistElement = ({
     data={}
 }) => {
-    const {
-        coverURI = require("../assets/icon/icon.png"),
+    let {
+        coverURI,
         title = "Titlu playlist",
         seconds = 3600,
         trackCount = 50,
     } = data;
+
+    coverURI = !coverURI || coverURI == null ? require("../assets/icon/icon.png") : coverURI;
     const tracks = trackCount > 1 ? "piese" : "piesă";
 
     return (
