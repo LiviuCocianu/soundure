@@ -15,6 +15,9 @@ import { ImageBackground, Dimensions } from 'react-native'
 import NoCoverImage from '../NoCoverImage';
 import * as ImagePicker from 'expo-image-picker'
 
+import { useDispatch } from 'react-redux';
+import { playlistAdded } from "../../redux/slices/playlistSlice"
+
 const CreatePlaylist = ({
     isOpen,
     closeHandle,
@@ -22,9 +25,10 @@ const CreatePlaylist = ({
 }) => {
     const [title, setTitle] = useState("playlist_title");
     const [description, setDescription] = useState("playlist_description");
-    const [coverURI, setCoverURI] = useState("");
+    const [coverURI, setCoverURI] = useState(null);
 
     const [errors, setErrors] = useState({});
+    const dispatch = useDispatch();
 
     const ImageNB = Factory(ImageBackground);
 
@@ -64,7 +68,14 @@ const CreatePlaylist = ({
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            
+            db.insert("Playlist", [title, description, coverURI], ["title", "description", "coverURI"])
+                .then(() => {
+                    db.select("Playlist", "*", "title = ?", [title]).then(rows => {
+                        dispatch(playlistAdded(rows[0]));
+                    });
+                });
+
+            handleClose();
         }
     }
 
@@ -88,7 +99,7 @@ const CreatePlaylist = ({
                 <Modal.CloseButton _icon={{ color: "white" }}/>
                 <Box w="100%" h="100%">
                     {
-                        coverURI === "" ? (
+                        coverURI === null ? (
                             <NoCoverImage h="35%"/>
                         ) : (
                             <ImageNB

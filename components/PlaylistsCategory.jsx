@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Box, Text, ScrollView } from 'native-base';
 import PlaylistElement from './PlaylistElement';
+import { useSelector } from 'react-redux';
 
-const PlaylistsCategory = ({db}) => {
-    const [data, setData] = useState([]);
-
-    useEffect(() => {
-      db.select("Playlist", "*").then(setData);
-    }, []);
+const PlaylistsCategory = () => {
+    const data = useSelector(state => state.playlists);
 
     return (
         <Box bg="primary.900"

@@ -8,6 +8,9 @@ import { useFonts } from 'expo-font'
 import themes from "./assets/themes";
 import Database from './database'
 
+import { useDispatch } from 'react-redux';
+import { playlistsSet } from './redux/slices/playlistSlice'
+
 const config = {
   dependencies: {
     'linear-gradient': LinearGradient
@@ -17,7 +20,9 @@ const config = {
 const theme = extendTheme(themes);
 const db = new Database();
 
-export default function App() {
+function App() {
+  const dispatch = useDispatch();
+  const [loadedDatabase, setLoadedDatabase] = useState(false);
   const [loadedFonts] = useFonts({
     'Quicksand-Light': require("./assets/font/Quicksand-Light.ttf"),
     'Quicksand-Regular': require("./assets/font/Quicksand-Regular.ttf"),
@@ -30,7 +35,6 @@ export default function App() {
     'Manrope-Bold': require("./assets/font/Manrope-Bold.ttf"),
     'IcoMoon': require("./assets/font/icomoon.ttf"),
   });
-  const [loadedDatabase, setLoadedDatabase] = useState(false);
 
   String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10);
@@ -45,13 +49,19 @@ export default function App() {
   }
 
   useEffect(() => {
-    db.init().then(() => setLoadedDatabase(true));
+    db.init()
+      .then(() => {
+        db.select("Playlist").then(rows => dispatch(playlistsSet(rows)));
+      })
+      .then(() => setLoadedDatabase(true));
   }, []);
 
   return (
     <NativeBaseProvider theme={theme} config={config}>
-      <StatusBar/>
-      {(loadedFonts && loadedDatabase) ? <HomePage db={db}/> : <LoadingPage/>}
+      <StatusBar />
+      {(loadedFonts && loadedDatabase) ? <HomePage db={db} /> : <LoadingPage />}
     </NativeBaseProvider>
   );
 }
+
+export default App;
