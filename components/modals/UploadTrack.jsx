@@ -12,7 +12,7 @@ import {
   Actionsheet,
 } from 'native-base'
 import { ImageBackground, Dimensions } from 'react-native'
-import NoCoverImage from '../NoCoverImage'
+import NoCoverImage from '../general/NoCoverImage'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import SourceSelectionBox from './SourceSelectionBox'

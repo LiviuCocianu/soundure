@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { NativeBaseProvider, extendTheme } from "native-base";
-import HomePage from "./components/screens/HomePage";
-import LoadingPage from "./components/LoadingPage";
+import HomePage from "./components/screens/home/HomePage";
+import LoadingPage from "./components/screens/LoadingPage";
 import { StatusBar } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"
 import { useFonts } from 'expo-font'
@@ -20,7 +20,7 @@ const config = {
 const theme = extendTheme(themes);
 const db = new Database();
 
-function App() {
+const App = () => {
   const dispatch = useDispatch();
   const [loadedDatabase, setLoadedDatabase] = useState(false);
   const [loadedFonts] = useFonts({
@@ -36,24 +36,11 @@ function App() {
     'IcoMoon': require("./assets/font/icomoon.ttf"),
   });
 
-  String.prototype.toHHMMSS = function () {
-    var sec_num = parseInt(this, 10);
-    var hours = Math.floor(sec_num / 3600);
-    var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-    var seconds = sec_num - (hours * 3600) - (minutes * 60);
-
-    if (hours < 10) {hours = "0"+hours;}
-    if (minutes < 10) {minutes = "0"+minutes;}
-    if (seconds < 10) {seconds = "0"+seconds;}
-    return (parseInt(hours) < 1 ? "" : (hours+':'))+minutes+':'+seconds;
-  }
-
   useEffect(() => {
-    db.init()
-      .then(() => {
-        db.select("Playlist").then(rows => dispatch(playlistsSet(rows)));
-      })
-      .then(() => setLoadedDatabase(true));
+    db.init().then(() => {
+        db.valuesOf("Playlist");
+        db.selectFrom("Playlist").then(rows => dispatch(playlistsSet(rows)));
+      }).then(() => setLoadedDatabase(true));
   }, []);
 
   return (

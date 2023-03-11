@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite'
+import { ResultSet } from 'expo-sqlite'
 
 export default class Database {
     /**
@@ -18,7 +19,7 @@ export default class Database {
             this.instance = SQLite.openDatabase("storage.db");
 
             await Promise.all([
-                this.createTable("Artist", 
+                this.createTable("Artist",
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT UNIQUE NOT NULL,
                     favorite BOOLEAN DEFAULT 0`
@@ -30,7 +31,7 @@ export default class Database {
                     coverURI TEXT,
                     favorite BOOLEAN DEFAULT 0`
                 ),
-                this.createTable("PlaylistConfig", 
+                this.createTable("PlaylistConfig",
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     isLooping BOOLEAN DEFAULT 0,
                     isShuffling BOOLEAN DEFAULT 0,
@@ -107,16 +108,18 @@ export default class Database {
     /**
      * Performs an SQL query on the database
      * @param {string} table Table name, case sensitive
-     * @param {string} [columns] A string containing the comma-separated list of columns. If not specified, all columns will be selected
+     * @param {string[]} [columns] An array containing the column names. If not specified, all columns will be selected
      * @param {string} [conditions] SQL conditions. If not specified, all rows will be selected for the specified columns
      * @param {any[]} [args] Values to replace placeholders with, if specified in columns and/or conditions
      * @returns {Promise<any[]>} An array of row objects on resolve, the error on reject. Prints the error to the console
      */
-    select(table, columns="*", conditions, args = []) {
+    selectFrom(table, columns=["*"], conditions, args = []) {
+        const cols = columns == null || columns == [] ? ["*"] : columns.join(", ");
         const conds = conditions ? ` WHERE ${conditions}` : ``;
+
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
-                await tx.executeSql(`SELECT ${columns} FROM ${table}${conds}`, 
+                await tx.executeSql(`SELECT ${cols} FROM ${table}${conds}`, 
                     args, 
                     (txObj, rs) => resolve(rs.rows._array),
                     (txObj, error) => {
@@ -131,21 +134,23 @@ export default class Database {
     /**
      * Performs an SQL insertion on the database
      * @param {string} table Table name, case sensitive
-     * @param {any[]} values Values to insert
-     * @param {string[]} [columns] If not specified, all columns must have a value in values
+     * @param {object} payload Object containing the column names as keys and their values respectively
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    insert(table, values = [], columns) {
-        const cols = columns ? ` (${columns.join(", ")})` : ``;
+    insertInto(table, payload={}) {
+        const keys = Object.keys(payload);
+        const values = Object.values(payload);
+        const joinedColumns = keys.join(", ");
+        const joinedPlaceholders = Array(values.length).fill("?").join(", ");
 
         return new Promise(async (resolve, reject) => {
-            if(values.length == 0) {
-                reject(new Error("Array of values for SQL insert cannot be empty"));
+            if(keys.length == 0) {
+                reject(new Error("SQL insert cannot happen with an empty payload"));
                 return;
             }
 
             await this.instance.transaction(async tx => {
-                await tx.executeSql(`INSERT INTO ${table}${cols} VALUES (${Array(values.length).fill("?").join(", ")})`, 
+                await tx.executeSql(`INSERT INTO ${table} (${joinedColumns}) VALUES (${joinedPlaceholders})`, 
                     values, 
                     (txObj, rs) => resolve(rs), 
                     (txObj, error) => {
@@ -160,12 +165,11 @@ export default class Database {
     /**
      * Performs multiple concurrent SQL insertions on the database
      * @param {string} table Table name, case sensitive
-     * @param {Array.<any[]>} valuesArray Array of values arrays to insert
-     * @param {string[]} [columns] If not specified, all columns must have a value
+     * @param {object[]} payloads Array containing objects with the column names as keys and their values respectively
      * @returns {Promise<ResultSet[]>} All ResultSets for each insert on resolve, the error on reject, if one failed. Prints the error to the console
      */
-    insertBulk(table, valuesArray = [], columns) {
-        return Promise.all(valuesArray.map(values => this.insert(table, values, columns)));
+    insertBulkInto(table, payloads=[{}]) {
+        return Promise.all(payloads.map(payload => this.insert(table, payload)));
     }
 
     /**
@@ -199,7 +203,7 @@ export default class Database {
      * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    delete(table, conditions, args=[]) {
+    deleteFrom(table, conditions, args=[]) {
         const conds = conditions ? ` WHERE ${conditions}` : ``;
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
@@ -242,8 +246,8 @@ export default class Database {
      * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
      * @returns {Promise<boolean>} Resolves with a boolean that indicates the existence of the data
      */
-    exists(table, conditions, args = []) {
-        return this.select(table, "*", conditions, args)
+    existsIn(table, conditions, args = []) {
+        return this.selectFrom(table, null, conditions, args)
             .then(rows => rows.length > 0);
     }
 
@@ -266,13 +270,15 @@ export default class Database {
     }
 
     /**
-     * Clears all data from the table and resets its autoincrement sequence
+     * Clears all data from the table and resets its autoincrement sequence.
+     * 
+     * This method is preffered over using `Database.deleteFrom` when you want to delete every
+     * row and reset the autoincrement sequence at the same time
      * @param {string} table Table name
      * @returns {Promise<ResultSet>} Resolves with a ResultSet when done
      */
     truncate(table) {
-        return this.delete(table)
-            .then(() => this.resetSequence(table));
+        return this.deleteFrom(table).then(() => this.resetSequenceFor(table));
     }
 
     /**
@@ -280,10 +286,7 @@ export default class Database {
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each truncation when done
      */
     truncateAll() {
-        return Promise.all(Array.from(this.TABLES).map(this.truncate))
-            .then(() => {
-                console.log("All tables were truncated");
-            });
+        return Promise.all(Array.from(this.TABLES).map(this.truncate));
     }
 
     /**
@@ -291,7 +294,7 @@ export default class Database {
      * @param {string} table Table name
      * @returns {Promise<ResultSet>} Resolves a ResultSet when the sequence was updated
      */
-    resetSequence(table) {
+    resetSequenceFor(table) {
         return this.update("sqlite_sequence", "seq = 0", "name = ?", [table]);
     }
 
@@ -300,18 +303,18 @@ export default class Database {
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each reset when done
      */
     resetSequenceAll() {
-        return Promise.all(Array.from(this.TABLES).map(this.resetSequence));
+        return Promise.all(Array.from(this.TABLES).map(this.resetSequenceFor));
     }
 
     /**
      * Prints all values in a table
      * @param {string} table Table name
      */
-    values(table) {
+    valuesOf(table) {
         console.log("");
         console.log(`== ${table} ====`);
-        this.select(table).then(rows => {
-            rows.forEach(console.log);
+        this.selectFrom(table).then(rows => {
+            for(const row of rows) console.log(`${row.id}: `, row);
         });
     }
 }

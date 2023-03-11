@@ -1,13 +1,13 @@
 import { Box, Button, ScrollView, Text, Icon } from 'native-base'
 import React, { useState } from 'react'
-import QuoteBox from '../QuoteBox'
+import QuoteBox from './QuoteBox'
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faFolderPlus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import PlaylistsCategory from '../PlaylistsCategory';
-import HistoryCategory from '../HistoryCategory';
-import FavoriteCategory from '../FavoriteCategory';
-import CreatePlaylist from '../modals/CreatePlaylist';
-import UploadTrack from '../modals/UploadTrack';
+import PlaylistsCategory from './PlaylistsCategory';
+import HistoryCategory from './HistoryCategory';
+import FavoriteCategory from './FavoriteCategory';
+import CreatePlaylist from '../../modals/CreatePlaylist';
+import UploadTrack from '../../modals/UploadTrack';
 
 const HomePage = ({db}) => {
   const [createModalOpened, toggleCreateModal] = useState(false);

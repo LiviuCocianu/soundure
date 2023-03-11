@@ -5,7 +5,7 @@ import { ImageBackground } from 'react-native';
 
 const HorizontalCategoryElement = ({
     title="Titlu playlist",
-    cover=require("../../assets/icon/icon.png"),
+    cover=require("../../../../assets/icon/icon.png"),
     color="primary.100",
     onPress
 }) => {

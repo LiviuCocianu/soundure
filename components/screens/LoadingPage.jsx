@@ -32,7 +32,7 @@ const LoadingPage = () => {
     >
       <Animated.View style={{opacity: progress}}>
         <Image
-          source={require("../assets/images/soundure_logo_white.png")}
+          source={require("../../assets/images/soundure_logo_white.png")}
           alt="home logo"
           w={size}
           h={size}

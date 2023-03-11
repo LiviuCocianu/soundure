@@ -1,5 +1,4 @@
-//import liraries
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import HorizontalCategory from './horizontalCategory/HorizontalCategory';
 import HorizontalCategoryElement from './horizontalCategory/HorizontalCategoryElement';
 
@@ -10,10 +9,11 @@ const FavoriteCategory = ({
 
     return (
         <HorizontalCategory 
+            title="Piese preferate"
             render={
                 data.slice(0, maxContent).map((el) => <HorizontalCategoryElement title={el.title} key={el.id}/>)
             } 
-            title="Piese preferate"/>
+        />
     );
 };
 

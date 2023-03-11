@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Component, useState } from 'react';
 import { 
     Box, 
     FormControl, 
@@ -12,21 +12,39 @@ import {
     ScrollView 
 } from 'native-base';
 import { ImageBackground, Dimensions } from 'react-native'
-import NoCoverImage from '../NoCoverImage';
+import NoCoverImage from '../general/NoCoverImage';
 import * as ImagePicker from 'expo-image-picker'
 
 import { useDispatch } from 'react-redux';
 import { playlistAdded } from "../../redux/slices/playlistSlice"
+import Database from '../../database';
 
+/**
+ * Modal visibility handler
+ * @callback closeHandle
+ * @param {boolean} visible Modal visibility
+ */
+
+/**
+ * CreatePlaylist component
+ * @param {object} props props object
+ * @param {boolean} props.isOpen Indicates the visibility of the modal
+ * @param {closeHandle} props.closeHandle Modal visibility handler
+ * @param {Database} props.db Database object
+ * @returns {Component} Component JSX
+ */
 const CreatePlaylist = ({
     isOpen,
     closeHandle,
     db
 }) => {
-    const [title, setTitle] = useState("playlist_title");
-    const [description, setDescription] = useState("playlist_description");
-    const [coverURI, setCoverURI] = useState(null);
+    const initialCoverObjectURI = require("../../assets/images/soundure_banner_dark.png");
 
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [coverStringURI, setCoverStringURI] = useState(null);
+    const [coverObjectURI, setCoverObjectURI] = useState(initialCoverObjectURI);
+ 
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
 
@@ -41,7 +59,8 @@ const CreatePlaylist = ({
         });
 
         if(!result.canceled) {
-            setCoverURI(result.assets[0].uri);
+            setCoverStringURI(result.assets[0].uri);
+            setCoverObjectURI({uri: result.assets[0].uri});
         }
     }
 
@@ -68,12 +87,10 @@ const CreatePlaylist = ({
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            db.insert("Playlist", [title, description, coverURI], ["title", "description", "coverURI"])
-                .then(() => {
-                    db.select("Playlist", "*", "title = ?", [title]).then(rows => {
-                        dispatch(playlistAdded(rows[0]));
-                    });
-                });
+            db.insertInto("Playlist", {title, description, coverURI: coverStringURI}).then(rs => {
+                const payload = {id: rs.insertId, title, description, coverURI: coverStringURI};
+                dispatch(playlistAdded(payload));
+            });
 
             handleClose();
         }
@@ -82,7 +99,8 @@ const CreatePlaylist = ({
     const handleClose = () => {
         setTitle("");
         setDescription("");
-        setCoverURI("");
+        setCoverStringURI(null);
+        setCoverObjectURI(initialCoverObjectURI);
         setErrors({})
 
         closeHandle(false);
@@ -99,14 +117,14 @@ const CreatePlaylist = ({
                 <Modal.CloseButton _icon={{ color: "white" }}/>
                 <Box w="100%" h="100%">
                     {
-                        coverURI === null ? (
+                        coverStringURI === null ? (
                             <NoCoverImage h="35%"/>
                         ) : (
                             <ImageNB
                                 w="100%"
                                 h="35%"
                                 imageStyle={{height: "100%"}}
-                                source={{uri: coverURI}}
+                                source={coverObjectURI}
                                 resizeMode="cover"
                             ></ImageNB>
                         )

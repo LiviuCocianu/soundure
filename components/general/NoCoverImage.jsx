@@ -9,7 +9,7 @@ const NoCoverImage = (props) => {
         <ImageNB 
             w="100%"
             imageStyle={{height: "100%", borderRadius: props.borderRadius}}
-            source={require("../assets/images/soundure_banner_dark.png")}
+            source={require("../../assets/images/soundure_banner_dark.png")}
             resizeMode="cover"
             {...props}
         >

@@ -27,7 +27,7 @@ const PlaylistsCategory = () => {
             nestedScrollEnabled
             flex="0.8"
           >
-            {data.map((item) => <PlaylistElement data={item} key={item.id}/>)}
+            {data.map((item) => <PlaylistElement playlistID={item.id} key={item.id}/>)}
           </ScrollView>
         </Box>
     );

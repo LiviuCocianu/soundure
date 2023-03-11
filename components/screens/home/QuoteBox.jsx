@@ -44,7 +44,7 @@ const QuoteBox = () => {
       <Pressable onPress={() => console.log("test")}>
         <ImageBackground
           h="100%"
-          source={require("../assets/images/soundure_banner_dark.png")}
+          source={require("../../../assets/images/soundure_banner_dark.png")}
           alt="quotecover"
           resizeMode="cover"
         >
