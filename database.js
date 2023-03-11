@@ -41,16 +41,12 @@ export default class Database {
                 ),
                 this.createTable("Track",
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    millis INTEGER NOT NULL,
                     title TEXT NOT NULL DEFAULT 'Fara titlu',
                     coverURI TEXT CHECK((coverURI NOT NULL AND platform IS 'NONE') OR (coverURI IS NULL AND platform IS NOT 'NONE')),
                     favorite BOOLEAN DEFAULT 0,
                     platform TEXT CHECK(platform IN ('NONE', 'SPOTIFY', 'SOUNDCLOUD', 'YOUTUBE')) DEFAULT 'NONE',
                     artistId INTEGER NOT NULL,
-                    playlistId INTEGER NOT NULL,
-                    UNIQUE(title, millis),
-                    FOREIGN KEY(artistId) REFERENCES Artist(id),
-                    FOREIGN KEY(playlistId) REFERENCES Playlist(id)`
+                    FOREIGN KEY(artistId) REFERENCES Artist(id)`
                 ),
                 this.createTable("TrackConfig",
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,6 +59,14 @@ export default class Database {
                     endMillis INTEGER DEFAULT 0,
                     playlistConfigId INTEGER NOT NULL,
                     FOREIGN KEY(playlistConfigId) REFERENCES PlaylistConfig(id)`
+                ),
+                this.createTable("PlaylistContent",
+                    `id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    playlistId INTEGER NOT NULL,
+                    trackId INTEGER NOT NULL,
+                    UNIQUE(playlistId, trackId),
+                    FOREIGN KEY(playlistId) REFERENCES Playlist(id),
+                    FOREIGN KEY(trackId) REFERENCES Track(id)`
                 ),
                 this.createTable("Queue",
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -163,6 +167,22 @@ export default class Database {
     }
 
     /**
+     * Performs an SQL insertion on the database, but only if the conditions are met
+     * @param {string} table Table name, case sensitive
+     * @param {object} payload Object containing the column names as keys and their values respectively
+     * @param {string} [conditions] SQL conditions
+     * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
+     * @returns {Promise<ResultSet|boolean>} Resolves with the ResultSet if conditions are met, false otherwise
+     */
+    insertIfNotExists(table, payload={}, conditions, args) {
+        return this.existsIn(table, conditions, args)
+            .then(exists => {
+                if(!exists) return this.insertInto(table, payload);
+                return exists;
+            });
+    }
+
+    /**
      * Performs multiple concurrent SQL insertions on the database
      * @param {string} table Table name, case sensitive
      * @param {object[]} payloads Array containing objects with the column names as keys and their values respectively
@@ -221,8 +241,8 @@ export default class Database {
 
     /**
      * Performs any SQL statement on the database
-     * @param {*} statement SQL statement
-     * @param {*} args Values to replace placeholders with, if specified in statement
+     * @param {string} statement SQL statement
+     * @param {any[]} args Values to replace placeholders with, if specified in statement
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
     exec(statement, args=[]) {
@@ -249,6 +269,27 @@ export default class Database {
     existsIn(table, conditions, args = []) {
         return this.selectFrom(table, null, conditions, args)
             .then(rows => rows.length > 0);
+    }
+
+    /**
+     * @typedef ExistsWithRowsResult 
+     * @property {boolean} exists Boolean that indicates the existence of the data
+     * @property {object[]} rows The rows fetched during the operation, if any data exists
+     */
+
+    /**
+     * Checks if data following given conditions exists in a table, but also returns the rows, if any were found
+     * @param {string} table Table name
+     * @param {string} conditions SQL conditions. Accepts placeholders
+     * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
+     * @returns {Promise<ExistsWithRowsResult>} Resolves with an object containing the information
+     */
+    existsWithRows(table, conditions, args = []) {
+        return this.selectFrom(table, null, conditions, args)
+            .then(rows => ({
+                exists: rows.length > 0,
+                rows
+            }));
     }
 
     /**

@@ -1,9 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit'
-import playlistReducer from "../redux/slices/playlistSlice"
+import { 
+    playlistReducer,
+    playlistContentReducer,
+    trackReducer
+} from "../redux/reducers"
 
 const store = configureStore({
     reducer: {
-        playlists: playlistReducer
+        playlists: playlistReducer,
+        playlistsContent: playlistContentReducer, // This state maps the relations between playlists and tracks
+        tracks: trackReducer,
     }
 });
 

@@ -1,6 +1,8 @@
 import React from 'react';
 import { Box, Text, ScrollView } from 'native-base';
 import PlaylistElement from './PlaylistElement';
+import { RESERVED_PLAYLISTS } from '../../../constants';
+
 import { useSelector } from 'react-redux';
 
 const PlaylistsCategory = () => {
@@ -27,7 +29,10 @@ const PlaylistsCategory = () => {
             nestedScrollEnabled
             flex="0.8"
           >
-            {data.map((item) => <PlaylistElement playlistID={item.id} key={item.id}/>)}
+            {data.map((item) => {
+              if(RESERVED_PLAYLISTS.includes(item.title)) return;
+              return <PlaylistElement playlistID={item.id} key={item.id}/>;
+            })}
           </ScrollView>
         </Box>
     );

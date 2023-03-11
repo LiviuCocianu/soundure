@@ -61,11 +61,11 @@ const SourceSelectionBox = ({
 
       <FormControl isRequired w="auto">
         <Radio.Group value={platform} onChange={setPlatform}>
-          <SourceRadio id="spotify" name="Spotify" color="green.400" value="1" />
+          <SourceRadio id="spotify" name="Spotify" color="green.400" value="SPOTIFY" />
           <Box mb="1.5" />
-          <SourceRadio id="soundcloud" name="Soundcloud" color="orange.400" value="2" />
+          <SourceRadio id="soundcloud" name="Soundcloud" color="orange.400" value="SOUNDCLOUD" />
           <Box mb="1.5" />
-          <SourceRadio id="youtube" name="Youtube" color="red.400" value="3" />
+          <SourceRadio id="youtube" name="Youtube" color="red.400" value="YOUTUBE" />
         </Radio.Group>
       </FormControl>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Component } from 'react'
 import { 
   Box, 
   Modal, 
@@ -16,7 +16,16 @@ import NoCoverImage from '../general/NoCoverImage'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import SourceSelectionBox from './SourceSelectionBox'
+import Database from '../../database'
 
+/**
+ * UploadTrack component
+ * @param {object} props props object
+ * @param {boolean} props.isOpen Indicates the visibility of the modal
+ * @param {closeHandle} props.closeHandle Modal visibility handler
+ * @param {Database} props.db Database object
+ * @returns {Component} Component JSX
+ */
 const UploadTrack = ({
     isOpen,
     closeHandle,
@@ -27,11 +36,11 @@ const UploadTrack = ({
   const defaultCoverURI = require("../../assets/images/soundure_banner_dark.png");
   const [coverURI, setCoverURI] = useState(defaultCoverURI);
   const [fileURI, setFileURI] = useState();
+  const [sourceHelper, setSourceHelper] = useState("");
   const [url, setURL] = useState("");
-  const [platform, setPlatform] = useState("1");
+  const [platform, setPlatform] = useState("SPOTIFY");
 
   const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
-  const [sourceHelper, setSourceHelper] = useState("");
   const [sheetIsOpen, toggleSheet] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -70,13 +79,59 @@ const UploadTrack = ({
   }
 
   const handleSubmit = () => {
+    let err = { ...errors };
 
+    if (title.length < 3) {
+      err = {
+        ...err,
+        title: "Denumire mai mică de 3 caractere"
+      };
+    } else if (title.length > 64) {
+      err = {
+        ...err,
+        title: "Denumire prea lungă"
+      };
+    } else delete err.title;
+
+    if (artist.length < 3) {
+      err = {
+        ...err,
+        artist: "Denumire mai mică de 3 caractere"
+      };
+    } else if (artist.length > 64) {
+      err = {
+        ...err,
+        artist: "Denumire prea lungă"
+      };
+    } else delete err.artist;
+
+    setErrors(err);
+
+    // All validation have passed
+    if (Object.keys(err).length == 0) {
+      db.insertIfNotExists("Artist", { name: artist }, "name = ?", [artist]).then(() => {
+        db.selectFrom("Artist", null, "name = ?", [artist]).then(rows => {
+          const artistId = rows[0].id;
+          const toInsert = { title, coverURI, platform, artistId };
+
+          db.insertInto("Track", toInsert).then(rs => {
+            const payload = { id: rs.insertId, ...toInsert };
+            dispatch(trackAdded(payload));
+          });
+        });
+      });
+
+      handleClose();
+    }
   }
   
   const handleClose = () => {
     setTitle("");
     setArtist("");
     setCoverURI(defaultCoverURI);
+    setSourceHelper("");
+    setURL("");
+    setPlatform("SPOTIFY");
     setErrors({})
 
     closeHandle(false);

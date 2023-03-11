@@ -14,6 +14,7 @@ import {
 import { ImageBackground, Dimensions } from 'react-native'
 import NoCoverImage from '../general/NoCoverImage';
 import * as ImagePicker from 'expo-image-picker'
+import { RESERVED_PLAYLISTS } from '../../constants';
 
 import { useDispatch } from 'react-redux';
 import { playlistAdded } from "../../redux/slices/playlistSlice"
@@ -75,6 +76,11 @@ const CreatePlaylist = ({
             err = { ...err,
                 title: "Denumire prea lungă"
             };
+        } else if(RESERVED_PLAYLISTS.includes(title)) {
+            err = {
+                ...err,
+                title: "Titlu rezervat! Încearcă alt titlu"
+            }
         } else delete err.title;
         
         if(description.length > 500) {

@@ -1,4 +1,4 @@
-import { Box, Button, ScrollView, Text, Icon } from 'native-base'
+import { Box, Button, ScrollView, Icon } from 'native-base'
 import React, { useState } from 'react'
 import QuoteBox from './QuoteBox'
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
@@ -73,7 +73,7 @@ const HomePage = ({db}) => {
         </Box>
 
         <PlaylistsCategory db={db}/>
-        <HistoryCategory/>
+        <HistoryCategory db={db}/>
         <FavoriteCategory/>
       </Box>
     </ScrollView>

@@ -2,24 +2,24 @@ import { createSlice } from "@reduxjs/toolkit"
 
 const initialState = [];
 
-const playlistSlice = createSlice({
-    name: "playlists",
+const trackSlice = createSlice({
+    name: "tracks",
     initialState,
     reducers: {
-        playlistsSet(state, action) {
+        tracksSet(state, action) {
             const data = action.payload;
             return data;
         },
-        playlistAdded(state, action) {
+        trackAdded(state, action) {
             const val = action.payload;
             state.push(val);
         },
-        playlistRemoved(state, action) {
+        trackRemoved(state, action) {
             const val = action.payload;
             return state.filter(el => el.id !== val.id);
         }
     }
 });
 
-export const { playlistsSet, playlistAdded, playlistRemoved } = playlistSlice.actions;
-export default playlistReducer = playlistSlice.reducer;
+export const { tracksSet, trackAdded, trackRemoved } = trackSlice.actions;
+export default trackReducer = trackSlice.reducer;

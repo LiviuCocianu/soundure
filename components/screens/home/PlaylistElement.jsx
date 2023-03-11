@@ -25,12 +25,7 @@ const PlaylistElement = ({
     const [trackCount, setTrackCount] = useState(0);
     const [trackStats, setTrackStats] = useState("");
 
-    // let {
-    //     coverURI,
-    //     title = "Titlu indisponibil",
-    //     seconds = 0,
-    //     trackCount = 0,
-    // } = data;
+    const MarqueeNB = Factory(MarqueeText);
 
     useEffect(() => {
         const found = playlists.find(pl => pl.id == playlistID);
@@ -74,8 +69,8 @@ const PlaylistElement = ({
                             rounded="lg"
                         />
                     </AspectRatio>
-                    <VStack ml="4">
-                        <Text color="white" fontFamily="quicksand_b" fontSize="md">{title}</Text>
+                    <VStack h="100%" w="70%" pl="4" justifyContent="center" overflow="hidden">
+                        <MarqueeNB color="white" fontFamily="quicksand_b" fontSize="md" speed={0.3}>{title}</MarqueeNB>
                         <Text color="white" fontFamily="quicksand_l" fontSize="xs">{trackStats}</Text>
                     </VStack>
                 </HStack>
