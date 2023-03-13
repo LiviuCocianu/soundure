@@ -19,6 +19,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.3.0",
     "@fortawesome/free-solid-svg-icons": "^6.3.0",
     "@fortawesome/react-native-fontawesome": "^0.3.0",
+    "@react-navigation/native": "^6.1.6",
     "@reduxjs/toolkit": "^1.9.3",
     "expo": "~48.0.5",
     "expo-document-picker": "^11.2.1",
@@ -38,7 +39,8 @@
     "react-native-svg": "13.4.0",
     "react-native-web": "~0.18.11",
     "react-redux": "^8.0.5",
-    "redux": "^4.2.1"
+    "redux": "^4.2.1",
+    "react-native-screens": "~3.20.0"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, Component } from 'react';
 import { useSelector } from 'react-redux';
-import Database from '../../../database';
-import HorizontalCategory from './horizontalCategory/HorizontalCategory';
-import HorizontalCategoryElement from './horizontalCategory/HorizontalCategoryElement';
+import Database from '../../../../database';
+import HorizontalCategory from '../horizontalCategory/HorizontalCategory';
+import HorizontalCategoryElement from '../horizontalCategory/HorizontalCategoryElement';
 
 /**
  * HistoryCategory component

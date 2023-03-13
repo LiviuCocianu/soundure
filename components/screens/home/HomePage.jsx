@@ -3,9 +3,9 @@ import React, { useState } from 'react'
 import QuoteBox from './QuoteBox'
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
 import { faFolderPlus, faPlus } from '@fortawesome/free-solid-svg-icons';
-import PlaylistsCategory from './PlaylistsCategory';
-import HistoryCategory from './HistoryCategory';
-import FavoriteCategory from './FavoriteCategory';
+import PlaylistsCategory from './categories/PlaylistsCategory';
+import HistoryCategory from './categories/HistoryCategory';
+import FavoriteCategory from './categories/FavoriteCategory';
 import CreatePlaylist from '../../modals/CreatePlaylist';
 import UploadTrack from '../../modals/UploadTrack';
 

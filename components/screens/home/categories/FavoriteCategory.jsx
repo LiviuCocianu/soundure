@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import HorizontalCategory from './horizontalCategory/HorizontalCategory';
-import HorizontalCategoryElement from './horizontalCategory/HorizontalCategoryElement';
+import HorizontalCategory from '../horizontalCategory/HorizontalCategory';
+import HorizontalCategoryElement from '../horizontalCategory/HorizontalCategoryElement';
 
 const FavoriteCategory = ({
     maxContent=10

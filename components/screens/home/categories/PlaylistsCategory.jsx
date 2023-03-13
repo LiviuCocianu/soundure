@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Text, ScrollView } from 'native-base';
-import PlaylistElement from './PlaylistElement';
-import { RESERVED_PLAYLISTS } from '../../../constants';
+import PlaylistElement from '../PlaylistElement';
+import { RESERVED_PLAYLISTS } from '../../../../constants';
 
 import { useSelector } from 'react-redux';
 

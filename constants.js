@@ -1,1 +1,1 @@
-export const RESERVED_PLAYLISTS = ["_HISTORY", "_FAVORITES"];
+export const RESERVED_PLAYLISTS = ["_HISTORY"];
