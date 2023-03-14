@@ -13,12 +13,11 @@ import { RESERVED_PLAYLISTS } from '../../../../constants'
  * @returns {JSX.Element} JSX component
  */
 const PlaylistsCategory = () => {
+    const data = useSelector(state => state.playlists);
     const renderContent = data.map((item) => {
       if(RESERVED_PLAYLISTS.includes(item.title)) return;
       return <PlaylistElement playlistID={item.id} key={item.id}/>;
     });
-
-    const data = useSelector(state => state.playlists);
 
     return (
         <Box w="90%" h="350" mt="6"

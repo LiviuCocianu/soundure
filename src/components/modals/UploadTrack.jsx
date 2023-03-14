@@ -16,9 +16,9 @@ import {
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 
-import SourceSelectionBox from './SourceSelectionBox'
+import SourceSelectionBox from '../general/SourceSelectionBox'
 import NoCoverImage from '../general/NoCoverImage'
-import { database as db } from "../../database/index"
+import db from "../../database/database"
 
 /**
  * Modal visibility handler
@@ -36,7 +36,7 @@ import { database as db } from "../../database/index"
  * @returns {Component} Component JSX
  */
 const UploadTrack = ({ isOpen, closeHandle }) => {
-  const defaultCoverURI = require("../../assets/images/soundure_banner_dark.png");
+  const defaultCoverURI = require("../../../assets/images/soundure_banner_dark.png");
   const ImageNB = Factory(ImageBackground);
   const screenHeight = parseInt(Dimensions.get("screen").height);
 

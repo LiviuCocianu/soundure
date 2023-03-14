@@ -10,6 +10,7 @@ import { Box, Image } from 'native-base'
  */
 const LoadingPage = () => {
   const size = Dimensions.get("screen").width * 0.6;
+  const logoWhiteURI = require("../../../../assets/images/soundure_logo_white.png");
   const progress = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -39,7 +40,7 @@ const LoadingPage = () => {
     >
       <Animated.View style={{ opacity: progress }}>
         <Image w={size} h={size}
-          source={require("../../assets/images/soundure_logo_white.png")}
+          source={logoWhiteURI}
           alt="homelogo"/>
       </Animated.View>
     </Box>

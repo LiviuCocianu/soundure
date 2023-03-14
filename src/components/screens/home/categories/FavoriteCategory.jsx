@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 
-import HorizontalCategory from '../horizontalCategory/HorizontalCategory'
-import HorizontalCategoryElement from '../horizontalCategory/HorizontalCategoryElement'
+import HorizontalCategory from '../../../general/HorizontalCategory'
+import HorizontalCategoryElement from '../../../general/HorizontalCategoryElement'
 
 /**
  * FavoriteCategory component
@@ -12,10 +12,9 @@ import HorizontalCategoryElement from '../horizontalCategory/HorizontalCategoryE
  * @returns {JSX.Element} JSX component
  */
 const FavoriteCategory = ({ maxContent = 10 }) => {
+    const [data, setData] = useState([]);
     const renderContent = data.slice(0, maxContent)
         .map((el) => <HorizontalCategoryElement title={el.title} key={el.id}/>);
-    
-    const [data, setData] = useState([]);
 
     return (
         <HorizontalCategory title="Piese preferate" render={renderContent}/>

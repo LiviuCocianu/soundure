@@ -25,7 +25,7 @@ import { useSelector } from 'react-redux'
  */
 const PlaylistElement = ({ playlistID }) => {
     const noTitle = "Titlu indisponibil";
-    const noCoverURI = require("../../../assets/icon/icon.png");
+    const noCoverURI = require("../../../../assets/icon/icon.png");
     const MarqueeNB = Factory(MarqueeText);
 
     const playlists = useSelector(state => state.playlists);

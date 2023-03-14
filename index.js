@@ -5,8 +5,8 @@ import { registerRootComponent } from 'expo';
 import { LinearGradient } from "expo-linear-gradient"
 import { Provider } from 'react-redux';
 
-import App from './app'
-import store from './redux/store'
+import App from './src/app'
+import store from './src/redux/store'
 import themes from "./assets/themes";
 
 String.prototype.toHHMMSS = function () {

@@ -19,7 +19,7 @@ import { useDispatch } from 'react-redux'
 import NoCoverImage from '../general/NoCoverImage'
 import { playlistAdded } from "../../redux/slices/playlistSlice"
 import { RESERVED_PLAYLISTS } from '../../constants'
-import { database as db } from "../../database/index"
+import db from "../../database/database"
 
 
 /**

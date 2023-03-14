@@ -2,7 +2,7 @@ import * as SQLite from 'expo-sqlite'
 import { ResultSet } from 'expo-sqlite'
 
 
-export default class Database {
+class Database {
     /**
     * A database object that allows for general control over the application's database
     * 
@@ -394,3 +394,6 @@ export default class Database {
         });
     }
 }
+
+
+export default new Database();
