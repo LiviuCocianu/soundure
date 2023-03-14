@@ -1,8 +1,13 @@
-import { registerRootComponent } from 'expo';
-import { Provider } from 'react-redux';
-import store from './redux/store'
+import { StatusBar } from "react-native";
+import { NativeBaseProvider, extendTheme } from 'native-base'
 
-import App from './App';
+import { registerRootComponent } from 'expo';
+import { LinearGradient } from "expo-linear-gradient"
+import { Provider } from 'react-redux';
+
+import App from './app'
+import store from './redux/store'
+import themes from "./assets/themes";
 
 String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10);
@@ -16,9 +21,20 @@ String.prototype.toHHMMSS = function () {
     return (parseInt(hours) < 1 ? "" : (hours + ':')) + minutes + ':' + seconds;
 }
 
+const config = {
+    dependencies: {
+        'linear-gradient': LinearGradient
+    },
+};
+  
+const theme = extendTheme(themes);
+
 const ReduxApp = () => (
     <Provider store={store}>
-        <App/>
+        <NativeBaseProvider theme={theme} config={config}>
+            <StatusBar />
+            <App/>
+        </NativeBaseProvider>
     </Provider>
 );
 
