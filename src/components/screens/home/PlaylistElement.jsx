@@ -15,15 +15,23 @@ import { useSelector } from 'react-redux'
 
 
 /**
+ * @callback navigateToPlaylist
+ * @param {object} playlistObj Object containing information about the playlist
+ */
+
+/**
  * PlaylistElement component
  * 
  * @param {object} props props object 
  * @param {number} props.playlistID ID of the playlist corresponding to the
  *                                  entry in the database
+ * @param {navigateToPlaylist} props.navigateToPlaylist Callback for navigating 
+ *                             to the playlist page when a playlist element
+ *                             is pressed
  * 
  * @returns {JSX.Element} JSX component
  */
-const PlaylistElement = ({ playlistID }) => {
+const PlaylistElement = ({ playlistID, navigateToPlaylist }) => {
     const noTitle = "Titlu indisponibil";
     const noCoverURI = require("../../../../assets/icon/icon.png");
     const MarqueeNB = Factory(MarqueeText);
@@ -34,6 +42,11 @@ const PlaylistElement = ({ playlistID }) => {
     const [seconds, setSeconds] = useState(0);
     const [trackCount, setTrackCount] = useState(0);
     const [trackStats, setTrackStats] = useState("");
+
+    const handleNavigation = () => {
+        const found = playlists.find(pl => pl.id == playlistID);
+        navigateToPlaylist(found);
+    }
 
     useEffect(() => {
         const found = playlists.find(pl => pl.id == playlistID);
@@ -54,7 +67,7 @@ const PlaylistElement = ({ playlistID }) => {
     }, [playlists]);
     
     return (
-        <Pressable _pressed={{ opacity: 80 }}>
+        <Pressable onPress={handleNavigation} _pressed={{ opacity: 80 }}>
             <Box w="100%" h="20" mb="1"
                 justifyContent="center"
                 bg={{

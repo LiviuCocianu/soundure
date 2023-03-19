@@ -24,21 +24,9 @@ const HomePage = ({ navigation }) => {
   const [createModalOpened, toggleCreateModal] = useState(false);
   const [uploadModalOpened, toggleUploadModal] = useState(false);
 
-  const HeaderButton = ({ text, icon, onPress }) => (
-    <Button bg="transparent" 
-      onPress={onPress}
-      borderColor="white" 
-      borderWidth="1" 
-      borderRadius="lg"
-      size="sm"
-      _text={{ fontFamily: "quicksand_r" }}
-      android_ripple={{ color: "primary.50" }}
-      _ios={{
-        _pressed: { bg: "primary.500:alpha.40" }
-      }}
-      leftIcon={<Icon as={FontAwesomeIcon} icon={icon} color="primary.500"></Icon>}
-    >{text}</Button>
-  )
+  const navigateToPlaylist = (playlistObj) => {
+    navigation.navigate("Playlist", { payload: playlistObj });
+  }
 
   return (
     <ScrollView w="100%" h="100%" 
@@ -75,12 +63,29 @@ const HomePage = ({ navigation }) => {
             icon={faPlus} onPress={() => toggleUploadModal(true)}/>
         </Box>
 
-        <PlaylistsCategory/>
+        <PlaylistsCategory navigateToPlaylist={navigateToPlaylist}/>
         <HistoryCategory/>
         <FavoriteCategory/>
       </Box>
     </ScrollView>
   )
 }
+
+const HeaderButton = ({ text, icon, onPress }) => (
+  <Button bg="transparent" 
+    onPress={onPress}
+    borderColor="white" 
+    borderWidth="1" 
+    borderRadius="lg"
+    size="sm"
+    _text={{ fontFamily: "quicksand_r" }}
+    android_ripple={{ color: "primary.50" }}
+    _ios={{
+      _pressed: { bg: "primary.500:alpha.40" }
+    }}
+    leftIcon={<Icon as={FontAwesomeIcon} icon={icon} color="primary.500"></Icon>}
+  >{text}</Button>
+)
+
 
 export default HomePage

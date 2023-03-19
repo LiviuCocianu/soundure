@@ -15,10 +15,14 @@ import {
 
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
+import { useDispatch } from 'react-redux'
+import { trackAdded } from '../../redux/slices/trackSlice'
 
 import SourceSelectionBox from '../general/SourceSelectionBox'
 import NoCoverImage from '../general/NoCoverImage'
 import db from "../../database/database"
+import { handleCoverURI } from '../../functions'
+
 
 /**
  * Modal visibility handler
@@ -42,15 +46,16 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
 
   const [title, setTitle] = useState("");
   const [artist, setArtist] = useState("Necunoscut");
-  const [coverURI, setCoverURI] = useState(defaultCoverURI);
+  const [coverURI, setCoverURI] = useState(undefined);
   const [fileURI, setFileURI] = useState(null);
   const [url, setURL] = useState("");
-  const [platform, setPlatform] = useState("SPOTIFY");
+  const [platform, setPlatform] = useState("NONE");
 
   const [sourceHelper, setSourceHelper] = useState("");
   const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
   const [sheetIsOpen, toggleSheet] = useState(false);
   const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
 
   const handleCoverChoice = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -71,7 +76,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     toggleSheet(false);
 
     if (result.type == "success") {
-      setFileURI({ uri: result.uri });
+      setFileURI(result.uri);
       setSourceHelper(result.name);
 
       if(title === "") {
@@ -116,6 +121,22 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
       };
     } else delete err.artist;
 
+    if (fileURI == null) {
+      err = {
+        ...err,
+        fileURI: "Încărcați un fișier audio!"
+      };
+    } else {
+      db.existsIn("Track", "fileURI = ?", [fileURI]).then(exists => {
+        if(exists) {
+          err = {
+            ...err,
+            fileURI: "O piesă la acestă locație este deja încărcată!"
+          };
+        } else delete err.fileURI;
+      });
+    }
+
     setErrors(err);
 
     // All validation have passed
@@ -123,7 +144,11 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
       db.insertIfNotExists("Artist", { name: artist }, "name = ?", [artist]).then(() => {
         db.selectFrom("Artist", null, "name = ?", [artist]).then(rows => {
           const artistId = rows[0].id;
-          const toInsert = { title, coverURI, platform, artistId };
+          let toInsert = { title, fileURI, platform, artistId };
+
+          if(coverURI) {
+            toInsert.coverURI = coverURI;
+          }
 
           db.insertInto("Track", toInsert).then(rs => {
             const payload = { id: rs.insertId, ...toInsert };
@@ -138,13 +163,15 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
   
   const handleClose = () => {
     setTitle("");
-    setArtist("");
-    setCoverURI(defaultCoverURI);
+    setArtist("Necunoscut");
+    setCoverURI(undefined);
     setFileURI(null);
     setURL("");
-    setPlatform("SPOTIFY");
+    setPlatform("NONE");
+
     setSourceHelper("");
-    setErrors({})
+    setErrors({});
+    toggleSourceSelectionBox(false);
 
     closeHandle(false);
   }
@@ -179,13 +206,13 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
             bg="primary.400"
             imageStyle={{height: "150%"}}
             resizeMode="cover"
-            source={coverURI}
+            source={handleCoverURI(coverURI, defaultCoverURI)}
             overflow="hidden"
             blurRadius={10}
           >
             <AspectRatio ratio="4/4" h="100%" alignSelf="center">
               {
-                coverURI === defaultCoverURI ? (
+                !coverURI ? (
                   <NoCoverImage/>
                 ) : (
                   <ImageNB
@@ -257,7 +284,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                 }}>Alege</Button>
             </FormControl>
 
-            <FormControl mt="6" isRequired>
+            <FormControl mt="6" isRequired isInvalid={"fileURI" in errors}>
               <Box
                 justifyContent="space-between"
                 alignItems="center"
@@ -276,6 +303,9 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                     fontSize: "xs"
                   }}>Alege</Button>
               </Box>
+              <FormControl.ErrorMessage mt="0">
+                {'fileURI' in errors ? errors.fileURI : ""}
+              </FormControl.ErrorMessage>
               <FormControl.HelperText>{sourceHelper}</FormControl.HelperText>
             </FormControl>
 
@@ -287,7 +317,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                   platform={platform}
                   setPlatform={setPlatform}
                 />
-              ) : null
+              ) : <></>
             }
 
             <Button mt="6" onPress={handleSubmit} 

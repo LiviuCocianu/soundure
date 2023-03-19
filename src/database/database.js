@@ -48,7 +48,8 @@ class Database {
                 this.createTable("Track",
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL DEFAULT 'Fara titlu',
-                    coverURI TEXT CHECK((coverURI NOT NULL AND platform IS 'NONE') OR (coverURI IS NULL AND platform IS NOT 'NONE')),
+                    coverURI TEXT,
+                    fileURI TEXT UNIQUE CHECK((fileURI NOT NULL AND platform IS 'NONE') OR (fileURI IS NULL AND platform IS NOT 'NONE')),
                     favorite BOOLEAN DEFAULT 0,
                     platform TEXT CHECK(platform IN ('NONE', 'SPOTIFY', 'SOUNDCLOUD', 'YOUTUBE')) DEFAULT 'NONE',
                     artistId INTEGER NOT NULL,
@@ -170,8 +171,8 @@ class Database {
                     values, 
                     (txObj, rs) => resolve(rs), 
                     (txObj, error) => {
-                        reject(error);
                         console.log(error);
+                        return reject(error);
                     }
                 );
             });
@@ -388,10 +389,17 @@ class Database {
      */
     valuesOf(table) {
         console.log("");
-        console.log(`== ${table} ====`);
+
         this.selectFrom(table).then(rows => {
-            for(const row of rows) console.log(`${row.id}: `, row);
+            if(rows.length == 0) {
+                console.log(`No values for ${table}...`);
+            } else {
+                console.log(`== ${table} ====`);
+                for(const row of rows) console.log(`${row.id}: `, row);
+            }
         });
+        
+        console.log("");
     }
 }
 

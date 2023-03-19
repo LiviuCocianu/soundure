@@ -8,15 +8,28 @@ import { RESERVED_PLAYLISTS } from '../../../../constants'
 
 
 /**
+ * @callback navigateToPlaylist
+ * @param {object} playlistObj Object containing information about the playlist
+ */
+
+/**
  * PlaylistsCategory component
+ * 
+ * @param {object} props props object
+ * @param {navigateToPlaylist} props.navigateToPlaylist Callback for navigating 
+ *                             to the playlist page when a playlist element
+ *                             is pressed
  * 
  * @returns {JSX.Element} JSX component
  */
-const PlaylistsCategory = () => {
+const PlaylistsCategory = ({ navigateToPlaylist }) => {
     const data = useSelector(state => state.playlists);
     const renderContent = data.map((item) => {
       if(RESERVED_PLAYLISTS.includes(item.title)) return;
-      return <PlaylistElement playlistID={item.id} key={item.id}/>;
+      return <PlaylistElement 
+                playlistID={item.id}
+                navigateToPlaylist={navigateToPlaylist} 
+                key={item.id}/>;
     });
 
     return (

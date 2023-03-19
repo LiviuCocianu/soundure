@@ -13,7 +13,10 @@ export function setup(dispatch, setLoadedDatabase) {
       }
     });
 
-    db.selectFrom("Track").then(rows => dispatch(tracksSet(rows)));
+    db.selectFrom("Track").then(rows => {
+      db.valuesOf("Track"); // TODO debug
+      dispatch(tracksSet(rows));
+    });
     db.selectFrom("Playlist").then(rows => dispatch(playlistsSet(rows)));
     db.selectFrom("PlaylistContent").then(rows => dispatch(playlistsContentSet(rows)))
   }).then(() => setLoadedDatabase(true));
