@@ -1,14 +1,15 @@
 import React, { useEffect, useState } from "react"
-import { Factory } from "native-base"
 
 import { useFonts } from 'expo-font'
-import { useDispatch, useSelector } from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import HomePage from "./components/screens/home/HomePage"
 import LoadingPage from "./components/screens/loading/LoadingPage"
 import PlaylistPage, { PlaylistHeader } from "./components/screens/playlist/PlaylistPage"
+import TrackListPage, { TrackListHeader } from "./components/screens/tracklist/TrackListPage"
+
 import fonts from "../fonts"
 import { setup } from "./database/index"
 
@@ -19,8 +20,6 @@ const App = () => {
   const dispatch = useDispatch();
   const [loadedDatabase, setLoadedDatabase] = useState(false);
   const [loadedFonts] = useFonts(fonts);
-
-  const tracks = useSelector(state => state.tracks);
 
   useEffect(() => {
     setup(dispatch, setLoadedDatabase);
@@ -41,6 +40,16 @@ const App = () => {
           component={PlaylistPage}
           options={{
             header: PlaylistHeader,
+            headerTransparent: true,
+            headerBackButtonMenuEnabled: false,
+            headerBackVisible: false,
+            animation: "slide_from_right"
+          }}/>
+        
+        <Stack.Screen name="TrackList"
+          component={TrackListPage}
+          options={{
+            header: TrackListHeader,
             headerTransparent: true,
             headerBackButtonMenuEnabled: false,
             headerBackVisible: false,

@@ -10,7 +10,6 @@ import {
   FormControl, 
   Input, 
   Button,
-  Actionsheet,
 } from 'native-base'
 
 import * as ImagePicker from 'expo-image-picker'
@@ -22,6 +21,7 @@ import SourceSelectionBox from '../general/SourceSelectionBox'
 import NoCoverImage from '../general/NoCoverImage'
 import db from "../../database/database"
 import { handleCoverURI } from '../../functions'
+import CustomActionsheet, { CustomActionsheetItem } from '../general/CustomActionsheet'
 
 
 /**
@@ -178,21 +178,14 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
 
   return (
     <Modal isOpen={isOpen} onClose={handleClose}>
-      <Actionsheet isOpen={sheetIsOpen} onClose={() => toggleSheet(false)}>
-        <Actionsheet.Content pb="4"
-          bg="primary.700"
-          _dragIndicatorWrapper={{ bg:"primary.700" }}
-          _dragIndicator={{ bg: "primary.50" }}
-        >
-          <Text mb="2"
-            color="white" 
-            fontFamily="quicksand_b" 
-            fontSize="md">Sursă piesă</Text>
-
-          <SourceActionsheetItem text="Preia din dispozitiv" onPress={handleFileChoice}/>
-          <SourceActionsheetItem text="Preia din URL" onPress={handleFileURLChoice}/>
-        </Actionsheet.Content>
-      </Actionsheet>
+      <CustomActionsheet
+        title="Sursă piesă"
+        isOpen={sheetIsOpen}
+        onClose={() => toggleSheet(false)}
+      >
+        <CustomActionsheetItem text="Preia din dispozitiv" onPress={handleFileChoice}/>
+        <CustomActionsheetItem text="Preia din URL" onPress={handleFileURLChoice}/>
+      </CustomActionsheet>
 
       <Modal.Content w="90%" h={screenHeight} 
           bg="primary.800" 
@@ -329,14 +322,5 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
   )
 }
 
-const SourceActionsheetItem = ({ text, onPress }) => (
-  <Actionsheet.Item
-    bg="primary.700"
-    onPress={onPress}
-    borderBottomWidth="1"
-    borderBottomColor="primary.200"
-    _text={{ color: "white", fontFamily: "manrope_r", fontSize: "xs" }}
-  >{text}</Actionsheet.Item>
-);
 
 export default UploadTrack

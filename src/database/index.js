@@ -3,21 +3,27 @@ import db from "./database"
 import { playlistsSet } from '../redux/slices/playlistSlice'
 import { tracksSet } from "../redux/slices/trackSlice"
 import { playlistsContentSet } from "../redux/slices/playlistContentSlice"
+import { artistsSet } from "../redux/slices/artistSlice"
 
 
 export function setup(dispatch, setLoadedDatabase) {
-  db.init().then(() => {
-    db.existsIn("Playlist", "title = ?", ["_HISTORY"]).then(exists => {
+  db.init().then(async () => {
+    await db.existsIn("Playlist", "title = ?", ["_HISTORY"]).then(exists => {
       if (!exists) {
         db.insertInto("Playlist", { title: "_HISTORY" });
       }
     });
 
-    db.selectFrom("Track").then(rows => {
+    await db.selectFrom("Track").then(rows => {
       db.valuesOf("Track"); // TODO debug
       dispatch(tracksSet(rows));
     });
-    db.selectFrom("Playlist").then(rows => dispatch(playlistsSet(rows)));
-    db.selectFrom("PlaylistContent").then(rows => dispatch(playlistsContentSet(rows)))
+
+    await db.selectFrom("Artist").then(rows => {
+      dispatch(artistsSet(rows));
+    });
+    
+    await db.selectFrom("Playlist").then(rows => dispatch(playlistsSet(rows)));
+    await db.selectFrom("PlaylistContent").then(rows => dispatch(playlistsContentSet(rows)))
   }).then(() => setLoadedDatabase(true));
 }

@@ -3,6 +3,7 @@ import { ImageBackground } from 'react-native';
 import { Box, HStack, Factory, AspectRatio, VStack, Text, Pressable } from 'native-base'
 
 import { Entypo } from '@expo/vector-icons';
+import MarqueeText from 'react-native-marquee'
 
 import { handleCoverURI } from '../../../functions';
 import { useSelector } from 'react-redux';
@@ -10,6 +11,7 @@ import { useSelector } from 'react-redux';
 
 const ImageNB = Factory(ImageBackground);
 const IconNB = Factory(Entypo);
+const MarqueeNB = Factory(MarqueeText);
 
 /**
  * TrackElement component
@@ -21,11 +23,19 @@ const TrackElement = ({ w="100%", trackId }) => {
     const trackHeight = 85;
 
     const tracks = useSelector(state => state.tracks);
+    const artists = useSelector(state => state.artists);
+
     const [track, setTrack] = useState({});
+    const [artist, setArtist] = useState({});
 
     useEffect(() => {
-        const found = tracks.find(el => el.id == trackId);
-        if(found) setTrack(tr);
+        const foundTrack = tracks.find(el => el.id == trackId);
+        if(foundTrack) {
+            setTrack(foundTrack);
+
+            const foundArtist = artists.find(el => el.id == foundTrack.artistId);
+            if(foundArtist) setArtist(foundArtist);
+        }
     }, [tracks]);
 
     return (
@@ -55,13 +65,15 @@ const TrackElement = ({ w="100%", trackId }) => {
                     borderTopRightRadius="lg"
                     borderBottomRightRadius="lg"
                 >
-                    <Text color="white"
+                    <MarqueeNB w="65%"
+                        color="white"
                         fontFamily="quicksand_b"
-                        fontSize="md">{track.title ? track.title : "Titlu piesă"}</Text>
+                        fontSize="md"
+                        speed={0.3}>{track.title ? track.title : "Titlu piesă"}</MarqueeNB>
 
                     <Text color="gray.300"
                         fontFamily="manrope_r"
-                        fontSize="xs">▶ {track.artist ? track.artist : "Nume artist"}</Text>
+                        fontSize="xs">▶ {artist.name ? artist.name : "Nume artist"}</Text>
                 </VStack>
 
                 <IconNB mr="2" py="4"

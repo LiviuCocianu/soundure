@@ -24,8 +24,9 @@ import { RESERVED_PLAYLISTS } from '../../../../constants'
  */
 const PlaylistsCategory = ({ navigateToPlaylist }) => {
     const data = useSelector(state => state.playlists);
-    const renderContent = data.map((item) => {
+    const renderContent = data.map(item => {
       if(RESERVED_PLAYLISTS.includes(item.title)) return;
+
       return <PlaylistElement 
                 playlistID={item.id}
                 navigateToPlaylist={navigateToPlaylist} 
