@@ -31,22 +31,26 @@ const NoContentInfo = ({
             <Box w="auto" h="auto"
                 justifyContent="center"
                 alignItems="center">
-                <AspectRatio ratio="4/4" h="40%" mb="2">
+                <AspectRatio ratio="4/4" h="40%">
                     <Image w="100%" h="100%"
                         opacity={0.5}
                         source={unavailableURI}
                         alt="no tracks in playlist"/>
                 </AspectRatio>
 
-                <Text color="white"
+                <Text mb="2"
+                    color="white"
                     fontFamily="quicksand_b"
-                    fontSize="xl"
+                    fontSize="lg"
                     opacity={0.5}>{title}</Text>
 
-                <Text color="white"
-                    fontFamily="quicksand_r"
-                    fontSize="sm"
-                    opacity={0.5}>{subtitle}</Text>
+                <Box w="80%">
+                    <Text color="white"
+                        textAlign="center"
+                        fontFamily="quicksand_r"
+                        fontSize="sm"
+                        opacity={0.5}>{subtitle}</Text>
+                </Box>
             </Box>
         </Pressable>
     );

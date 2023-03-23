@@ -1,5 +1,14 @@
 export function handleCoverURI(coverURI, defaultURI=require("../assets/icon/icon.png")) {
-    return !coverURI ? defaultURI : { uri: coverURI };
+    let modified = coverURI;
+
+    if(typeof(modified) == "string") {
+        // Parse from JSON if needed, otherwise it must be an URI string
+        try {
+            modified = JSON.parse(modified);
+        } catch(err) {}
+    }
+
+    return !modified ? defaultURI : (modified.uri ? modified : { uri: modified });
 }
 
 export function playlistStatsString(trackCount, totalSeconds) {

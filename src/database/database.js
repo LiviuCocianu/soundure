@@ -160,6 +160,8 @@ class Database {
         const joinedColumns = keys.join(", ");
         const joinedPlaceholders = Array(values.length).fill("?").join(", ");
 
+        console.log("keys:", keys); // TODO debug
+
         return new Promise(async (resolve, reject) => {
             if(keys.length == 0) {
                 reject(new Error("SQL insert cannot happen with an empty payload"));
@@ -169,7 +171,9 @@ class Database {
             await this.instance.transaction(async tx => {
                 await tx.executeSql(`INSERT INTO ${table} (${joinedColumns}) VALUES (${joinedPlaceholders})`, 
                     values, 
-                    (txObj, rs) => resolve(rs), 
+                    (txObj, rs) => {
+                        return resolve(rs);
+                    }, 
                     (txObj, error) => {
                         console.log(error);
                         return reject(error);
@@ -187,14 +191,13 @@ class Database {
      * @param {string} [conditions] SQL conditions
      * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
      * 
-     * @returns {Promise<ResultSet|boolean>} Resolves with the ResultSet if conditions are met, false otherwise.
+     * @returns {Promise<ResultSet|void>} Resolves with the ResultSet if conditions are met, void otherwise.
      */
     insertIfNotExists(table, payload={}, conditions, args) {
-        return this.existsIn(table, conditions, args)
-            .then(exists => {
-                if(!exists) return this.insertInto(table, payload);
-                return exists;
-            });
+        return this.existsIn(table, conditions, args).then(exists => {
+            if(!exists) return this.insertInto(table, payload);
+            return Promise.resolve();
+        });
     }
 
     /**

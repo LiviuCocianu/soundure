@@ -146,14 +146,19 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
           const artistId = rows[0].id;
           let toInsert = { title, fileURI, platform, artistId };
 
+          console.log("coverURI:", coverURI); // TODO debug
+
           if(coverURI) {
-            toInsert.coverURI = coverURI;
+            toInsert.coverURI = JSON.stringify(coverURI);
           }
 
-          db.insertInto("Track", toInsert).then(rs => {
-            const payload = { id: rs.insertId, ...toInsert };
-            dispatch(trackAdded(payload));
-          });
+          db.insertInto("Track", toInsert)
+            .then(rs => {
+              console.log("insert:", rs, toInsert); // TODO debug
+              const payload = { id: rs.insertId, ...toInsert };
+              dispatch(trackAdded(payload));
+            })
+            .catch(err => console.log(err));
         });
       });
 
@@ -209,7 +214,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                   <NoCoverImage/>
                 ) : (
                   <ImageNB
-                      source={coverURI}
+                      source={handleCoverURI(coverURI, defaultCoverURI)}
                       resizeMode="cover"
                       imageStyle={{height: "100%"}}
                   ></ImageNB>

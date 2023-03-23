@@ -1,11 +1,12 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
 import { ImageBackground } from 'react-native';
-import { Box, HStack, Factory, AspectRatio, VStack, Text, Pressable } from 'native-base'
+import { HStack, Factory, AspectRatio, VStack, Text, Pressable, Checkbox } from 'native-base'
 
 import { Entypo } from '@expo/vector-icons';
 import MarqueeText from 'react-native-marquee'
 
 import { handleCoverURI } from '../../../functions';
+import { TRACK_EL_HEIGHT } from '../../../constants';
 import { useSelector } from 'react-redux';
 
 
@@ -18,15 +19,21 @@ const MarqueeNB = Factory(MarqueeText);
  * 
  * @returns {JSX.Element} JSX component
  */
-const TrackElement = ({ w="100%", trackId }) => {
-    const trackWidth = w * 0.95;
-    const trackHeight = 85;
-
+const TrackElement = ({
+    w="100%",
+    trackId,
+    selectionMode,
+    allSelected=false,
+    selectionHandler=() => {}
+}) => {
     const tracks = useSelector(state => state.tracks);
     const artists = useSelector(state => state.artists);
 
     const [track, setTrack] = useState({});
     const [artist, setArtist] = useState({});
+    const [isSelected, setSelected] = useState(false);
+
+    const memoIsSelected = useMemo(() => isSelected, [isSelected]);
 
     useEffect(() => {
         const foundTrack = tracks.find(el => el.id == trackId);
@@ -38,9 +45,27 @@ const TrackElement = ({ w="100%", trackId }) => {
         }
     }, [tracks]);
 
+    useEffect(() => {
+        setSelected(allSelected);
+        selectionHandler(allSelected, null);
+    }, [allSelected]);
+
+    const handleSelection = useCallback((isSelected) => {
+        setSelected(isSelected);
+        selectionHandler(isSelected, trackId);
+    })
+
+    const handlePress = () => {
+        if(selectionMode) {
+            handleSelection(!isSelected);
+        }
+    }
+
     return (
-        <Pressable _pressed={{ opacity: 0.8 }}>
-            <HStack w={trackWidth} h={trackHeight} mb="1"
+        <Pressable _pressed={{ opacity: 0.8 }} 
+            onPress={handlePress}
+        >
+            <HStack w={w} h={TRACK_EL_HEIGHT} mb="1"
                 bg={{
                     linearGradient: {
                         colors: ["primary.700", "gray.900"],
@@ -76,15 +101,29 @@ const TrackElement = ({ w="100%", trackId }) => {
                         fontSize="xs">▶ {artist.name ? artist.name : "Nume artist"}</Text>
                 </VStack>
 
-                <IconNB mr="2" py="4"
-                    color="primary.50"
-                    name="dots-three-vertical" 
-                    fontSize={20}
-                    alignSelf="center"/>
+                {
+                    !selectionMode ? (
+                        <IconNB mr="2" py="4"
+                            color="primary.50"
+                            name="dots-three-vertical" 
+                            fontSize={20}
+                            alignSelf="center"/>
+                    ) : (
+                        <Checkbox my="auto" p="1" mr="4"
+                            aria-label="track selection checkbox"
+                            bg="gray.500"
+                            borderWidth="0"
+                            isChecked={memoIsSelected}
+                            onChange={handleSelection}/>
+                    )
+                }
             </HStack>
         </Pressable>
     );
 };
 
 
-export default TrackElement;
+export default memo(TrackElement, (prev, next) => {
+    if(prev.selectionMode == next.selectionMode) return true;
+    return false;
+})

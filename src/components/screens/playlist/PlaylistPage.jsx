@@ -139,7 +139,7 @@ export const PlaylistHeader = ({ navigation, route }) => {
                     onPress={handleBack}
                     color="primary.50"
                     name="arrow-left"
-                    fontSize={40}
+                    fontSize={30}
                     shadow={5}/>
 
                 <EntypoNB h="auto" ml="auto" mr="4"

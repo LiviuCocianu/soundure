@@ -14,6 +14,7 @@ const trackSlice = createSlice({
         trackAdded(state, action) {
             const val = action.payload;
             state.push(val);
+            return state;
         },
         trackRemoved(state, action) {
             const val = action.payload;
