@@ -15,7 +15,6 @@ export function setup(dispatch, setLoadedDatabase) {
     });
 
     await db.selectFrom("Track").then(rows => {
-      db.valuesOf("Track"); // TODO debug
       dispatch(tracksSet(rows));
     });
 

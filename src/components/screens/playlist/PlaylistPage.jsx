@@ -4,12 +4,18 @@ import { Box, Factory, HStack, Text, FlatList, useDisclose } from 'native-base'
 
 import { StackActions } from "@react-navigation/native"
 import { Feather, Entypo } from '@expo/vector-icons'; 
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { handleCoverURI, playlistStatsString } from '../../../functions';
+import db from '../../../database/database';
+import { playlistContentRemoved } from '../../../redux/slices/playlistContentSlice';
+import { playlistRemoved } from '../../../redux/slices/playlistSlice';
+
 import TrackElement from './TrackElement';
 import CustomActionsheet, { CustomActionsheetItem } from '../../general/CustomActionsheet';
 import NoContentInfo from '../../general/NoContentInfo';
+import ConfirmationWindow from '../../modals/ConfirmationWindow';
+import Toast from 'react-native-root-toast';
 
 
 const ImageNB = Factory(ImageBackground);
@@ -113,6 +119,9 @@ export const PlaylistHeader = ({ navigation, route }) => {
         onClose
     } = useDisclose();
 
+    const [deletionModal, toggleDeletionModal] = useState(false);
+    const dispatch = useDispatch();
+
     const handleBack = () => {
         navigation.dispatch(StackActions.pop());
     }
@@ -122,8 +131,37 @@ export const PlaylistHeader = ({ navigation, route }) => {
         handleTrackListNav(navigation, payload);
     }
 
+    const handleDeletionModal = () => {
+        onClose();
+        toggleDeletionModal(true);
+    }
+
+    const handlePlaylistDeletion = () => {
+        db.selectFrom("PlaylistContent", ["id"], "playlistId = ?", [payload.id]).then(rows => {
+            db.deleteFrom("PlaylistContent", "playlistId = ?", [payload.id]).then(() => {
+                rows.forEach(row => dispatch(playlistContentRemoved(row)));
+
+                db.deleteFrom("Playlist", "id = ?", [payload.id]).then(() => {
+                    dispatch(playlistRemoved({id: payload.id}));
+                    handleBack();
+
+                    Toast.show("Playlist eliminat!", {
+                        duration: Toast.durations.LONG,
+                        delay: 500
+                    });
+                });
+            });
+        });
+    }
+
     return (
         <Box w="100%">
+            <ConfirmationWindow 
+                isOpen={deletionModal}
+                toggleVisible={toggleDeletionModal}
+                onYes={handlePlaylistDeletion}
+            />
+
             <CustomActionsheet
                 title="Setări playlist"
                 isOpen={isOpen} 
@@ -132,6 +170,9 @@ export const PlaylistHeader = ({ navigation, route }) => {
             >
                 <CustomActionsheetItem text="Adaugă o piesă" 
                     onPress={handleTrackListOption}/>
+                
+                <CustomActionsheetItem text="Șterge playlist"
+                    onPress={handleDeletionModal}/>
             </CustomActionsheet>
 
             <HStack h="16" alignItems="center">

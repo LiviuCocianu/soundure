@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, memo } from 'react';
 import { ImageBackground } from 'react-native';
 import { HStack, Factory, AspectRatio, VStack, Text, Pressable, Checkbox } from 'native-base'
 
@@ -31,9 +31,8 @@ const TrackElement = ({
 
     const [track, setTrack] = useState({});
     const [artist, setArtist] = useState({});
-    const [isSelected, setSelected] = useState(false);
 
-    const memoIsSelected = useMemo(() => isSelected, [isSelected]);
+    const [isSelected, setSelected] = useState(false);
 
     useEffect(() => {
         const foundTrack = tracks.find(el => el.id == trackId);
@@ -41,7 +40,9 @@ const TrackElement = ({
             setTrack(foundTrack);
 
             const foundArtist = artists.find(el => el.id == foundTrack.artistId);
-            if(foundArtist) setArtist(foundArtist);
+            if(foundArtist) {
+                setArtist(foundArtist);
+            }
         }
     }, [tracks]);
 
@@ -50,10 +51,10 @@ const TrackElement = ({
         selectionHandler(allSelected, null);
     }, [allSelected]);
 
-    const handleSelection = useCallback((isSelected) => {
+    const handleSelection = (isSelected) => {
         setSelected(isSelected);
         selectionHandler(isSelected, trackId);
-    })
+    }
 
     const handlePress = () => {
         if(selectionMode) {
@@ -85,21 +86,7 @@ const TrackElement = ({
                         }}/>
                 </AspectRatio>
 
-                <VStack w="auto" pl="6" mr="auto"
-                    justifyContent="center"
-                    borderTopRightRadius="lg"
-                    borderBottomRightRadius="lg"
-                >
-                    <MarqueeNB w="65%"
-                        color="white"
-                        fontFamily="quicksand_b"
-                        fontSize="md"
-                        speed={0.3}>{track.title ? track.title : "Titlu piesă"}</MarqueeNB>
-
-                    <Text color="gray.300"
-                        fontFamily="manrope_r"
-                        fontSize="xs">▶ {artist.name ? artist.name : "Nume artist"}</Text>
-                </VStack>
+                <TrackInfo w={w} title={track.title} artist={artist.name}/>
 
                 {
                     !selectionMode ? (
@@ -113,7 +100,7 @@ const TrackElement = ({
                             aria-label="track selection checkbox"
                             bg="gray.500"
                             borderWidth="0"
-                            isChecked={memoIsSelected}
+                            isChecked={isSelected}
                             onChange={handleSelection}/>
                     )
                 }
@@ -123,7 +110,25 @@ const TrackElement = ({
 };
 
 
-export default memo(TrackElement, (prev, next) => {
-    if(prev.selectionMode == next.selectionMode) return true;
+const TrackInfo = memo(({w, title, artistName}) => (
+    <VStack w="auto" pl="6" mr="auto"
+        justifyContent="center"
+        borderTopRightRadius="lg"
+        borderBottomRightRadius="lg"
+    >
+        <MarqueeNB w={w * 0.55}
+            color="white"
+            fontFamily="quicksand_b"
+            fontSize="md"
+            speed={0.3}>{title ? title : "Titlu piesă"}</MarqueeNB>
+
+        <Text color="gray.300"
+            fontFamily="manrope_r"
+            fontSize="xs">▶ {artistName ? artistName : "Nume artist"}</Text>
+    </VStack>
+), (prev, next) => {
+    if(prev.title == next.title && prev.artistName == next.artistName) return true;
     return false;
-})
+});
+
+export default TrackElement

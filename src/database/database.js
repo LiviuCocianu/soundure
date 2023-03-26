@@ -160,8 +160,6 @@ class Database {
         const joinedColumns = keys.join(", ");
         const joinedPlaceholders = Array(values.length).fill("?").join(", ");
 
-        console.log("keys:", keys); // TODO debug
-
         return new Promise(async (resolve, reject) => {
             if(keys.length == 0) {
                 reject(new Error("SQL insert cannot happen with an empty payload"));
@@ -172,6 +170,7 @@ class Database {
                 await tx.executeSql(`INSERT INTO ${table} (${joinedColumns}) VALUES (${joinedPlaceholders})`, 
                     values, 
                     (txObj, rs) => {
+                        rs.payload = payload;
                         return resolve(rs);
                     }, 
                     (txObj, error) => {
@@ -209,7 +208,7 @@ class Database {
      * @returns {Promise<ResultSet[]>} All ResultSets for each insert on resolve, the error on reject, if one failed. Prints the error to the console
      */
     insertBulkInto(table, payloads=[{}]) {
-        return Promise.all(payloads.map(payload => this.insert(table, payload)));
+        return Promise.all(payloads.map(payload => this.insertInto(table, payload)));
     }
 
     /**

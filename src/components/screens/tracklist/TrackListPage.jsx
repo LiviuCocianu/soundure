@@ -1,14 +1,19 @@
-import React, { useCallback, useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Dimensions } from 'react-native';
 import { Box, HStack, Factory, Text, FlatList, Button } from 'native-base';
 import { StackActions } from '@react-navigation/native';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+
+import Toast from 'react-native-root-toast';
+import { Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'; 
 
 import TrackElement from '../playlist/TrackElement';
 
-import { Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'; 
+import { playlistContentAdded } from "../../../redux/slices/playlistContentSlice"
 import NoContentInfo from '../../general/NoContentInfo';
 import { TRACK_EL_HEIGHT } from '../../../constants';
+import db from "../../../database/database"
+import { useEffect } from 'react';
 
 
 const FeatherNB = Factory(Feather);
@@ -29,8 +34,20 @@ const TrackListPage = ({ navigation, route }) => {
     const screenW = Dimensions.get("screen").width;
 
     const tracks = useSelector(state => state.tracks);
-    const [selectedIDs, setSelectedIDs] = useState(new Set());
+    const playlistsContent = useSelector(state => state.playlistsContent);
+    const dispatch = useDispatch();
+    
+    const [ownTracks, setOwnTracks] = useState([]);
     const [areAllSelected, setAllSelected] = useState(false);
+    let selectedIDs = useRef(new Set()).current;
+
+    useEffect(() => {
+        const ownIDs = playlistsContent
+            .filter(pc => pc.playlistId == payload.id)
+            .map(pc => pc.trackId);
+
+        setOwnTracks(tracks.filter(tr => !ownIDs.includes(tr.id)));
+    }, [playlistsContent]);
 
     const handleHomeNav = () => {
         navigation.popToTop();
@@ -48,26 +65,42 @@ const TrackListPage = ({ navigation, route }) => {
             else set.clear();
         }
 
-        setSelectedIDs(set);
+        selectedIDs = set;
     }
 
-    const renderItem = useCallback(({item}) => (
+    const renderItem = ({item}) => (
         <TrackElement w={screenW}
             trackId={item.id}
             selectionMode={true}
             allSelected={areAllSelected}
             selectionHandler={handleSelection}
             key={item.id}/>
-    ))
+    );
 
-    const getItemLayout = useCallback((data, index) => ({
+    const getItemLayout = (data, index) => ({
         length: TRACK_EL_HEIGHT,
         offset: TRACK_EL_HEIGHT * index,
         index
-    }))
+    });
 
     const handleSubmit = () => {
-
+        if(selectedIDs.size > 0) {
+            db.insertBulkInto("PlaylistContent", tracks
+                .filter(tr => selectedIDs.has(tr.id))
+                .map(tr => ({ trackId: tr.id, playlistId: payload.id }))
+            ).then(rsArr => {
+                rsArr.forEach(rs => {
+                    const payl = rs.payload;
+                    dispatch(playlistContentAdded({ id: rs.insertId, ...payl }));
+                });
+            }).then(() => {
+                handleHomeNav();
+                Toast.show("Piesele au fost adăugate!", {
+                    duration: Toast.durations.LONG,
+                    delay: 500
+                });
+            });
+        }
     }
 
     return (
@@ -102,14 +135,14 @@ const TrackListPage = ({ navigation, route }) => {
                     <MaterialNB mr="2"
                         onPress={() => setAllSelected(true)}
                         name="select-all"
-                        color="white"
+                        color={!areAllSelected ? "white" : "gray.400"}
                         accessibilityLabel="select all button"
                         fontSize={30}/>
 
                     <MaterialComNB
                         onPress={() => setAllSelected(false)}
                         name="select-remove"
-                        color="white"
+                        color={areAllSelected ? "white" : "gray.400"}
                         accessibilityLabel="deselect all button"
                         fontSize={30}/>
                 </HStack>
@@ -123,7 +156,7 @@ const TrackListPage = ({ navigation, route }) => {
                         subtitle={<><Text underline>Navighează</Text> înapoi către pagina de pornire și adaugă câteva piese</>}/>
                 ) : (
                     <FlatList w="100%" h="84%" mt="1"
-                        data={tracks}
+                        data={ownTracks}
                         initialNumToRender={7}
                         maxToRenderPerBatch={7}
                         getItemLayout={getItemLayout}
@@ -131,24 +164,18 @@ const TrackListPage = ({ navigation, route }) => {
                 )
             }
 
-            <Box w="100%" h="20" 
+            <Button w="50%" h="10" mb="5"
+                onPress={handleSubmit}
                 position="absolute"
                 bottom="0"
-                alignItems="center"
-                justifyContent="center"
-            >
-                <Button minW="50%" maxW="90%" h="10"
-                    onPress={handleSubmit}
-                    isDisabled={selectedIDs.size == 0}
-                    bg="primary.500"
-                    borderRadius="lg"
-                >
-                    <Text
-                        color="white"
-                        fontFamily="quicksand_b"
-                    >Adaugă {selectedIDs.size} {selectedIDs.size == 1 ? "piesă" : "piese"}</Text>
-                </Button>
-            </Box>
+                alignSelf="center"
+                bg="primary.500"
+                borderRadius="lg"
+                _text={{
+                    color: "white",
+                    fontFamily: "quicksand_b"
+                }}
+            >Adaugă</Button>
         </Box>
     );
 };

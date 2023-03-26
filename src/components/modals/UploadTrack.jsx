@@ -146,15 +146,12 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
           const artistId = rows[0].id;
           let toInsert = { title, fileURI, platform, artistId };
 
-          console.log("coverURI:", coverURI); // TODO debug
-
           if(coverURI) {
             toInsert.coverURI = JSON.stringify(coverURI);
           }
 
           db.insertInto("Track", toInsert)
             .then(rs => {
-              console.log("insert:", rs, toInsert); // TODO debug
               const payload = { id: rs.insertId, ...toInsert };
               dispatch(trackAdded(payload));
             })

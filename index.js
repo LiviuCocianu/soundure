@@ -4,6 +4,7 @@ import { NativeBaseProvider, extendTheme } from 'native-base'
 import { registerRootComponent } from 'expo';
 import { LinearGradient } from "expo-linear-gradient"
 import { Provider } from 'react-redux';
+import { RootSiblingParent } from "react-native-root-siblings"
 
 import App from './src/app'
 import store from './src/redux/store'
@@ -30,10 +31,15 @@ const config = {
 const theme = extendTheme(themes);
 
 const ReduxApp = () => (
+    /* Provide the entire app with the Redux store */
     <Provider store={store}>
-        <NativeBaseProvider theme={theme} config={config}>
-            <StatusBar />
-            <App/>
+        {/* Allows the use of NativeBase components and settings */}
+        <NativeBaseProvider theme={theme} config={config}> 
+            {/* Used for showing toasts */}
+            <RootSiblingParent> 
+                <StatusBar />
+                <App />
+            </RootSiblingParent>
         </NativeBaseProvider>
     </Provider>
 );
