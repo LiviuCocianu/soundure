@@ -22,7 +22,11 @@ import NoCoverImage from '../general/NoCoverImage'
 import db from "../../database/database"
 import { handleCoverURI } from '../../functions'
 import CustomActionsheet, { CustomActionsheetItem } from '../general/CustomActionsheet'
+import { Entypo, AntDesign } from "@expo/vector-icons"
 
+
+const EntypoNB = Factory(Entypo);
+const AntDesignNB = Factory(AntDesign);
 
 /**
  * Modal visibility handler
@@ -62,7 +66,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 4],
-      quality: 1,
+      quality: 0.5,
     });
 
     if (!result.canceled) {
@@ -185,8 +189,15 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         isOpen={sheetIsOpen}
         onClose={() => toggleSheet(false)}
       >
-        <CustomActionsheetItem text="Preia din dispozitiv" onPress={handleFileChoice}/>
-        <CustomActionsheetItem text="Preia din URL" onPress={handleFileURLChoice}/>
+        <CustomActionsheetItem text="Preia din dispozitiv"
+          iconName="mobile"
+          IconType={EntypoNB}
+          onPress={handleFileChoice}/>
+
+        <CustomActionsheetItem text="Preia din URL" 
+          iconName="link"
+          IconType={AntDesignNB}
+          onPress={handleFileURLChoice}/>
       </CustomActionsheet>
 
       <Modal.Content w="90%" h={screenHeight} 

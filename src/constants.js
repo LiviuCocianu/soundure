@@ -1,2 +1,8 @@
 export const RESERVED_PLAYLISTS = ["_HISTORY"]
+export const PLATFORMS = {
+    NONE: "NONE",
+    SPOTIFY: "SPOTIFY",
+    SOUNDCLOUD: "SOUNDCLOUD",
+    YOUTUBE: "YOUTUBE"
+}
 export const TRACK_EL_HEIGHT = 85;

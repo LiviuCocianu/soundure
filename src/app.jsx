@@ -9,6 +9,7 @@ import HomePage from "./components/screens/home/HomePage"
 import LoadingPage from "./components/screens/loading/LoadingPage"
 import PlaylistPage, { PlaylistHeader } from "./components/screens/playlist/PlaylistPage"
 import TrackListPage, { TrackListHeader } from "./components/screens/tracklist/TrackListPage"
+import TrackPage, { TrackHeader } from "./components/screens/track/TrackPage"
 
 import fonts from "../fonts"
 import { setup } from "./database/index"
@@ -17,47 +18,57 @@ import { setup } from "./database/index"
 const Stack = createNativeStackNavigator();
 
 const App = () => {
-  const dispatch = useDispatch();
-  const [loadedDatabase, setLoadedDatabase] = useState(false);
-  const [loadedFonts] = useFonts(fonts);
+    const dispatch = useDispatch();
+    const [loadedDatabase, setLoadedDatabase] = useState(false);
+    const [loadedFonts] = useFonts(fonts);
 
-  useEffect(() => {
-    setup(dispatch, setLoadedDatabase);
-  }, []);
+    useEffect(() => {
+        setup(dispatch, setLoadedDatabase);
+    }, []);
 
-  if(!loadedFonts || !loadedDatabase) {
-    return <LoadingPage/>
-  }
+    if (!loadedFonts || !loadedDatabase) {
+        return <LoadingPage />
+    }
 
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" 
-          component={HomePage}
-          options={{headerShown: false}}/>
+    return (
+        <NavigationContainer>
+            <Stack.Navigator initialRouteName="Home">
+                <Stack.Screen name="Home"
+                    component={HomePage}
+                    options={{ headerShown: false }} />
 
-        <Stack.Screen name="Playlist"
-          component={PlaylistPage}
-          options={{
-            header: PlaylistHeader,
-            headerTransparent: true,
-            headerBackButtonMenuEnabled: false,
-            headerBackVisible: false,
-            animation: "slide_from_right"
-          }}/>
-        
-        <Stack.Screen name="TrackList"
-          component={TrackListPage}
-          options={{
-            header: TrackListHeader,
-            headerTransparent: true,
-            headerBackButtonMenuEnabled: false,
-            headerBackVisible: false,
-            animation: "slide_from_right"
-          }}/>
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+                <Stack.Screen name="Playlist"
+                    component={PlaylistPage}
+                    options={{
+                        header: PlaylistHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+
+                <Stack.Screen name="TrackList"
+                    component={TrackListPage}
+                    options={{
+                        header: TrackListHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+
+                <Stack.Screen name="Track"
+                    component={TrackPage}
+                    options={{
+                        header: TrackHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+            </Stack.Navigator>
+        </NavigationContainer>
+    );
 }
 
 

@@ -11,6 +11,16 @@ const trackSlice = createSlice({
             const data = action.payload;
             return data;
         },
+        trackSet(state, action) {
+            const data = action.payload;
+            const foundTrack = state.findIndex(tr => tr.id == data.id);
+
+            if(foundTrack != -1) {
+                state[foundTrack] = data;
+            }
+
+            return state;
+        },
         trackAdded(state, action) {
             const val = action.payload;
             state.push(val);
@@ -24,5 +34,5 @@ const trackSlice = createSlice({
 });
 
 
-export const { tracksSet, trackAdded, trackRemoved } = trackSlice.actions
+export const { tracksSet, trackSet, trackAdded, trackRemoved } = trackSlice.actions
 export default trackReducer = trackSlice.reducer

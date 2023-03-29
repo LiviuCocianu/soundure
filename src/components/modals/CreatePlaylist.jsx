@@ -54,7 +54,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 4],
-            quality: 1,
+            quality: 0.5,
         });
 
         if(!result.canceled) {

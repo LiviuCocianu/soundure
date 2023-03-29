@@ -1,10 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useLayoutEffect, useState } from 'react'
 import { ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import { Box, Factory, HStack, Text, FlatList, useDisclose } from 'native-base'
 
 import { StackActions } from "@react-navigation/native"
-import { Feather, Entypo } from '@expo/vector-icons'; 
+import { Feather, Entypo, MaterialCommunityIcons } from '@expo/vector-icons'; 
 import { useDispatch, useSelector } from 'react-redux';
+import Toast from 'react-native-root-toast';
+import { Audio } from 'expo-av'
 
 import { handleCoverURI, playlistStatsString } from '../../../functions';
 import db from '../../../database/database';
@@ -15,12 +17,14 @@ import TrackElement from './TrackElement';
 import CustomActionsheet, { CustomActionsheetItem } from '../../general/CustomActionsheet';
 import NoContentInfo from '../../general/NoContentInfo';
 import ConfirmationWindow from '../../modals/ConfirmationWindow';
-import Toast from 'react-native-root-toast';
+import LoadingPage from '../loading/LoadingPage';
+import { useRef } from 'react';
 
 
 const ImageNB = Factory(ImageBackground);
 const FeatherNB = Factory(Feather);
 const EntypoNB = Factory(Entypo);
+const MaterialCommunityIconsNB = Factory(MaterialCommunityIcons);
 
 const handleTrackListNav = (navigation, payload) => {
     navigation.navigate("TrackList", { payload });
@@ -39,15 +43,66 @@ const PlaylistPage = ({ navigation, route }) => {
     const payload = route.params.payload;
     const screenW = Dimensions.get("screen").width;
 
-    const [textHeight, setTextHeight] = useState(0);
     const playlistsContent = useSelector(state => state.playlistsContent);
-    const [ownTracks, setOwnTracks] = useState([]); // List of IDs
+    const tracks = useSelector(state => state.tracks);
+    
+    const [ownTracks, setOwnTracks] = useState([]); // !! List of IDs !!
+    const [textHeight, setTextHeight] = useState(0);
+    const [totalDuration, setTotalDuration] = useState(0);
+
+    const [isLoaded, setLoaded] = useState(false);
+
+    const renderElements = ({item}) => {
+        return <TrackElement 
+            navigation={navigation}
+            w={screenW} 
+            trackId={item} 
+            key={item}/>
+    }
 
     useEffect(() => {
         setOwnTracks(playlistsContent
             .filter(link => link.playlistId == payload.id)
             .map(link => link.trackId));
     }, [playlistsContent]);
+    
+    useEffect(() => {
+        const toID = setTimeout(() => handleTotalDuration(), 500);
+        return () => clearTimeout(toID);
+    }, [ownTracks]);
+
+    const handleTotalDuration = async () => {
+        let sum = 0;
+
+        for(const trackID of ownTracks) {
+            const track = tracks.find(tr => tr.id == trackID);
+            const uri = track.fileURI;
+            const dur = await getDuration(uri);
+            sum += dur;
+        }
+
+        setTotalDuration(sum);
+        setLoaded(true);
+    }
+
+    const getDuration = async (uri) => {
+        const sound = new Audio.Sound();
+
+        try {
+            await sound.loadAsync({ uri });
+            const data = await sound.getStatusAsync();
+
+            return data.durationMillis / 1000;
+        } catch (error) {
+            console.error(`Could not load track for '${uri}':`, error);
+        }
+
+        return 0;
+    }
+
+    if(!isLoaded) {
+        return <LoadingPage/>;
+    }
 
     return (
         <Box w="100%" h="100%"
@@ -86,7 +141,7 @@ const PlaylistPage = ({ navigation, route }) => {
 
                         <Text color="white"
                             fontFamily="quicksand_r"
-                            fontSize="xs">{playlistStatsString(0, 0)}</Text>
+                            fontSize="xs">{playlistStatsString(ownTracks.length, totalDuration)}</Text>
                     </Box>
                 </Box>
             </Box>
@@ -101,7 +156,7 @@ const PlaylistPage = ({ navigation, route }) => {
                 ) : (
                     <FlatList w="100%" h="100%" pt="2"
                         data={ownTracks}
-                        renderItem={({item}) => <TrackElement trackId={item} w={screenW} key={item}/>}
+                        renderItem={renderElements}
                         _contentContainerStyle={{ alignItems: "center", paddingBottom: 5 }}
                         initialNumToRender={6}/>
                 )
@@ -168,10 +223,14 @@ export const PlaylistHeader = ({ navigation, route }) => {
                 onOpen={onOpen} 
                 onClose={onClose}
             >
-                <CustomActionsheetItem text="Adaugă o piesă" 
+                <CustomActionsheetItem text="Adaugă o piesă"
+                    iconName="playlist-plus"
+                    IconType={MaterialCommunityIconsNB}
                     onPress={handleTrackListOption}/>
                 
                 <CustomActionsheetItem text="Șterge playlist"
+                    iconName="playlist-remove"
+                    IconType={MaterialCommunityIconsNB}
                     onPress={handleDeletionModal}/>
             </CustomActionsheet>
 
@@ -187,7 +246,7 @@ export const PlaylistHeader = ({ navigation, route }) => {
                     onPress={onOpen}
                     color="primary.50"
                     name="dots-three-vertical"
-                    fontSize={30}
+                    fontSize={25}
                     shadow={5}/>
             </HStack>
         </Box>

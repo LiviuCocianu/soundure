@@ -15,6 +15,8 @@ const NoCoverImage = (props) => {
     const coverImageStyle = {height: "100%", borderRadius: props.borderRadius};
     const bannerDarkURI = require("../../../assets/images/soundure_banner_dark.png");
 
+    const {h, height, ...filteredProps} = props;
+
     return (
         <ImageNB 
             w="100%" 
@@ -32,7 +34,7 @@ const NoCoverImage = (props) => {
                     position="absolute" 
                     bg="black" 
                     opacity="50" 
-                    {...props}/>
+                    {...filteredProps}/>
 
                 <Text position="absolute" 
                     color="gray.400" 

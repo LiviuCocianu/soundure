@@ -28,7 +28,7 @@ const PlaylistsCategory = ({ navigateToPlaylist }) => {
       if(RESERVED_PLAYLISTS.includes(item.title)) return;
 
       return <PlaylistElement 
-                playlistID={item.id}
+                playlistId={item.id}
                 navigateToPlaylist={navigateToPlaylist} 
                 key={item.id}/>;
     });

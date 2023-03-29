@@ -30,7 +30,7 @@ const MaterialComNB = Factory(MaterialCommunityIcons);
  * @returns {JSX.Element} JSX component
  */
 const TrackListPage = ({ navigation, route }) => {
-    const payload = route.params.payload;
+    const payload = route.params.payload; // Playlist info from database
     const screenW = Dimensions.get("screen").width;
 
     const tracks = useSelector(state => state.tracks);
@@ -53,6 +53,10 @@ const TrackListPage = ({ navigation, route }) => {
         navigation.popToTop();
     }
 
+    const handleBack = () => {
+        navigation.dispatch(StackActions.pop());
+    }
+
     const handleSelection = (isSelected, trackId) => {
         const set = new Set();
         selectedIDs.forEach(el => set.add(el));
@@ -71,6 +75,7 @@ const TrackListPage = ({ navigation, route }) => {
     const renderItem = ({item}) => (
         <TrackElement w={screenW}
             trackId={item.id}
+            playlistId={payload.id}
             selectionMode={true}
             allSelected={areAllSelected}
             selectionHandler={handleSelection}
@@ -94,11 +99,16 @@ const TrackListPage = ({ navigation, route }) => {
                     dispatch(playlistContentAdded({ id: rs.insertId, ...payl }));
                 });
             }).then(() => {
-                handleHomeNav();
+                handleBack();
                 Toast.show("Piesele au fost adăugate!", {
                     duration: Toast.durations.LONG,
                     delay: 500
                 });
+            });
+        } else {
+            Toast.show("Selectează câteva piese mai întâi", {
+                duration: Toast.durations.LONG,
+                position: Toast.positions.CENTER
             });
         }
     }

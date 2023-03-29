@@ -1,5 +1,5 @@
 import React from 'react';
-import { Actionsheet, Text } from 'native-base';
+import { Actionsheet, Text, HStack } from 'native-base';
 
 
 /**
@@ -46,12 +46,6 @@ const CustomActionsheet = ({
                 _dragIndicatorWrapper={{ bg:"primary.800" }}
                 _dragIndicator={{ bg: "primary.500", h: "0.5" }}
             >
-                <Text w="100%" py="2"
-                    color="primary.50"
-                    textAlign="center"
-                    fontFamily="quicksand_r" 
-                    fontSize="sm">{title}</Text>
-
                 {children}
             </Actionsheet.Content>
         </Actionsheet>
@@ -65,18 +59,32 @@ const CustomActionsheet = ({
  * @param {object} props props object
  * @param {string} props.text Item text
  * @param {onPress} props.onPress Callback to execute on item press
+ * @param {string} [props.iconName] Icon name for the icon to the left of the text
+ * @param {JSX.Element} [props.IconType] Icon type for the icon to the left of the text
+ * @param {string|number} [props.iconSize] Icon size for the icon to the left of the text
  * 
  * @returns {JSX.Element} JSX component
  */
-export const CustomActionsheetItem = ({ text, onPress }) => (
-    <Actionsheet.Item py="2" mb="0.5"
+export const CustomActionsheetItem = ({ 
+    text, 
+    onPress, 
+    iconName="", 
+    IconType,
+    iconSize="20"
+}) => (
+    <Actionsheet.Item py="4"
         bg="transparent"
-        borderLeftColor="primary.800"
-        borderLeftWidth="6"
         onPress={onPress}
         _pressed={{ opacity: 0.5, backgroundColor: "primary.900" }}
-        _text={{ color: "primary.50", fontFamily: "quicksand_r", fontSize: "xs" }}
-    >{text}</Actionsheet.Item>
+    >
+        <HStack space={3} alignItems="center">
+            {IconType ? <IconType name={iconName} color="primary.50" fontSize={iconSize}/> : (<></>)}
+            
+            <Text color="primary.50"
+                fontFamily="quicksand_r"
+                fontSize="sm">{text}</Text>
+        </HStack>
+    </Actionsheet.Item>
   );
 
 export default CustomActionsheet;

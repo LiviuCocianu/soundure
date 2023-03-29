@@ -1,6 +1,6 @@
 export default {
   colors: {
-    primary: {
+    old: {
       50: '#bdaaff',
       100: '#ac98e5',
       200: '#9a87cc',
@@ -11,7 +11,19 @@ export default {
       700: '#45375a',
       800: '#352845',
       900: '#261b32',
-    }
+    },
+    primary: {
+      50: '#e8bfff',
+      100: '#d2a8e9',
+      200: '#bc92d3',
+      300: '#a67dbd',
+      400: '#9168a8',
+      500: '#7c5493',
+      600: '#68407f',
+      700: '#542c6b',
+      800: '#411958',
+      900: '#2e0545',
+    },
   },
   fonts: {
     quicksand_l: "Quicksand-Light",
