@@ -1,4 +1,4 @@
-export function handleCoverURI(coverURI, defaultURI=require("../assets/icon/icon.png")) {
+export function handleCoverURI(coverURI, defaultURI=require("../assets/images/default_cover.png")) {
     let modified = coverURI;
 
     if(typeof(modified) == "string") {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 
 import { useFonts } from 'expo-font'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
@@ -19,6 +19,8 @@ const Stack = createNativeStackNavigator();
 
 const App = () => {
     const dispatch = useDispatch();
+    const appIsLoading = useSelector(state => state.appIsLoading);
+
     const [loadedDatabase, setLoadedDatabase] = useState(false);
     const [loadedFonts] = useFonts(fonts);
 
@@ -26,7 +28,7 @@ const App = () => {
         setup(dispatch, setLoadedDatabase);
     }, []);
 
-    if (!loadedFonts || !loadedDatabase) {
+    if (!loadedFonts || !loadedDatabase || appIsLoading) {
         return <LoadingPage />
     }
 
@@ -44,7 +46,8 @@ const App = () => {
                         headerTransparent: true,
                         headerBackButtonMenuEnabled: false,
                         headerBackVisible: false,
-                        animation: "slide_from_right"
+                        animation: "slide_from_right",
+                        freezeOnBlur: true,
                     }} />
 
                 <Stack.Screen name="TrackList"

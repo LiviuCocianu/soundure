@@ -23,7 +23,7 @@ export default {
       700: '#542c6b',
       800: '#411958',
       900: '#2e0545',
-    },
+    }
   },
   fonts: {
     quicksand_l: "Quicksand-Light",

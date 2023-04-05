@@ -35,7 +35,7 @@
     "native-base": "3.4.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-native": "0.71.4",
+    "react-native": "0.71.6",
     "react-native-marquee": "^0.4.0",
     "react-native-root-toast": "^3.4.1",
     "react-native-safe-area-context": "4.5.0",
@@ -46,7 +46,8 @@
     "redux": "^4.2.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "react-native-dotenv": "^3.4.8"
   },
   "author": "Liviu Cocianu",
   "private": true

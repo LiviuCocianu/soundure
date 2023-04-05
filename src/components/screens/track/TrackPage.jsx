@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { 
     Box,
     HStack,
@@ -10,23 +10,23 @@ import {
     ScrollView,
     Button,
 } from 'native-base';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { Feather, AntDesign } from '@expo/vector-icons'
+import { Feather, AntDesign, Entypo } from '@expo/vector-icons'
 import PlatformIcon from '../../general/PlatformIcon';
 import Toast from 'react-native-root-toast';
 
 import { StackActions } from '@react-navigation/native';
 import { handleCoverURI } from '../../../functions';
 import { TrackUtils } from '../../../database/componentUtils';
-import { useDispatch, useSelector } from 'react-redux';
-import { useState } from 'react';
-import { useEffect } from 'react';
+import ConfirmationWindow from '../../modals/ConfirmationWindow';
 
 
-const ImageNB = Factory(Image);
 const FeatherNB = Factory(Feather);
 const AntDesignNB = Factory(AntDesign);
+const EntypoNB = Factory(Entypo);
 
+// TODO add documentation
 const TrackPage = ({
     navigation,
     route: {
@@ -68,17 +68,32 @@ const TrackPage = ({
             <ScrollView w="100%" h="100%"
                 _contentContainerStyle={{ flexGrow: 1 }}
             >
-                <TrackInfo track={track} artist={artist}/>
+                <TrackInfo 
+                    navigation={navigation}
+                    track={track}
+                    artist={artist}/>
             </ScrollView>
         </Box>
     );
 };
 
 const TrackInfo = memo(({
+    navigation,
     track,
     artist,
 }) => {
     const dispatch = useDispatch();
+
+    const [deletionWindow, toggleDeletionWindow] = useState(false);
+
+    const handleBack = () => {
+        navigation.dispatch(StackActions.pop());
+    }
+
+    const handleTrackDelete = () => {
+        TrackUtils.deleteTrack(track.id, dispatch);
+        handleBack();
+    }
 
     const handleToggleFavorite = () => {
         TrackUtils.toggleFavorite(track.id, dispatch);
@@ -91,77 +106,110 @@ const TrackInfo = memo(({
     }
 
     return (
-        <VStack w="100%" h="100%" mt="25%"
-            alignItems="center"
-            space="5"
-        >
-            <AspectRatio ratio="4/4" w="75%">
-                <ImageNB
-                    source={handleCoverURI(track.coverURI)}
-                    alt="about track cover"
-                    rounded="2xl"
-                    shadow={10}
-                    imageStyle={{ height: "100%" }} />
-            </AspectRatio>
+        <>
+            <ConfirmationWindow
+                isOpen={deletionWindow}
+                toggleVisible={toggleDeletionWindow}
+                title="Ștergere permanentă"
+                description={`Această piesă va fi eliminată din aplicație dacă confirmi! Sigur vrei să faci asta? 
+                
+Fișierul asociat piesei nu va fi șters din dispozitiv!`}
+                onYes={handleTrackDelete}
+            />
 
-            <Box w="75%" h="auto">
-                <Text w="100%"
-                    lineHeight="sm"
-                    color="white"
-                    fontFamily="quicksand_b"
-                    fontSize="xl">{track.title}</Text>
+            <VStack w="100%" h="100%" mt="25%"
+                alignItems="center"
+                space="5"
+            >
+                <AspectRatio ratio="4/4" w="75%">
+                    <Image
+                        source={handleCoverURI(track.coverURI)}
+                        alt="about track cover"
+                        rounded="2xl"
+                        shadow={10}
+                        size="100%"
+                    />
+                </AspectRatio>
 
-                <HStack w="100%" h="auto" mt="2"
+                <Box w="75%" h="auto">
+                    <Text w="100%"
+                        lineHeight="sm"
+                        color="white"
+                        fontFamily="quicksand_b"
+                        fontSize="xl">{track.title}</Text>
+
+                    <HStack w="100%" h="auto" mt="2"
+                        justifyContent="space-between"
+                        alignItems="center"
+                    >
+                        <Text
+                            color="gray.400"
+                            fontFamily="manrope_r"
+                            fontSize="sm">{artist.name}</Text>
+
+                        <PlatformIcon
+                            onPress={handlePlatformIcon}
+                            platform={track.platform}
+                            size={21} />
+                    </HStack>
+                </Box>
+
+                <HStack w="75%" h="auto"
+                    flex="1"
+                    flexGrow="0"
                     justifyContent="space-between"
                     alignItems="center"
                 >
-                    <Text
-                        color="gray.400"
-                        fontFamily="manrope_r"
-                        fontSize="sm">{artist.name}</Text>
+                    <Button flexGrow="1" h="45" mr="2"
+                        bg="primary.500"
+                        rounded="lg"
+                        _pressed={{
+                            bg: "primary.600"
+                        }}
+                        _text={{
+                            fontFamily: "manrope_b",
+                            color: "primary.50"
+                        }}
+                    >Ascultă</Button>
 
-                    <PlatformIcon
-                        onPress={handlePlatformIcon}
-                        platform={track.platform} 
-                        size={21}/>
+                    <Button w="45" h="45" p="0" mr="2"
+                        onPress={() => toggleDeletionWindow(true)}
+                        bg="transparent"
+                        borderWidth="3"
+                        borderColor="primary.500"
+                        rounded="lg"
+                        _pressed={{
+                            bg: "transparent"
+                        }}
+                    >
+                        <EntypoNB
+                            name="trash"
+                            color="primary.50"
+                            fontSize={25} />
+                    </Button>
+
+                    <Button w="45" h="45" p="0"
+                        onPress={handleToggleFavorite}
+                        bg="transparent"
+                        borderWidth="3"
+                        borderColor="primary.500"
+                        rounded="lg"
+                        _pressed={{
+                            bg: "transparent"
+                        }}
+                    >
+                        <AntDesignNB
+                            name={track.favorite ? "star" : "staro"}
+                            color="primary.50"
+                            fontSize={25} />
+                    </Button>
                 </HStack>
-            </Box>
-
-            <HStack w="75%" h="auto"
-                justifyContent="space-between"
-                alignItems="center"
-            >
-                <Button w="80%" h="45"
-                    bg="primary.500"
-                    rounded="lg"
-                    _pressed={{
-                        bg: "primary.600"
-                    }}
-                    _text={{
-                        fontFamily: "manrope_b",
-                        color: "primary.50"
-                    }}
-                >Ascultă</Button>
-
-                <Button w="45" h="45" p="0"
-                    onPress={handleToggleFavorite}
-                    bg="transparent"
-                    borderWidth="3"
-                    borderColor="primary.500"
-                    rounded="lg"
-                    _pressed={{
-                        bg: "transparent"
-                    }}
-                >
-                    <AntDesignNB
-                        name={track.favorite ? "star" : "staro"}
-                        color="primary.50"
-                        fontSize={25} />
-                </Button>
-            </HStack>
-        </VStack>
+            </VStack>
+        </>
+        
     )
-}, (prev, next) => prev.track.coverURI == next.track.coverURI
+}, (prev, next) => prev.navigation == next.navigation
+    && prev.track.coverURI == next.track.coverURI
     && prev.track.title == next.track.title
     && prev.track.platform == next.track.platform
     && prev.track.favorite == next.track.favorite

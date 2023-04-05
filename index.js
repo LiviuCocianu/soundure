@@ -10,6 +10,7 @@ import App from './src/app'
 import store from './src/redux/store'
 import themes from "./assets/themes";
 
+
 String.prototype.toHHMMSS = function () {
     var sec_num = parseInt(this, 10);
     var hours = Math.floor(sec_num / 3600);
