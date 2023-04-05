@@ -3,7 +3,7 @@ import {
     playlistReducer,
     playlistContentReducer,
     trackReducer,
-    artistReducer
+    artistReducer,
 } from "../redux/reducers"
 
 

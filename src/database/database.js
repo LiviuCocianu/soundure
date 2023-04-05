@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite'
 import { ResultSet } from 'expo-sqlite'
+import { TABLES } from '../constants';
 
 
 class Database {
@@ -8,11 +9,9 @@ class Database {
     * 
     * Internal fields:
     * - instance = Database object used for sending SQL transactions. Is undefined by default
-    * - TABLES = A set of table names that have been successfully initialized
     */
     constructor() {
         this.instance = undefined;
-        this.TABLES = new Set();
     }
 
     /**
@@ -25,19 +24,19 @@ class Database {
             this.instance = SQLite.openDatabase("storage.db");
 
             await Promise.all([
-                this.createTable("Artist",
+                this.createTable(TABLES.ARTIST,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     name TEXT UNIQUE NOT NULL,
                     favorite BOOLEAN DEFAULT 0`
                 ),
-                this.createTable("Playlist",
+                this.createTable(TABLES.PLAYLIST,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL DEFAULT 'Fara titlu',
                     description TEXT DEFAULT '',
                     coverURI TEXT,
                     favorite BOOLEAN DEFAULT 0`
                 ),
-                this.createTable("PlaylistConfig",
+                this.createTable(TABLES.PLAYLIST_CONFIG,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     isLooping BOOLEAN DEFAULT 0,
                     isShuffling BOOLEAN DEFAULT 0,
@@ -45,17 +44,18 @@ class Database {
                     playlistId INTEGER NOT NULL,
                     FOREIGN KEY(playlistId) REFERENCES Playlist(id)`
                 ),
-                this.createTable("Track",
+                this.createTable(TABLES.TRACK,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL DEFAULT 'Fara titlu',
                     coverURI TEXT,
                     fileURI TEXT UNIQUE CHECK((fileURI NOT NULL AND platform IS 'NONE') OR (fileURI IS NULL AND platform IS NOT 'NONE')),
+                    millis INTEGER DEFAULT 0,
                     favorite BOOLEAN DEFAULT 0,
                     platform TEXT CHECK(platform IN ('NONE', 'SPOTIFY', 'SOUNDCLOUD', 'YOUTUBE')) DEFAULT 'NONE',
                     artistId INTEGER NOT NULL,
                     FOREIGN KEY(artistId) REFERENCES Artist(id)`
                 ),
-                this.createTable("TrackConfig",
+                this.createTable(TABLES.TRACK_CONFIG,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     shuffleWeight REAL DEFAULT 0,
                     loopRepeats INTEGER DEFAULT 1,
@@ -67,7 +67,7 @@ class Database {
                     playlistConfigId INTEGER NOT NULL,
                     FOREIGN KEY(playlistConfigId) REFERENCES PlaylistConfig(id)`
                 ),
-                this.createTable("PlaylistContent",
+                this.createTable(TABLES.PLAYLIST_CONTENT,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     playlistId INTEGER NOT NULL,
                     trackId INTEGER NOT NULL,
@@ -75,18 +75,24 @@ class Database {
                     FOREIGN KEY(playlistId) REFERENCES Playlist(id),
                     FOREIGN KEY(trackId) REFERENCES Track(id)`
                 ),
-                this.createTable("Queue",
+                this.createTable(TABLES.QUEUE,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     channel TEXT NOT NULL CHECK(channel IN ('MAIN', 'EAVESDROP')),
                     currentTrack INTEGER,
                     currentMillis INTEGER DEFAULT 0,
                     playlistId INTEGER,
                     FOREIGN KEY(playlistId) REFERENCES Playlist(id)`
-                )
+                ),
+                this.createTable(TABLES.QUOTE,
+                    `id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    lastFetch INTEGER DEFAULT 0,
+                    quote TEXT DEFAULT 'default quote',
+                    author TEXT DEFAULT 'default author',
+                    updateDaily BOOLEAN DEFAULT 0`)
             ]).then(() => {
                 console.log("");
                 console.log("Tables were created successfully!");
-                console.log(`Registered tables: ${Array.from(this.TABLES).join(", ")}`);
+                console.log(`Registered tables: ${Array.from(Object.values(TABLES)).join(", ")}`);
                 resolve();
             }).catch(error => reject(error));
         });
@@ -106,7 +112,6 @@ class Database {
                 await tx.executeSql(`CREATE TABLE IF NOT EXISTS ${name} (${columns})`, 
                     null, 
                     (txObj, rs) => {
-                        this.TABLES.add(name);
                         resolve(rs);
                     },
                     (txObj, error) => {
@@ -194,8 +199,11 @@ class Database {
      */
     insertIfNotExists(table, payload={}, conditions, args) {
         return this.existsIn(table, conditions, args).then(exists => {
-            if(!exists) return this.insertInto(table, payload);
-            return Promise.resolve();
+            if(!exists) return this.insertInto(table, payload).then(rs => {
+                rs.exists = true;
+                return rs;
+            });
+            return Promise.resolve().then(() => ({ exists: false }));
         });
     }
 
@@ -329,8 +337,7 @@ class Database {
      * @returns {Promise<ResultSet>} Resolves with a ResultSet when done
      */
     drop(table) {
-        return this.exec(`DROP TABLE IF EXISTS ${table}`)
-            .then(() => this.TABLES.delete(table));
+        return this.exec(`DROP TABLE IF EXISTS ${table}`);
     }
 
     /**
@@ -339,7 +346,7 @@ class Database {
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each drop when done
      */
     dropAll() {
-        return Promise.all(Array.from(this.TABLES).map(this.drop));
+        return Promise.all(Array.from(Object.values(TABLES)).map(table => this.drop(table)));
     }
 
     /**
@@ -361,7 +368,7 @@ class Database {
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each truncation when done
      */
     truncateAll() {
-        return Promise.all(Array.from(this.TABLES).map(this.truncate));
+        return Promise.all(Array.from(Object.values(TABLES)).map(this.truncate));
     }
 
     /**
@@ -381,7 +388,7 @@ class Database {
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each reset when done
      */
     resetSequenceAll() {
-        return Promise.all(Array.from(this.TABLES).map(this.resetSequenceFor));
+        return Promise.all(Array.from(Object.values(TABLES)).map(this.resetSequenceFor));
     }
 
     /**

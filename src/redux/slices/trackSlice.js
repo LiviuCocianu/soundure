@@ -13,10 +13,10 @@ const trackSlice = createSlice({
         },
         trackSet(state, action) {
             const data = action.payload;
-            const foundTrack = state.findIndex(tr => tr.id == data.id);
+            const foundData = state.findIndex(tr => tr.id == data.id);
 
-            if(foundTrack != -1) {
-                state[foundTrack] = data;
+            if(foundData != -1) {
+                state[foundData] = data;
             }
 
             return state;

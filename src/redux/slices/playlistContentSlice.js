@@ -18,10 +18,29 @@ const playlistContentSlice = createSlice({
         playlistContentRemoved(state, action) {
             const val = action.payload;
             return state.filter(el => el.id !== val.id);
+        },
+        trackRelationsRemoved(state, action) {
+            const val = action.payload;
+            return state.filter(el => el.trackId !== val.trackId);
+        },
+        playlistRelationsRemoved(state, action) {
+            const val = action.payload;
+            return state.filter(el => el.playlistId !== val.playlistId);
+        },
+        trackPlaylistRelationRemoved(state, action) {
+            const val = action.payload;
+            return state.filter(el => ((el.playlistId !== val.playlistId) || (el.trackId !== val.trackId)));
         }
     }
 });
 
 
-export const { playlistsContentSet, playlistContentAdded, playlistContentRemoved } = playlistContentSlice.actions
+export const { 
+    playlistsContentSet,
+    playlistContentAdded,
+    playlistContentRemoved,
+    trackRelationsRemoved,
+    playlistRelationsRemoved,
+    trackPlaylistRelationRemoved
+} = playlistContentSlice.actions
 export default playlistContentReducer = playlistContentSlice.reducer

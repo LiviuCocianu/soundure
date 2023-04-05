@@ -17,10 +17,12 @@ import * as ImagePicker from 'expo-image-picker'
 import { useDispatch } from 'react-redux'
 
 import NoCoverImage from '../general/NoCoverImage'
-import { playlistAdded } from "../../redux/slices/playlistSlice"
-import { RESERVED_PLAYLISTS } from '../../constants'
-import db from "../../database/database"
+import { IMAGE_QUALITY, RESERVED_PLAYLISTS } from '../../constants'
+import { PlaylistUtils } from '../../database/componentUtils'
 
+
+const initialCoverObjectURI = require("../../../assets/images/soundure_banner_dark.png");
+const ImageNB = Factory(ImageBackground);
 
 /**
  * @callback closeHandle
@@ -37,8 +39,6 @@ import db from "../../database/database"
  * @returns {JSX.Element} JSX component
  */
 const CreatePlaylist = ({ isOpen, closeHandle }) => {
-    const initialCoverObjectURI = require("../../../assets/images/soundure_banner_dark.png");
-
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [coverStringURI, setCoverStringURI] = useState(null);
@@ -47,14 +47,12 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
 
-    const ImageNB = Factory(ImageBackground);
-
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 4],
-            quality: 0.5,
+            quality: IMAGE_QUALITY,
         });
 
         if(!result.canceled) {
@@ -91,11 +89,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            db.insertInto("Playlist", {title, description, coverURI: coverStringURI}).then(rs => {
-                const payload = {id: rs.insertId, title, description, coverURI: coverStringURI};
-                dispatch(playlistAdded(payload));
-            });
-
+            PlaylistUtils.addPlaylist({title, description, coverURI: coverStringURI}, dispatch);
             handleClose();
         }
     }

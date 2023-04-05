@@ -2,6 +2,16 @@ import React from 'react';
 import { Button, HStack, Modal } from 'native-base';
 
 
+const colorTheme = {
+    header: "gray.800",
+    headerText: "white",
+    close: "gray.500",
+    body: "gray.700",
+    bodyText: "gray.200",
+    button: "gray.500",
+    buttonText: "white"
+}
+
 /**
  * @callback toggleVisible
  * @callback onYes
@@ -41,18 +51,22 @@ const ConfirmationWindow = ({
 
     return (
         <Modal isOpen={isOpen} onOpen={() => toggleVisible(true)} onClose={() => toggleVisible(false)}>
-            <Modal.Content bg="primary.500">
-                <Modal.CloseButton _icon={{ color: "primary.100" }}/>
+            <Modal.Content bg={colorTheme.body}>
+                <Modal.CloseButton 
+                    _icon={{ color: colorTheme.close }}
+                    _pressed={{ bg: colorTheme.header }}
+                />
+                
                 <Modal.Header 
-                    bg="primary.600" 
-                    borderBottomColor="primary.800"
+                    bg={colorTheme.header}
+                    borderBottomWidth={0}
                     _text={{
                         color: "white",
                         fontFamily: "quicksand_b"
                     }}>{title}</Modal.Header>
 
                 <Modal.Body _text={{
-                    color: "primary.50",
+                    color: colorTheme.bodyText,
                     fontFamily: "manrope_r"
                 }}>{description}</Modal.Body>
 
@@ -62,11 +76,13 @@ const ConfirmationWindow = ({
                 >
                     <Button w="25%" py="1" mr="10" 
                         onPress={handleYes}
-                        _text={{ fontFamily: "manrope_b" }}>Da</Button>
+                        bg={colorTheme.button}
+                        _text={{ fontFamily: "manrope_b", color: colorTheme.buttonText }}>Da</Button>
 
                     <Button w="25%" py="1"
                         onPress={handleNo}
-                        _text={{ fontFamily: "manrope_b" }}>Nu</Button>
+                        bg={colorTheme.button}
+                        _text={{ fontFamily: "manrope_b", color: colorTheme.buttonText }}>Nu</Button>
                 </HStack>
             </Modal.Content>
         </Modal>

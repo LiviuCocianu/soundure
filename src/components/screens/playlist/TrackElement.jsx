@@ -11,28 +11,20 @@ import {
     useDisclose
 } from 'native-base'
 
-import { Entypo, AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Entypo, AntDesign } from '@expo/vector-icons';
 import MarqueeText from 'react-native-marquee'
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 
-import CustomActionsheet, { CustomActionsheetItem } from '../../general/CustomActionsheet';
-import ConfirmationWindow from '../../modals/ConfirmationWindow';
-import Toast from 'react-native-root-toast';
+import { handleCoverURI } from '../../../functions';
+import { ARTIST_NAME_PLACEHOLDER, PLATFORMS, TRACK_EL_HEIGHT } from '../../../constants';
 
-import { getPlatformIcon, handleCoverURI } from '../../../functions';
-import { TRACK_EL_HEIGHT } from '../../../constants';
-import db from '../../../database/database';
-
-import { playlistContentRemoved } from '../../../redux/slices/playlistContentSlice';
-import { trackSet } from '../../../redux/slices/trackSlice';
 import PlatformIcon from '../../general/PlatformIcon';
-import { TrackUtils } from '../../../database/componentUtils';
+import TrackSettingsSheet from '../track/TrackSettingsSheet';
 
 
 const ImageNB = Factory(ImageBackground);
 const EntypoNB = Factory(Entypo);
 const AntDesignNB = Factory(AntDesign);
-const MaterialCommunityIconsNB = Factory(MaterialCommunityIcons);
 const MarqueeNB = Factory(MarqueeText);
 
 /**
@@ -65,37 +57,26 @@ const TrackElement = ({
     allSelected=false,
     selectionHandler=() => {}
 }) => {
-    const {
-        isOpen,
-        onOpen,
-        onClose
-    } = useDisclose();
+    const disclose = useDisclose();
 
     const tracks = useSelector(state => state.tracks);
     const artists = useSelector(state => state.artists);
-    const dispatch = useDispatch();
 
     const [track, setTrack] = useState({});
     const [artist, setArtist] = useState({});
 
     const [isSelected, setSelected] = useState(false);
-    const [deletionModal, toggleDeletionModal] = useState(false);
 
-    const favoriteASTitle = !track.favorite ? "Adaugă la favorite" : "Elimină din favorite";
-    const favoriteASIcon = !track.favorite ? "star-check" : "archive-star";
 
     useEffect(() => {
         const foundTrack = tracks.find(el => el.id == trackId);
-
-        if(foundTrack) {
-            setTrack(foundTrack);
-
-            const foundArtist = artists.find(el => el.id == foundTrack.artistId);
-            if(foundArtist) {
-                setArtist(foundArtist);
-            }
-        }
+        if(foundTrack) setTrack(foundTrack);
     }, [tracks]);
+
+    useEffect(() => {
+        const foundArtist = artists.find(el => el.id == track.artistId);
+        if (foundArtist) setArtist(foundArtist);
+    }, [track, artists]);
 
     useEffect(() => {
         setSelected(allSelected);
@@ -114,46 +95,13 @@ const TrackElement = ({
     }
 
     const handleSettingsButton = () => {
-        onOpen();
-    }
-
-    const handleTrackDelete = () => {
-        onClose();
-        toggleDeletionModal(true);
-    }
-
-    const handleTrackFavorite = () => {
-        onClose();
-        TrackUtils.toggleFavorite(track, dispatch);
-    }
-
-    const handleAboutTrack = () => {
-        onClose();
-        navigation.navigate("Track", {trackId});
-    }
-
-    const handleDeletionYes = () => {
-        db.selectFrom("PlaylistContent", ["id"], "trackId = ?", [trackId]).then(rows => {
-            db.deleteFrom("PlaylistContent", "trackId = ?", [trackId]).then(() => {
-                rows.forEach(row => dispatch(playlistContentRemoved(row)));
-
-                Toast.show("Piesă eliminată!", {
-                    duration: Toast.durations.LONG,
-                    delay: 500
-                });
-            });
-        });
+        disclose.onOpen();
     }
 
     return (
         <Pressable _pressed={{ opacity: 0.8 }} 
             onPress={handlePress}
         >
-            <ConfirmationWindow 
-                isOpen={deletionModal}
-                toggleVisible={toggleDeletionModal}
-                onYes={handleDeletionYes}/>
-
             <HStack w={w} h={TRACK_EL_HEIGHT} mb="1"
                 bg={{
                     linearGradient: {
@@ -169,6 +117,7 @@ const TrackElement = ({
                 <TrackInfo w={w} 
                     title={track.title} 
                     artistName={artist.name}
+                    millis={track.millis}
                     isFavorite={track.favorite}
                     platform={track.platform}/>
 
@@ -191,27 +140,10 @@ const TrackElement = ({
                 }
             </HStack>
 
-            <CustomActionsheet 
-                isOpen={isOpen}
-                onOpen={onOpen}
-                onClose={onClose}
-                title="Setări piesă"
-            >
-                <CustomActionsheetItem text="Elimină din playlist"
-                    iconName="playlist-minus"
-                    IconType={MaterialCommunityIconsNB}
-                    onPress={handleTrackDelete}/>
-
-                <CustomActionsheetItem text={favoriteASTitle}
-                    iconName={favoriteASIcon}
-                    IconType={MaterialCommunityIconsNB}
-                    onPress={handleTrackFavorite}/>
-
-                <CustomActionsheetItem text="Despre piesă"
-                    iconName="tag"
-                    IconType={AntDesignNB}
-                    onPress={handleAboutTrack}/>
-            </CustomActionsheet>
+            <TrackSettingsSheet
+                navigation={navigation}
+                payload={{playlistId, track}}
+                discloseObject={disclose}/>
         </Pressable>
     );
 };
@@ -228,7 +160,7 @@ const TrackCover = memo(({coverURI}) => (
     </AspectRatio>
 ), (prev, next) => prev.coverURI == next.coverURI);
 
-const TrackInfo = memo(({w, title, artistName, isFavorite, platform="NONE"}) => {
+const TrackInfo = memo(({w, title="", artistName="", millis=0, isFavorite, platform=PLATFORMS.NONE}) => {
     return (
         <VStack w="auto" pl="6" mr="auto"
             justifyContent="center"
@@ -239,13 +171,23 @@ const TrackInfo = memo(({w, title, artistName, isFavorite, platform="NONE"}) => 
                 color="white"
                 fontFamily="quicksand_b"
                 fontSize="md"
-                speed={0.3}>{title ? title : "Titlu piesă"}</MarqueeNB>
+                speed={0.3}>{title ? title : ""}</MarqueeNB>
 
-            <Text color="primary.50"
-                fontFamily="manrope_r"
-                fontSize="xs">▶ {artistName ? artistName : "Nume artist"}</Text>
+            <Text color={artistName == ARTIST_NAME_PLACEHOLDER ? "gray.400" : "white"}
+                fontFamily={artistName == ARTIST_NAME_PLACEHOLDER ? "manrope_li" : "manrope_r"}
+                fontSize="xs">{artistName ? artistName : ""}</Text>
 
-            <HStack space={1} mt="1">
+            <HStack space={1} mt="1" alignItems="center">
+                <EntypoNB name="controller-play" color="primary.50">
+                    <Text 
+                        color="primary.50"
+                        fontFamily="manrope_l"
+                        fontSize="xs"
+                    >
+                        {millis.toString().toHHMMSS()}
+                    </Text>
+                </EntypoNB>
+
                 {
                     isFavorite ? (
                         <AntDesignNB 
@@ -261,6 +203,7 @@ const TrackInfo = memo(({w, title, artistName, isFavorite, platform="NONE"}) => 
 }, (prev, next) => 
     prev.title == next.title 
     && prev.artistName == next.artistName
+    && prev.millis == next.millis
     && prev.isFavorite == next.isFavorite
     && prev.platform == next.platform
 );

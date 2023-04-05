@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ImageBackground, Animated } from 'react-native'
-import { Box, Pressable, Text } from 'native-base'
+import { Box, Pressable, Switch, Text } from 'native-base'
+import { QuoteUtils } from '../../../database/componentUtils';
+import Toast from 'react-native-root-toast';
 
+
+const bannerDarkURI = require("../../../../assets/images/soundure_banner_dark.png");
+const QUOTE_MAX_LEN = 110;
 
 /**
  * QuoteBox component
@@ -9,76 +14,99 @@ import { Box, Pressable, Text } from 'native-base'
  * @returns {JSX.Element} JSX component
  */
 const QuoteBox = () => {
-  const bannerDarkURI = require("../../../../assets/images/soundure_banner_dark.png");
-  const progress = useRef(new Animated.Value(0)).current;
+    const progress = useRef(new Animated.Value(0)).current;
 
-  const [quote, setQuote] = useState("There's nothing like music to relieve the soul and uplift it.");
-  const [author, setAuthor] = useState("Mickey Hart");
-  const [generated, setGenerated] = useState(false);
+    const [quote, setQuote] = useState("There's nothing like music to relieve the soul and uplift it.");
+    const [author, setAuthor] = useState("Mickey Hart");
+    const [updatesDaily, toggleDailyUpdate] = useState(false);
 
-  const getQuote = async () => {
-    const url = "https://api.api-ninjas.com/v1/quotes?category=inspirational"
+    useEffect(() => {
+        QuoteUtils.updatesDaily().then(updates => {
+            toggleDailyUpdate(!!updates);
+        });
+    }, []);
 
-    if (!generated) {
-      await fetch(url, { headers: { "X-Api-Key": QUOTE_API_KEY } })
-        .then(res => res.json())
-        .then(res => {
-          const quote = res[0].quote > 75 
-                        ? quote.slice(0, 70) + "..." 
-                        : res[0].quote;
-
-          setQuote(quote);
-          setAuthor(res[0].author);
-          setGenerated(true);
+    useEffect(() => {
+        if(updatesDaily) {
+            getQuote();
+            
+            Animated.timing(progress, {
+                toValue: 1,
+                duration: 1000,
+                useNativeDriver: true,
+            }).start();
+        }
+    }, [updatesDaily]);
+    
+    const getQuote = () => {
+        QuoteUtils.fetchQuote().then(res => {
+            setQuote(res.quote);
+            setAuthor(res.author);
         });
     }
-  }
 
-  useEffect(() => {
-    // TODO add fetch timestamp to database to check if quote was already fetched for the day
-    //getQuote();
+    const handleQuoteToast = () => {
+        if(quote.length > QUOTE_MAX_LEN) {
+            Toast.show(quote, {
+                duration: Toast.durations.LONG
+            });
+        }
+    }
 
-    Animated.timing(progress, {
-      toValue: 1,
-      duration: 1000,
-      useNativeDriver: true,
-    }).start();
-  }, []);
+    const handleQuoteUpdates = () => {
+        QuoteUtils.toggleDailyUpdate();
+        toggleDailyUpdate(!updatesDaily);
+    }
 
-  return (
-    <Box w="100%" h="150" position="absolute">
-      <Pressable>
-        <ImageBackground h="100%"
-          source={bannerDarkURI}
-          alt="quotecover"
-          resizeMode="cover"
-        >
-          <Box w="100%" h="100%"
-            bg="black"
-            position="absolute"
-            opacity="50"/>
+    return (
+        <Box w="100%" h={updatesDaily ? "150" : "12"} position="relative">
+            <Switch
+                onChange={handleQuoteUpdates}
+                isChecked={updatesDaily}
+                zIndex={10}
+                position="absolute"
+                top={0} right="2"
+                offTrackColor="primary.500"
+                offThumbColor="white"
+                onTrackColor="primary.50" />
+            
+            <Pressable onPress={handleQuoteToast}>
+                <ImageBackground h="100%"
+                    source={bannerDarkURI}
+                    alt="quote cover"
+                    resizeMode="cover"
+                >
+                    <Box w="100%" h="100%"
+                        bg="black"
+                        position="absolute"
+                        opacity="50" />
 
-          <Animated.View style={{ opacity: progress }}>
-            <Box w="100%" h="100%" px="10"
-              justifyContent="center"
-              alignItems="center"
-            >
-              <Text color="white"
-                fontFamily="quicksand_b"
-                fontSize="xl">Citatul zilei!</Text>
+                    <Animated.View style={{ opacity: progress }}>
+                        <Box w="100%" h="100%" px="10"
+                            justifyContent="center"
+                            alignItems="center"
+                            display={updatesDaily ? undefined : "none"}
+                        >
+                            <Text color="white"
+                                fontFamily="quicksand_b"
+                                fontSize="xl">Citatul zilei!</Text>
 
-              <Text color="white"
-                fontFamily="manrope_li">"{quote}"</Text>
+                            <Text color="white"
+                                fontFamily="manrope_li">"{
+                                    quote.length > QUOTE_MAX_LEN
+                                        ? `${quote.slice(0, QUOTE_MAX_LEN - 1)}...`
+                                        : `${quote}"`
+                                }</Text>
 
-              <Text color="white"
-                fontFamily="manrope_m"
-                alignSelf="flex-end">- {author}</Text>
-            </Box>
-          </Animated.View>
-        </ImageBackground>
-      </Pressable>
-    </Box>
-  )
+                            <Text color="white"
+                                fontFamily="manrope_m"
+                                alignSelf="flex-end">- {author}</Text>
+                        </Box>
+                    </Animated.View>
+                </ImageBackground>
+            </Pressable>
+        </Box>
+    )
 }
 
 export default QuoteBox

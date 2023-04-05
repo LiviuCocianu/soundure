@@ -1,34 +1,27 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react'
+import React, { useEffect, useState, memo, useMemo } from 'react'
 import { ImageBackground, StyleSheet, Dimensions } from 'react-native';
 import { Box, Factory, HStack, Text, FlatList, useDisclose } from 'native-base'
 
 import { StackActions } from "@react-navigation/native"
-import { Feather, Entypo, MaterialCommunityIcons } from '@expo/vector-icons'; 
-import { useDispatch, useSelector } from 'react-redux';
-import Toast from 'react-native-root-toast';
-import { Audio } from 'expo-av'
+import { Feather, Entypo } from '@expo/vector-icons'; 
+import { useSelector } from 'react-redux';
 
 import { handleCoverURI, playlistStatsString } from '../../../functions';
-import db from '../../../database/database';
-import { playlistContentRemoved } from '../../../redux/slices/playlistContentSlice';
-import { playlistRemoved } from '../../../redux/slices/playlistSlice';
 
 import TrackElement from './TrackElement';
-import CustomActionsheet, { CustomActionsheetItem } from '../../general/CustomActionsheet';
 import NoContentInfo from '../../general/NoContentInfo';
-import ConfirmationWindow from '../../modals/ConfirmationWindow';
-import LoadingPage from '../loading/LoadingPage';
-import { useRef } from 'react';
+import PlaylistSettingsSheet from './PlaylistSettingsSheet';
 
 
 const ImageNB = Factory(ImageBackground);
 const FeatherNB = Factory(Feather);
 const EntypoNB = Factory(Entypo);
-const MaterialCommunityIconsNB = Factory(MaterialCommunityIcons);
 
 const handleTrackListNav = (navigation, payload) => {
     navigation.navigate("TrackList", { payload });
 };
+
+// TODO make playlist title and cover editable, like TrackPage!!
 
 /**
  * PlaylistPage component
@@ -41,67 +34,33 @@ const handleTrackListNav = (navigation, payload) => {
  */
 const PlaylistPage = ({ navigation, route }) => {
     const payload = route.params.payload;
-    const screenW = Dimensions.get("screen").width;
 
     const playlistsContent = useSelector(state => state.playlistsContent);
     const tracks = useSelector(state => state.tracks);
     
-    const [ownTracks, setOwnTracks] = useState([]); // !! List of IDs !!
-    const [textHeight, setTextHeight] = useState(0);
-    const [totalDuration, setTotalDuration] = useState(0);
-
-    const [isLoaded, setLoaded] = useState(false);
-
-    const renderElements = ({item}) => {
-        return <TrackElement 
-            navigation={navigation}
-            w={screenW} 
-            trackId={item} 
-            key={item}/>
-    }
-
-    useEffect(() => {
-        setOwnTracks(playlistsContent
+    const ownTracks = useMemo(() => {
+        return playlistsContent
             .filter(link => link.playlistId == payload.id)
-            .map(link => link.trackId));
-    }, [playlistsContent]);
+            .map(link => link.trackId);
+    }, [playlistsContent]); // !! List of IDs !!
+
+    const [textHeight, setTextHeight] = useState(0);
+    const [totalMillis, setTotalMillis] = useState(0);
+    const memoMillis = useMemo(() => {
+        return ownTracks
+            .filter(id => tracks.find(tr => tr.id == id))
+            .map(id => tracks.find(tr => tr.id == id).millis)
+            .reduce((prev, curr) => prev + curr, 0);
+    }, [ownTracks, tracks]);
     
     useEffect(() => {
         const toID = setTimeout(() => handleTotalDuration(), 500);
         return () => clearTimeout(toID);
     }, [ownTracks]);
 
-    const handleTotalDuration = async () => {
-        let sum = 0;
-
-        for(const trackID of ownTracks) {
-            const track = tracks.find(tr => tr.id == trackID);
-            const uri = track.fileURI;
-            const dur = await getDuration(uri);
-            sum += dur;
-        }
-
-        setTotalDuration(sum);
-        setLoaded(true);
-    }
-
-    const getDuration = async (uri) => {
-        const sound = new Audio.Sound();
-
-        try {
-            await sound.loadAsync({ uri });
-            const data = await sound.getStatusAsync();
-
-            return data.durationMillis / 1000;
-        } catch (error) {
-            console.error(`Could not load track for '${uri}':`, error);
-        }
-
-        return 0;
-    }
-
-    if(!isLoaded) {
-        return <LoadingPage/>;
+    const handleTotalDuration = () => {
+        const sum = memoMillis;
+        setTotalMillis(sum);
     }
 
     return (
@@ -123,7 +82,7 @@ const PlaylistPage = ({ navigation, route }) => {
                     <Box w="100%" h="100%"
                         bg={{
                             linearGradient: {
-                                colors: ["black", "transparent", "transparent", "black"],
+                                colors: ["black", "transparent", "transparent", "transparent", "gray.800", "black"],
                                 start: [0.5, 0],
                                 end: [0.5, 1]
                             }
@@ -141,101 +100,76 @@ const PlaylistPage = ({ navigation, route }) => {
 
                         <Text color="white"
                             fontFamily="quicksand_r"
-                            fontSize="xs">{playlistStatsString(ownTracks.length, totalDuration)}</Text>
+                            fontSize="xs">{playlistStatsString(ownTracks.length, totalMillis)}</Text>
                     </Box>
                 </Box>
             </Box>
 
-            {
-                ownTracks.length == 0 ? (
-                    <NoContentInfo 
-                        onPress={() => handleTrackListNav(navigation, payload)}
-                        title="Cam pustiu pe aici..."
-                        subtitle={<><Text underline>Adaugă piese</Text> și începe să asculți</>}
-                    />
-                ) : (
-                    <FlatList w="100%" h="100%" pt="2"
-                        data={ownTracks}
-                        renderItem={renderElements}
-                        _contentContainerStyle={{ alignItems: "center", paddingBottom: 5 }}
-                        initialNumToRender={6}/>
-                )
-            }
+            <TrackList 
+                navigation={navigation}
+                payload={payload}
+                ownTracks={ownTracks}/>
         </Box>
     );
 };
 
+const TrackList = memo(({
+    navigation,
+    payload,
+    ownTracks
+}) => {
+    const screenW = Dimensions.get("screen").width;
+
+    const renderElements = ({item}) => {
+        return <TrackElement 
+            navigation={navigation}
+            w={screenW - (screenW * 0.05)} 
+            trackId={item}
+            playlistId={payload.id}
+            key={item}/>
+    }
+
+    return <>
+        {
+            ownTracks.length == 0 ? (
+                <NoContentInfo
+                    onPress={() => handleTrackListNav(navigation, payload)}
+                    subtitle={<><Text underline>Adaugă piese</Text> și începe să asculți</>}
+                />
+            ) : (
+                <FlatList w="100%" h="100%" pt="2"
+                    data={ownTracks}
+                    renderItem={renderElements}
+                    _contentContainerStyle={{ alignItems: "center", paddingBottom: 5 }}
+                    initialNumToRender={6} />
+            )
+        }
+    </>
+}, (prev, next) => prev.navigation == next.navigation
+    && prev.payload == next.payload
+    && prev.ownTracks == next.ownTracks
+);
+
+
 export const PlaylistHeader = ({ navigation, route }) => {
     const payload = route.params.payload;
-
-    const {
-        isOpen,
-        onOpen,
-        onClose
-    } = useDisclose();
-
-    const [deletionModal, toggleDeletionModal] = useState(false);
-    const dispatch = useDispatch();
+    const disclose = useDisclose();
 
     const handleBack = () => {
         navigation.dispatch(StackActions.pop());
     }
 
-    const handleTrackListOption = async () => {
-        await onClose();
-        handleTrackListNav(navigation, payload);
-    }
-
-    const handleDeletionModal = () => {
-        onClose();
-        toggleDeletionModal(true);
-    }
-
-    const handlePlaylistDeletion = () => {
-        db.selectFrom("PlaylistContent", ["id"], "playlistId = ?", [payload.id]).then(rows => {
-            db.deleteFrom("PlaylistContent", "playlistId = ?", [payload.id]).then(() => {
-                rows.forEach(row => dispatch(playlistContentRemoved(row)));
-
-                db.deleteFrom("Playlist", "id = ?", [payload.id]).then(() => {
-                    dispatch(playlistRemoved({id: payload.id}));
-                    handleBack();
-
-                    Toast.show("Playlist eliminat!", {
-                        duration: Toast.durations.LONG,
-                        delay: 500
-                    });
-                });
-            });
-        });
-    }
-
     return (
         <Box w="100%">
-            <ConfirmationWindow 
-                isOpen={deletionModal}
-                toggleVisible={toggleDeletionModal}
-                onYes={handlePlaylistDeletion}
-            />
-
-            <CustomActionsheet
-                title="Setări playlist"
-                isOpen={isOpen} 
-                onOpen={onOpen} 
-                onClose={onClose}
-            >
-                <CustomActionsheetItem text="Adaugă o piesă"
-                    iconName="playlist-plus"
-                    IconType={MaterialCommunityIconsNB}
-                    onPress={handleTrackListOption}/>
-                
-                <CustomActionsheetItem text="Șterge playlist"
-                    iconName="playlist-remove"
-                    IconType={MaterialCommunityIconsNB}
-                    onPress={handleDeletionModal}/>
-            </CustomActionsheet>
+            <PlaylistSettingsSheet
+                navigation={navigation}
+                payload={payload}
+                discloseObject={disclose}/>
 
             <HStack h="16" alignItems="center">
-                <FeatherNB h="auto" ml="4"
+                <FeatherNB h="auto" ml="4" p="1"
+                    bg="black"
+                    borderRadius="full"
                     onPress={handleBack}
                     color="primary.50"
                     name="arrow-left"
@@ -243,7 +177,7 @@ export const PlaylistHeader = ({ navigation, route }) => {
                     shadow={5}/>
 
                 <EntypoNB h="auto" ml="auto" mr="4"
-                    onPress={onOpen}
+                    onPress={disclose.onOpen}
                     color="primary.50"
                     name="dots-three-vertical"
                     fontSize={25}

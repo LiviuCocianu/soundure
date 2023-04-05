@@ -63,7 +63,11 @@ const TrackListPage = ({ navigation, route }) => {
 
         if(isSelected) {
             if(trackId) set.add(trackId);
-            else tracks.forEach(tr => selectedIDs.add(tr.id));
+            else {
+                ownTracks.forEach(tr => selectedIDs.add(tr.id));
+                set.clear();
+                selectedIDs.forEach(el => set.add(el));
+            }
         } else {
             if(trackId) set.delete(trackId);
             else set.clear();
@@ -107,7 +111,6 @@ const TrackListPage = ({ navigation, route }) => {
             });
         } else {
             Toast.show("Selectează câteva piese mai întâi", {
-                duration: Toast.durations.LONG,
                 position: Toast.positions.CENTER
             });
         }
