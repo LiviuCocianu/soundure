@@ -1,9 +1,7 @@
-import React, { useState } from 'react'
-import { useEffect } from 'react';
+import React, { useMemo } from 'react'
 import { useSelector } from 'react-redux';
 
 import HorizontalCategory from '../../../general/HorizontalCategory'
-import HorizontalCategoryElement from '../../../general/HorizontalCategoryElement'
 
 
 /**
@@ -17,31 +15,19 @@ import HorizontalCategoryElement from '../../../general/HorizontalCategoryElemen
  */
 const FavoriteCategory = ({ 
     navigation,
-    maxContent = 10
+    maxContent=10
 }) => {
     const tracks = useSelector(state => state.tracks);
-    const [ownTracks, setOwnTracks] = useState([]);
-
-    const handleTrackPage = (trackId) => {
-        navigation.navigate("Track", { trackId });
-    }
-
-    const renderContent = ownTracks.slice(0, maxContent)
-        .map((el) => (
-            <HorizontalCategoryElement 
-                onPress={() => handleTrackPage(el.id)}
-                title={el.title} 
-                coverURI={el.coverURI}
-                key={el.id}
-            />
-        ));
-
-    useEffect(() => {
-        setOwnTracks(tracks.filter(tr => tr.favorite));
+    const favoriteTracks = useMemo(() => {
+        return tracks.filter(tr => tr.favorite);
     }, [tracks]);
 
     return (
-        <HorizontalCategory title="Piese preferate" render={renderContent}/>
+        <HorizontalCategory 
+            navigation={navigation}
+            title="Piese preferate" 
+            tracks={favoriteTracks}
+            maxContent={maxContent}/>
     );
 };
 

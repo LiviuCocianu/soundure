@@ -15,8 +15,8 @@ import MarqueeText from 'react-native-marquee'
 import { useSelector } from 'react-redux'
 
 import { Audio } from 'expo-av'
-import { handleCoverURI, playlistStatsString } from '../../../functions'
-import PlaylistSettingsSheet from '../playlist/PlaylistSettingsSheet'
+import { handleCoverURI, lng, playlistStatsString } from '../../../functions'
+import PlaylistSettingsSheet from './PlaylistSettingsSheet'
 
 
 /**
@@ -85,8 +85,7 @@ const PlaylistElement = ({
     }, [totalDuration]);
 
     const handleNavigation = () => {
-        const found = playlists.find(pl => pl.id == playlistId);
-        navigateToPlaylist(found);
+        navigateToPlaylist(playlistId);
     }
 
     const handleSettings = () => {
@@ -137,13 +136,7 @@ const PlaylistElement = ({
 
             <Box w="100%" h="20" mb="1"
                 justifyContent="center"
-                bg={{
-                    linearGradient: {
-                        colors: ["primary.700", "primary.800"],
-                        start: [0, 0],
-                        end: [0, 1]
-                    }
-                }}
+                bg={lng(["primary.700", "primary.800"], "bottom")}
                 rounded="xl" 
                 shadow="2"
             >

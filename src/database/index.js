@@ -7,7 +7,7 @@ import { artistsSet } from "../redux/slices/artistSlice"
 import { TABLES } from "../constants"
 
 
-export function setup(dispatch, setLoadedDatabase) {
+export function setupDatabase(dispatch, setLoadedDatabase) {
     db.init().then(async () => {
         await db.existsIn(TABLES.PLAYLIST, "title = ?", ["_HISTORY"]).then(exists => {
             if (!exists) db.insertInto(TABLES.PLAYLIST, { title: "_HISTORY" });

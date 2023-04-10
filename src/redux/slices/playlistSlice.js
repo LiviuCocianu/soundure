@@ -11,6 +11,14 @@ const playlistSlice = createSlice({
             const data = action.payload;
             return data;
         },
+        playlistSet(state, action) {
+            const data = action.payload;
+
+            return state.map(el => {
+                if(el.id == data.id) return data;
+                else return el;
+            });
+        },
         playlistAdded(state, action) {
             const val = action.payload;
             state.push(val);
@@ -23,5 +31,5 @@ const playlistSlice = createSlice({
 });
 
 
-export const { playlistsSet, playlistAdded, playlistRemoved } = playlistSlice.actions
+export const { playlistsSet, playlistSet, playlistAdded, playlistRemoved } = playlistSlice.actions
 export default playlistReducer = playlistSlice.reducer

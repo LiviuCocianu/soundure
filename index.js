@@ -5,10 +5,12 @@ import { registerRootComponent } from 'expo';
 import { LinearGradient } from "expo-linear-gradient"
 import { Provider } from 'react-redux';
 import { RootSiblingParent } from "react-native-root-siblings"
+import serviceCallback from "./src/sound/service"
 
 import App from './src/app'
 import store from './src/redux/store'
 import themes from "./assets/themes";
+import TrackPlayer from "react-native-track-player";
 
 
 String.prototype.toHHMMSS = function () {
@@ -23,6 +25,8 @@ String.prototype.toHHMMSS = function () {
     return (parseInt(hours) < 1 ? "" : (hours + ':')) + minutes + ':' + seconds;
 }
 
+TrackPlayer.registerPlaybackService(() => serviceCallback);
+
 const config = {
     dependencies: {
         'linear-gradient': LinearGradient
@@ -32,7 +36,7 @@ const config = {
 const theme = extendTheme(themes);
 
 const ReduxApp = () => (
-    /* Provide the entire app with the Redux store */
+    /* Provide the Redux store to the entire app */
     <Provider store={store}>
         {/* Allows the use of NativeBase components and settings */}
         <NativeBaseProvider theme={theme} config={config}> 

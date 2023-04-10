@@ -17,7 +17,12 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "audio"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -39,6 +44,12 @@
           "photosPermission": "Aplicația are nevoie de acces la galerie."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "cbe15ea3-3fe9-4136-946f-3431c1beae3b"
+      }
+    },
+    "owner": "idoomful"
   }
 }

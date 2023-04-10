@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux'
 import { RESERVED_PLAYLISTS } from '../../../../constants'
 import { faFolderPlus } from '@fortawesome/free-solid-svg-icons'
 
-import PlaylistElement from '../PlaylistElement'
+import PlaylistElement from '../../playlist/PlaylistElement'
 import NoContentInfo from '../../../general/NoContentInfo'
 import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
 

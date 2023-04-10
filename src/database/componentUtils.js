@@ -3,23 +3,24 @@ import { ENV, QUOTE_API_URL, TABLES } from "../constants";
 import Toast from "react-native-root-toast";
 
 import { trackSet, trackAdded, trackRemoved } from "../redux/slices/trackSlice";
-import { playlistAdded, playlistRemoved } from "../redux/slices/playlistSlice";
+import { playlistAdded, playlistRemoved, playlistSet } from "../redux/slices/playlistSlice";
 import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved } from "../redux/slices/playlistContentSlice";
 import { artistAdded } from "../redux/slices/artistSlice";
 
 
+const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
+    db.selectFrom(table, null, "id=?", [id]).then(rows => {
+        db.update(table, `${column}=?`, "id=?", [value, id]).then(() => {
+            dispatch(setAction({ ...rows[0], [`${column}`]: value }));
+        });
+    });
+}
+
+
 export const TrackUtils = {
-    updateColumn: (columnName, value, trackId, dispatch) => {
-        db.selectFrom(TABLES.TRACK, null, "id=?", [trackId]).then(rows => {
-            const track = rows[0];
-    
-            db.update(TABLES.TRACK, `${columnName}=?`, "id=?", [value, track.id]).then(() => {
-                const obj = {
-                    ...track,
-                    [`${columnName}`]: value
-                };
-                dispatch(trackSet(obj));
-            });
+    updateColumn: (column, value, trackId, dispatch) => {
+        updateColumn(TABLES.TRACK, trackId, trackSet, {
+            column, value, dispatch
         });
     },
     toggleFavorite: (trackId, dispatch) => {
@@ -81,6 +82,19 @@ export const TrackUtils = {
 }
 
 export const PlaylistUtils = {
+    updateColumn: (column, value, playlistId, dispatch) => {
+        updateColumn(TABLES.PLAYLIST, playlistId, playlistSet, {
+            column, value, dispatch
+        });
+    },
+    setTitle: (title, playlistId, dispatch) => {
+        PlaylistUtils.updateColumn("title", title, playlistId, dispatch);
+        Toast.show("Titlul a fost actualizat!");
+    },
+    setCoverURI: (coverURI, playlistId, dispatch) => {
+        PlaylistUtils.updateColumn("coverURI", JSON.stringify({ uri: coverURI }), playlistId, dispatch);
+        Toast.show("Coperta a fost actualizată!");
+    },
     addPlaylist: (payload, dispatch) => {
         db.insertInto(TABLES.PLAYLIST, payload).then(rs => {
             const completePayload = {id: rs.insertId, ...payload};

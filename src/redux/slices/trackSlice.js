@@ -13,13 +13,11 @@ const trackSlice = createSlice({
         },
         trackSet(state, action) {
             const data = action.payload;
-            const foundData = state.findIndex(tr => tr.id == data.id);
 
-            if(foundData != -1) {
-                state[foundData] = data;
-            }
-
-            return state;
+            return state.map(el => {
+                if (el.id == data.id) return data;
+                else return el;
+            });
         },
         trackAdded(state, action) {
             const val = action.payload;

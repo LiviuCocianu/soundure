@@ -6,7 +6,7 @@ import Toast from 'react-native-root-toast';
 
 
 const bannerDarkURI = require("../../../../assets/images/soundure_banner_dark.png");
-const QUOTE_MAX_LEN = 110;
+const QUOTE_MAX_LEN = 130;
 
 /**
  * QuoteBox component
@@ -27,16 +27,16 @@ const QuoteBox = () => {
     }, []);
 
     useEffect(() => {
-        if(updatesDaily) {
-            getQuote();
-            
-            Animated.timing(progress, {
-                toValue: 1,
-                duration: 1000,
-                useNativeDriver: true,
-            }).start();
-        }
+        if(updatesDaily) getQuote();
     }, [updatesDaily]);
+
+    useEffect(() => {
+        Animated.timing(progress, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+        }).start();
+    }, [quote]);
     
     const getQuote = () => {
         QuoteUtils.fetchQuote().then(res => {
@@ -47,9 +47,7 @@ const QuoteBox = () => {
 
     const handleQuoteToast = () => {
         if(quote.length > QUOTE_MAX_LEN) {
-            Toast.show(quote, {
-                duration: Toast.durations.LONG
-            });
+            Toast.show(quote, { duration: Toast.durations.LONG });
         }
     }
 
@@ -59,7 +57,7 @@ const QuoteBox = () => {
     }
 
     return (
-        <Box w="100%" h={updatesDaily ? "150" : "12"} position="relative">
+        <Box w="100%" h={updatesDaily ? "170" : "12"} position="relative">
             <Switch
                 onChange={handleQuoteUpdates}
                 isChecked={updatesDaily}
@@ -91,16 +89,22 @@ const QuoteBox = () => {
                                 fontFamily="quicksand_b"
                                 fontSize="xl">Citatul zilei!</Text>
 
-                            <Text color="white"
-                                fontFamily="manrope_li">"{
+                            <Text my="1"
+                                color="white"
+                                fontFamily="manrope_li"
+                                fontSize="xs"
+                            >
+                                "{
                                     quote.length > QUOTE_MAX_LEN
                                         ? `${quote.slice(0, QUOTE_MAX_LEN - 1)}...`
                                         : `${quote}"`
                                 }</Text>
 
                             <Text color="white"
-                                fontFamily="manrope_m"
-                                alignSelf="flex-end">- {author}</Text>
+                                alignSelf="flex-end"
+                                fontFamily="manrope_b"
+                                fontSize="xs"
+                            >- {author}</Text>
                         </Box>
                     </Animated.View>
                 </ImageBackground>
