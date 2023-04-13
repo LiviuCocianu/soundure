@@ -54,7 +54,7 @@ const TrackElement = ({
     trackId,
     playlistId=undefined,
     selectionMode=false,
-    allSelected=false,
+    allSelected,
     selectionHandler=() => {}
 }) => {
     const disclose = useDisclose();

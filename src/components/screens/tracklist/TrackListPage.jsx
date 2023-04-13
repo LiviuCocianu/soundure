@@ -6,8 +6,8 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import Toast from 'react-native-root-toast';
 import { Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons'; 
-import OptimizedTrackList from '../../general/OptimizedTrackList';
 
+import OptimizedTrackList from '../../general/OptimizedTrackList';
 import { playlistContentAdded } from "../../../redux/slices/playlistContentSlice"
 import db from "../../../database/database"
 
@@ -120,7 +120,6 @@ const TrackListPage = ({ navigation, route }) => {
                         fontSize="lg">Alege piese</Text>
                 </Box>
 
-                {/* TODO fix broken select all feature */}
                 <HStack h="100%" ml="auto" mr="4"
                     alignItems="center"
                     justifyContent="center"

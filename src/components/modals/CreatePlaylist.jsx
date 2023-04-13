@@ -17,8 +17,8 @@ import * as ImagePicker from 'expo-image-picker'
 import { useDispatch } from 'react-redux'
 
 import NoCoverImage from '../general/NoCoverImage'
-import { IMAGE_QUALITY, RESERVED_PLAYLISTS } from '../../constants'
 import { PlaylistUtils } from '../../database/componentUtils'
+import { IMAGE_QUALITY, RESERVED_PLAYLISTS } from '../../constants'
 
 
 const initialCoverObjectURI = require("../../../assets/images/soundure_banner_dark.png");
@@ -64,11 +64,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const handleSubmit = () => {
         let err = {...errors};
 
-        if(title.length < 3) {
-            err = { ...err,
-                title: "Denumire mai mică de 3 caractere"
-            };
-        } else if(title.length > 64) {
+        if(title.length > 64) {
             err = { ...err,
                 title: "Denumire prea lungă"
             };
@@ -89,7 +85,13 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            PlaylistUtils.addPlaylist({title, description, coverURI: coverStringURI}, dispatch);
+            let newTitle = title == "" ? "Playlist" : title;
+
+            // TODO debug
+            console.log(title);
+            console.log(description);
+
+            PlaylistUtils.addPlaylist({ title: newTitle, coverURI: coverStringURI, description }, dispatch);
             handleClose();
         }
     }
@@ -170,12 +172,12 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
                                     color: "gray.400"
                                 }}>Descriere</FormControl.Label>
 
-                                <TextArea 
-                                    h="100"
+                                <TextArea h="100"
+                                    value={description}
+                                    onChangeText={setDescription}
                                     borderColor="primary.50"
                                     color="primary.50"
                                     fontFamily="manrope_r"
-                                    onChangeText={setDescription}
                                     _focus={{
                                         borderColor: "primary.50"
                                     }}

@@ -12,16 +12,16 @@ import {
     Button,
 } from 'native-base'
 
+import { useDispatch } from 'react-redux'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
 import { Audio } from 'expo-av'
-import { useDispatch } from 'react-redux'
+import { Entypo, AntDesign } from "@expo/vector-icons"
 
 import SourceSelectionBox from '../general/SourceSelectionBox'
 import NoCoverImage from '../general/NoCoverImage'
-import { handleCoverURI } from '../../functions'
 import CustomActionsheet, { CustomActionsheetItem } from '../general/CustomActionsheet'
-import { Entypo, AntDesign } from "@expo/vector-icons"
+import { handleCoverURI } from '../../functions'
 import { TrackUtils } from '../../database/componentUtils'
 import { ARTIST_NAME_PLACEHOLDER, IMAGE_QUALITY, PLATFORMS } from '../../constants'
 
@@ -49,19 +49,19 @@ const screenHeight = parseInt(Dimensions.get("screen").height);
  * @returns {Component} Component JSX
  */
 const UploadTrack = ({ isOpen, closeHandle }) => {
+    const dispatch = useDispatch();
+
     const [title, setTitle] = useState("");
     const [artist, setArtist] = useState(ARTIST_NAME_PLACEHOLDER);
     const [coverURI, setCoverURI] = useState(undefined);
     const [fileURI, setFileURI] = useState(null);
     const [millis, setMillis] = useState(0);
-    const [url, setURL] = useState("");
-    const [platform, setPlatform] = useState(PLATFORMS.NONE);
+    const [platform, setPlatform] = useState(PLATFORMS.SPOTIFY);
 
     const [sourceHelper, setSourceHelper] = useState("");
     const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
-    const [sheetIsOpen, toggleSheet] = useState(false);
+    const [sourceOptions, toggleSourceOptions] = useState(false);
     const [errors, setErrors] = useState({});
-    const dispatch = useDispatch();
 
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -76,19 +76,23 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         }
     }
 
-    const handleFileChoice = async () => {
-        const result = await DocumentPicker.getDocumentAsync({ type: "audio/*" });
+    const handleFileChoice = async (platform) => {
+        toggleSourceOptions(false);
 
-        toggleSheet(false);
+        const result = await DocumentPicker.getDocumentAsync({ type: "audio/*" });
 
         if (result.type == "success") {
             setFileURI(result.uri);
             setSourceHelper(result.name);
+            setPlatform(platform);
 
             const millis = await getMillis(result.uri);
             setMillis(millis);
 
-            if(title === "") setTitle(result.name.split(".")[0]);
+            if(title === "") {
+                const fileName = result.name.split(".");
+                setTitle(fileName.slice(0, fileName.length - 1).join("."));
+            }
         }
     }
 
@@ -107,16 +111,10 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         return 0;
     }
 
-    // TODO finish these
-    const handleFileURLChoice = () => {
+    const handleSourceSelectionBox = () => {
         toggleSourceSelectionBox(true);
-        toggleSheet(false);
+        toggleSourceOptions(false);
     }
-
-    const handleSourceChoice = () => {
-        toggleSheet(true);
-    }
-    //
 
     const handleSubmit = () => {
         let err = { ...errors };
@@ -181,8 +179,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         setCoverURI(undefined);
         setFileURI(null);
         setMillis(0);
-        setURL("");
-        setPlatform(PLATFORMS.NONE);
+        setPlatform(PLATFORMS.SPOTIFY);
 
         setSourceHelper("");
         setErrors({});
@@ -195,18 +192,18 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         <Modal isOpen={isOpen} onClose={handleClose}>
             <CustomActionsheet
                 title="Sursă piesă"
-                isOpen={sheetIsOpen}
-                onClose={() => toggleSheet(false)}
+                isOpen={sourceOptions}
+                onClose={() => toggleSourceOptions(false)}
             >
                 <CustomActionsheetItem text="Preia din dispozitiv"
                     iconName="mobile"
                     IconType={EntypoNB}
-                    onPress={handleFileChoice} />
+                    onPress={() => handleFileChoice(PLATFORMS.NONE)} />
 
-                <CustomActionsheetItem text="Preia din URL"
+                <CustomActionsheetItem text="Preia din exterior"
                     iconName="link"
                     IconType={AntDesignNB}
-                    onPress={handleFileURLChoice} />
+                    onPress={handleSourceSelectionBox} />
             </CustomActionsheet>
 
             <Modal.Content w="90%" h={screenHeight}
@@ -312,7 +309,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                                 }}>Sursă piesă</FormControl.Label>
 
                                 <Button h="30" p="0" px="6"
-                                    onPress={handleSourceChoice}
+                                    onPress={() => toggleSourceOptions(true)}
                                     _text={{
                                         fontFamily: "manrope_r",
                                         fontSize: "xs"
@@ -327,10 +324,9 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                         {
                             sourceSelectionBox ? (
                                 <SourceSelectionBox
-                                    url={url}
-                                    setURL={setURL}
                                     platform={platform}
                                     setPlatform={setPlatform}
+                                    handleFileChoice={handleFileChoice}
                                 />
                             ) : <></>
                         }

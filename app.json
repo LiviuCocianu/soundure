@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "scheme": "soundure",
     "splash": {
       "image": "./assets/images/soundure_logo.png",
       "resizeMode": "contain",

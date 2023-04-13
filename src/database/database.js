@@ -48,7 +48,7 @@ class Database {
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL DEFAULT 'Fara titlu',
                     coverURI TEXT,
-                    fileURI TEXT UNIQUE CHECK((fileURI NOT NULL AND platform IS 'NONE') OR (fileURI IS NULL AND platform IS NOT 'NONE')),
+                    fileURI TEXT UNIQUE,
                     millis INTEGER DEFAULT 0,
                     favorite BOOLEAN DEFAULT 0,
                     platform TEXT CHECK(platform IN ('NONE', 'SPOTIFY', 'SOUNDCLOUD', 'YOUTUBE')) DEFAULT 'NONE',

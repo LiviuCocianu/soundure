@@ -1,6 +1,6 @@
 import React, { useState, useEffect, memo, useMemo } from 'react'
-import { ImageBackground, StyleSheet, Dimensions } from 'react-native';
-import { Box, Factory, HStack, Text, FlatList, useDisclose, FormControl, Input, Button, Pressable } from 'native-base'
+import { ImageBackground, StyleSheet } from 'react-native';
+import { Box, Factory, HStack, Text, useDisclose, FormControl, Input, Button, Pressable } from 'native-base'
 
 import { StackActions } from "@react-navigation/native"
 import { Feather, Entypo } from '@expo/vector-icons'; 
@@ -9,12 +9,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import * as ImagePicker from 'expo-image-picker'
 import Toast from 'react-native-root-toast';
 
-import TrackElement from './TrackElement';
-import NoContentInfo from '../../general/NoContentInfo';
 import PlaylistSettingsSheet from './PlaylistSettingsSheet';
 
 import { PlaylistUtils } from '../../../database/componentUtils';
-import { handleCoverURI, lng, playlistStatsString } from '../../../functions';
+import { handleCoverURI, lng, composePlaylistInfo } from '../../../functions';
 import { IMAGE_QUALITY } from '../../../constants';
 import OptimizedTrackList from '../../general/OptimizedTrackList';
 
@@ -223,7 +221,7 @@ const PlaylistCover = memo(({
 
                     <Text color="white"
                         fontFamily="quicksand_r"
-                        fontSize="xs">{playlistStatsString(ownTracks.length, totalMillis)}</Text>
+                        fontSize="xs">{composePlaylistInfo(ownTracks.length, totalMillis)}</Text>
                 </Box>
             </Box>
         </Box>
@@ -237,12 +235,6 @@ const PlaylistCover = memo(({
 export const PlaylistHeader = ({ navigation, route: { params: { playlistId } } }) => {
     const disclose = useDisclose();
 
-    const playlists = useSelector(state => state.playlists);
-
-    const playlist = useMemo(() => {
-        return playlists.find(pl => pl.id == playlistId);
-    }, [playlists]);
-
     const handleBack = () => {
         navigation.dispatch(StackActions.pop());
     }
@@ -251,7 +243,7 @@ export const PlaylistHeader = ({ navigation, route: { params: { playlistId } } }
         <Box w="100%">
             <PlaylistSettingsSheet
                 navigation={navigation}
-                payload={playlist}
+                playlistId={playlistId}
                 discloseObject={disclose}/>
 
             <HStack h="16" alignItems="center">

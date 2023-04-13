@@ -55,7 +55,7 @@ const OptimizedTrackList = ({
             trackId={item}
             playlistId={playlist ? playlist.id : undefined}
             selectionMode={selection.enabled}
-            areAllSelected={selection.areAllSelected}
+            allSelected={selection.areAllSelected}
             selectionHandler={selection.selectionHandler}
             key={item} />
     }

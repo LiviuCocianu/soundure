@@ -26,6 +26,10 @@ const TracksPreviewPage = ({
     navigation,
     route: { params: { title="", trackIDs } }
 }) => {
+    const handleInfoPress = () => {
+        navigation.dispatch(StackActions.popToTop());
+    }
+
     return (
         <Box w="100%" h="100%"
             bg={lng(["gray.700", "black"], "bottom")}
@@ -42,7 +46,8 @@ const TracksPreviewPage = ({
 
             <OptimizedTrackList 
                 navigation={navigation}
-                ownTracks={trackIDs}/>
+                ownTracks={trackIDs}
+                onInfoPress={handleInfoPress}/>
         </Box>
     )
 }
