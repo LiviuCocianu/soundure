@@ -27,6 +27,7 @@ export const PLATFORMS = {
 export const QUOTE_API_URL = "https://api.api-ninjas.com/v1/quotes?category=inspirational";
 export const RESERVED_PLAYLISTS = ["_HISTORY"];
 export const TRACK_EL_HEIGHT = 85;
+export const QUEUE_TRACK_EL_HEIGHT = 65;
 export const ARTIST_NAME_PLACEHOLDER = "Necunoscut";
 
 /**
@@ -34,3 +35,8 @@ export const ARTIST_NAME_PLACEHOLDER = "Necunoscut";
  * chosen through an image picker will be
  */
 export const IMAGE_QUALITY = 0.5;
+
+export const DEFAULT_QUOTE = {
+    CONTENT: "There's nothing like music to relieve the soul and uplift it.",
+    AUTHOR: "Mickey Hart"
+}

@@ -5,6 +5,8 @@ import { Text, FlatList } from 'native-base';
 import TrackElement from '../screens/playlist/TrackElement';
 import NoContentInfo from './NoContentInfo';
 import { TRACK_EL_HEIGHT } from '../../constants';
+import { useCallback } from 'react';
+import { useMemo } from 'react';
 
 
 /**
@@ -50,21 +52,22 @@ const OptimizedTrackList = ({
 
     const renderElements = ({ item }) => {
         return <TrackElement
-            navigation={navigation}
-            w={screenW - (screenW * 0.05)}
-            trackId={item}
-            playlistId={playlist ? playlist.id : undefined}
-            selectionMode={selection.enabled}
-            allSelected={selection.areAllSelected}
-            selectionHandler={selection.selectionHandler}
-            key={item} />
-    }
+        navigation={navigation}
+        w={screenW - (screenW * 0.05)}
+        trackId={item}
+        playlistId={playlist ? playlist.id : undefined}
+        selectionMode={selection.enabled}
+        allSelected={selection.areAllSelected}
+        selectionHandler={selection.selectionHandler} />
+    };
 
-    const getItemLayout = (data, index) => ({
+    const renderMemo = useMemo(() => renderElements, [playlist, selection.areAllSelected]);
+    
+    const getItemLayout = useCallback((data, index) => ({
         length: TRACK_EL_HEIGHT,
         offset: TRACK_EL_HEIGHT * index,
         index
-    });
+    }), []);
 
     return <>
         {
@@ -76,18 +79,17 @@ const OptimizedTrackList = ({
             ) : (
                 <FlatList w="100%" h="100%" pt="2"
                     data={ownTracks}
-                    renderItem={renderElements}
-                    _contentContainerStyle={{ alignItems: "center", paddingBottom: 5 }}
-                    initialNumToRender={itemBatchSize} 
-                    maxToRenderPerBatch={itemBatchSize}
-                    getItemLayout={getItemLayout}/>
+                    renderItem={renderMemo}
+                    keyExtractor={(_, index) => `optimizedlistitem_${index}`}
+                    _contentContainerStyle={{ alignItems: "center", paddingBottom: 5 }}/>
             )
         }
     </>
 }
 
 
-export default memo(OptimizedTrackList, (prev, next) => prev.navigation == next.navigation
+export default memo(OptimizedTrackList, (prev, next) => 
+    prev.navigation == next.navigation
     && prev.ownTracks == next.ownTracks
     && prev.playlist == next.playlist
     && prev.itemBatchSize == next.itemBatchSize

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 
 import { useFonts } from 'expo-font'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
@@ -15,6 +15,8 @@ import fonts from "../fonts"
 import { setupDatabase } from "./database/index"
 import { setupPlayer } from "./sound/service"
 import TracksPreviewPage, { TracksPreviewHeader } from "./components/screens/trackspreview/TracksPreviewPage"
+import MusicPlayer from "./components/screens/player/MusicPlayer"
+import { QueueBridge } from "./database/componentBridge"
 
 
 const Stack = createNativeStackNavigator();
@@ -36,54 +38,58 @@ const App = () => {
     }
 
     return (
-        <NavigationContainer>
-            <Stack.Navigator initialRouteName="Home">
-                <Stack.Screen name="Home"
-                    component={HomePage}
-                    options={{ headerShown: false }} />
+        <>
+            <NavigationContainer>
+                <Stack.Navigator initialRouteName="Home">
+                    <Stack.Screen name="Home"
+                        component={HomePage}
+                        options={{ headerShown: false }} />
 
-                <Stack.Screen name="Playlist"
-                    component={PlaylistPage}
-                    options={{
-                        header: PlaylistHeader,
-                        headerTransparent: true,
-                        headerBackButtonMenuEnabled: false,
-                        headerBackVisible: false,
-                        animation: "slide_from_right",
-                        freezeOnBlur: true,
-                    }} />
+                    <Stack.Screen name="Playlist"
+                        component={PlaylistPage}
+                        options={{
+                            header: PlaylistHeader,
+                            headerTransparent: true,
+                            headerBackButtonMenuEnabled: false,
+                            headerBackVisible: false,
+                            animation: "slide_from_right",
+                            freezeOnBlur: true,
+                        }} />
 
-                <Stack.Screen name="TrackList"
-                    component={TrackListPage}
-                    options={{
-                        header: TrackListHeader,
-                        headerTransparent: true,
-                        headerBackButtonMenuEnabled: false,
-                        headerBackVisible: false,
-                        animation: "slide_from_right"
-                    }} />
+                    <Stack.Screen name="TrackList"
+                        component={TrackListPage}
+                        options={{
+                            header: TrackListHeader,
+                            headerTransparent: true,
+                            headerBackButtonMenuEnabled: false,
+                            headerBackVisible: false,
+                            animation: "slide_from_right"
+                        }} />
 
-                <Stack.Screen name="TracksPreview"
-                    component={TracksPreviewPage}
-                    options={{
-                        header: TracksPreviewHeader,
-                        headerTransparent: true,
-                        headerBackButtonMenuEnabled: false,
-                        headerBackVisible: false,
-                        animation: "slide_from_right"
-                    }} />
+                    <Stack.Screen name="TracksPreview"
+                        component={TracksPreviewPage}
+                        options={{
+                            header: TracksPreviewHeader,
+                            headerTransparent: true,
+                            headerBackButtonMenuEnabled: false,
+                            headerBackVisible: false,
+                            animation: "slide_from_right"
+                        }} />
 
-                <Stack.Screen name="Track"
-                    component={TrackPage}
-                    options={{
-                        header: TrackHeader,
-                        headerTransparent: true,
-                        headerBackButtonMenuEnabled: false,
-                        headerBackVisible: false,
-                        animation: "slide_from_right"
-                    }} />
-            </Stack.Navigator>
-        </NavigationContainer>
+                    <Stack.Screen name="Track"
+                        component={TrackPage}
+                        options={{
+                            header: TrackHeader,
+                            headerTransparent: true,
+                            headerBackButtonMenuEnabled: false,
+                            headerBackVisible: false,
+                            animation: "slide_from_right"
+                        }} />
+                </Stack.Navigator>
+            </NavigationContainer>
+
+            <MusicPlayer/>
+        </>
     );
 }
 

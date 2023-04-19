@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ImageBackground, Animated } from 'react-native'
 import { Box, Pressable, Switch, Text } from 'native-base'
-import { QuoteUtils } from '../../../database/componentUtils';
+import { QuoteBridge } from '../../../database/componentBridge';
 import Toast from 'react-native-root-toast';
+import { DEFAULT_QUOTE } from '../../../constants';
 
 
 const bannerDarkURI = require("../../../../assets/images/soundure_banner_dark.png");
@@ -16,12 +17,12 @@ const QUOTE_MAX_LEN = 130;
 const QuoteBox = () => {
     const progress = useRef(new Animated.Value(0)).current;
 
-    const [quote, setQuote] = useState("There's nothing like music to relieve the soul and uplift it.");
-    const [author, setAuthor] = useState("Mickey Hart");
+    const [quote, setQuote] = useState(DEFAULT_QUOTE.CONTENT);
+    const [author, setAuthor] = useState(DEFAULT_QUOTE.AUTHOR);
     const [updatesDaily, toggleDailyUpdate] = useState(false);
 
     useEffect(() => {
-        QuoteUtils.updatesDaily().then(updates => {
+        QuoteBridge.updatesDaily().then(updates => {
             toggleDailyUpdate(!!updates);
         });
     }, []);
@@ -39,7 +40,7 @@ const QuoteBox = () => {
     }, [quote]);
     
     const getQuote = () => {
-        QuoteUtils.fetchQuote().then(res => {
+        QuoteBridge.fetchQuote().then(res => {
             setQuote(res.quote);
             setAuthor(res.author);
         });
@@ -52,8 +53,7 @@ const QuoteBox = () => {
     }
 
     const handleQuoteUpdates = () => {
-        QuoteUtils.toggleDailyUpdate();
-        toggleDailyUpdate(!updatesDaily);
+        QuoteBridge.toggleDailyUpdate().then(() => toggleDailyUpdate(!updatesDaily));
     }
 
     return (

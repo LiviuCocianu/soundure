@@ -6,7 +6,7 @@ import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons";
 import ConfirmationWindow from "../../modals/ConfirmationWindow";
 import CustomActionsheet, { CustomActionsheetItem } from "../../general/CustomActionsheet";
 
-import { TrackUtils } from '../../../database/componentUtils';
+import { TrackBridge } from '../../../database/componentBridge';
 
 
 const MaterialCommunityIconsNB = Factory(MaterialCommunityIcons);
@@ -68,7 +68,7 @@ const TrackSettingsSheet = ({
 
     const handleTrackFavorite = () => {
         onClose();
-        TrackUtils.toggleFavorite(track.id, dispatch);
+        TrackBridge.toggleFavorite(track.id, dispatch);
     }
 
     const handleAboutTrack = () => {
@@ -77,11 +77,11 @@ const TrackSettingsSheet = ({
     }
 
     const handlePlaylistDeleteYes = () => {
-        TrackUtils.deleteFromPlaylist(playlistId, track.id, dispatch);
+        TrackBridge.deleteFromPlaylist(playlistId, track.id, dispatch);
     }
 
     const handleDeletionYes = () => {
-        TrackUtils.deleteTrack(track.id, dispatch);
+        TrackBridge.deleteTrack(track.id, dispatch);
     }
 
     return (

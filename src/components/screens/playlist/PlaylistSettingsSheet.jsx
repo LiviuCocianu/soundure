@@ -9,7 +9,7 @@ import ConfirmationWindow from '../../modals/ConfirmationWindow';
 import { MaterialCommunityIcons, AntDesign } from "@expo/vector-icons"
 
 import { StackActions } from '@react-navigation/native';
-import { PlaylistUtils } from '../../../database/componentUtils';
+import { PlaylistBridge } from '../../../database/componentBridge';
 import PlaylistDescriptionSheet from './PlaylistDescriptionSheet';
 
 
@@ -82,7 +82,7 @@ const PlaylistSettingsSheet = ({
     }
 
     const handlePlaylistDeletion = () => {
-        PlaylistUtils.deletePlaylist(playlistId, dispatch);
+        PlaylistBridge.deletePlaylist(playlistId, dispatch);
         handleBack();
     }
 

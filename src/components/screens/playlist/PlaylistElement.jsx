@@ -87,35 +87,19 @@ const PlaylistElement = ({
         disclose.onOpen();
     }
 
-    const handleTotalDuration = async () => {
+    const handleTotalDuration = () => {
         let sum = 0;
 
         for(const trackID of ownTracks) {
             const track = tracks.find(tr => tr.id == trackID);
 
-            if(track.fileURI) {
-                const uri = track.fileURI;
-                const dur = await getDuration(uri);
+            if(track) {
+                const dur = track.millis;
                 sum += dur;
             }
         }
 
         setTotalDuration(sum);
-    }
-
-    const getDuration = async (uri) => {
-        const sound = new Audio.Sound();
-
-        try {
-            await sound.loadAsync({ uri });
-            const data = await sound.getStatusAsync();
-
-            return data.durationMillis / 1000;
-        } catch (error) {
-            console.error(`Could not load track for '${uri}':`, error);
-        }
-
-        return 0;
     }
 
     return (
@@ -133,7 +117,7 @@ const PlaylistElement = ({
                 source={coverURI}
                 justifyContent="center"
                 shadow="2"
-                blurRadius={10}
+                blurRadius={5}
                 imageStyle={{ borderRadius: 10 }}
             >
                 <Box w="100%" h="100%" bg={lng(["primary.700", "primary.800"], "bottom")}
@@ -174,7 +158,10 @@ const PlaylistElement = ({
                                 textShadowColor: 'black',
                                 textShadowOffset: { width: 1, height: 2 }
                             }}
-                            fontSize="xs">{composePlaylistInfo(ownTracks.length, totalDuration)}</Text>
+                            fontSize="xs"
+                        >
+                            {composePlaylistInfo(ownTracks.length, totalDuration / 1000)}
+                        </Text>
                     </VStack>
                 </HStack>
             </ImageBackgroundNB>

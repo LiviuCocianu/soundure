@@ -29,12 +29,12 @@ const HorizontalCategory = ({
         navigation.navigate("TracksPreview", { title, trackIDs })
     }
 
-    const renderContent = tracks.slice(0, maxContent).map((el) => (
+    const renderContent = tracks.slice(0, maxContent).map((el, index) => (
         <HorizontalCategoryElement
             onPress={() => handleTrackPage(el.id)}
             title={el.title}
             coverURI={el.coverURI}
-            key={el.id}
+            key={index}
         />
     ));
 

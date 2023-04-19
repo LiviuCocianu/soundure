@@ -22,8 +22,9 @@ import SourceSelectionBox from '../general/SourceSelectionBox'
 import NoCoverImage from '../general/NoCoverImage'
 import CustomActionsheet, { CustomActionsheetItem } from '../general/CustomActionsheet'
 import { handleCoverURI } from '../../functions'
-import { TrackUtils } from '../../database/componentUtils'
+import { TrackBridge } from '../../database/componentBridge'
 import { ARTIST_NAME_PLACEHOLDER, IMAGE_QUALITY, PLATFORMS } from '../../constants'
+import { createTrack } from '../../database/shapes'
 
 
 const EntypoNB = Factory(Entypo);
@@ -103,7 +104,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
             await sound.loadAsync({ uri });
             const data = await sound.getStatusAsync();
 
-            return data.durationMillis / 1000;
+            return data.durationMillis;
         } catch (error) {
             console.error(`Could not load track for '${uri}':`, error);
         }
@@ -149,26 +150,28 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                 fileURI: "Încărcați un fișier audio!"
             };
         } else {
-            TrackUtils.trackExists(fileURI).then(exists => {
-                if(exists) {
+            TrackBridge.trackExists(fileURI)
+                .then(() => {
                     err = {
                         ...err,
                         fileURI: "O piesă la acestă locație este deja încărcată!"
                     };
-                } else delete err.fileURI;
-            });
+                })
+                .catch(() => {
+                    delete err.fileURI;
+                });
         }
 
         setErrors(err);
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            let track = { title, fileURI, platform, millis };
-            const newArtist = artist == "" ? ARTIST_NAME_PLACEHOLDER : artist;
-
+            let track = createTrack(title, fileURI, platform, millis);
             if (coverURI) track.coverURI = JSON.stringify(coverURI);
 
-            TrackUtils.addTrack({ artist: newArtist, track}, dispatch);
+            const newArtist = artist == "" ? ARTIST_NAME_PLACEHOLDER : artist;
+
+            TrackBridge.addTrack({ artist: newArtist, track}, dispatch);
             handleClose();
         }
     }

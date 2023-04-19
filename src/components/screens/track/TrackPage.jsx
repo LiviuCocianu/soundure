@@ -22,7 +22,7 @@ import Toast from 'react-native-root-toast';
 
 import { StackActions } from '@react-navigation/native';
 import { handleCoverURI } from '../../../functions';
-import { TrackUtils } from '../../../database/componentUtils';
+import { TrackBridge } from '../../../database/componentBridge';
 import ConfirmationWindow from '../../modals/ConfirmationWindow';
 import { IMAGE_QUALITY } from '../../../constants';
 import { useMemo } from 'react';
@@ -110,12 +110,12 @@ const TrackInfo = memo(({
     }
 
     const handleTrackDelete = () => {
-        TrackUtils.deleteTrack(track.id, dispatch);
+        TrackBridge.deleteTrack(track.id, dispatch);
         handleBack();
     }
 
     const handleToggleFavorite = () => {
-        TrackUtils.toggleFavorite(track.id, dispatch);
+        TrackBridge.toggleFavorite(track.id, dispatch);
     }
 
     const handlePlatformIcon = () => {
@@ -135,7 +135,7 @@ const TrackInfo = memo(({
             });
         } else {
             toggleTitleEditor(false);
-            TrackUtils.setTitle(title, track.id, dispatch);
+            TrackBridge.setTitle(title, track.id, dispatch);
         }
     }
 
@@ -157,7 +157,7 @@ const TrackInfo = memo(({
         });
 
         if (!result.canceled) {
-            TrackUtils.setCoverURI(result.assets[0].uri, track.id, dispatch);
+            TrackBridge.setCoverURI(result.assets[0].uri, track.id, dispatch);
         }
     }
 
@@ -243,7 +243,7 @@ Fișierul asociat piesei nu va fi șters din dispozitiv!`}
                         <Text
                             color="gray.400"
                             fontFamily="manrope_r"
-                            fontSize="sm">{artist.name} • {track.millis.toString().toHHMMSS()}</Text>
+                            fontSize="sm">{artist.name} • {(track.millis / 1000).toString().toHHMMSS()}</Text>
 
                         <PlatformIcon
                             onPress={handlePlatformIcon}

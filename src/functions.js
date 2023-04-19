@@ -1,7 +1,7 @@
 import { getColorFromURL } from "rn-dominant-color";
 
 
-const defURI = require("../assets/images/default_cover.png");
+const defURI = require("../assets/images/default_cover.jpg");
 
 /**
  * Verifies if the given cover URI is defined and processes it.

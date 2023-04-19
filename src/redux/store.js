@@ -4,6 +4,7 @@ import {
     playlistContentReducer,
     trackReducer,
     artistReducer,
+    queueReducer,
 } from "../redux/reducers"
 
 
@@ -13,6 +14,7 @@ const store = configureStore({
         playlistsContent: playlistContentReducer, // This state maps the relations between playlists and tracks
         tracks: trackReducer,
         artists: artistReducer,
+        queue: queueReducer,
     }
 });
 

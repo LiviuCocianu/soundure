@@ -11,6 +11,7 @@ import App from './src/app'
 import store from './src/redux/store'
 import themes from "./assets/themes";
 import TrackPlayer from "react-native-track-player";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 
 String.prototype.toHHMMSS = function () {
@@ -36,17 +37,20 @@ const config = {
 const theme = extendTheme(themes);
 
 const ReduxApp = () => (
-    /* Provide the Redux store to the entire app */
-    <Provider store={store}>
-        {/* Allows the use of NativeBase components and settings */}
-        <NativeBaseProvider theme={theme} config={config}> 
-            {/* Used for showing toasts */}
-            <RootSiblingParent> 
-                <StatusBar />
-                <App />
-            </RootSiblingParent>
-        </NativeBaseProvider>
-    </Provider>
+    // Enable user gesture support
+    <GestureHandlerRootView style={{flex: 1, flexGrow: 1}}>
+        {/* Provide the Redux store to the entire app */}
+        <Provider store={store}>
+            {/* Allows the use of NativeBase components and settings */}
+            <NativeBaseProvider theme={theme} config={config}> 
+                {/* Used for showing toasts */}
+                <RootSiblingParent> 
+                    <StatusBar />
+                    <App />
+                </RootSiblingParent>
+            </NativeBaseProvider>
+        </Provider>
+    </GestureHandlerRootView>
 );
 
 registerRootComponent(ReduxApp);

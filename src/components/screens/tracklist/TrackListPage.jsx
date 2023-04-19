@@ -10,6 +10,7 @@ import { Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-ico
 import OptimizedTrackList from '../../general/OptimizedTrackList';
 import { playlistContentAdded } from "../../../redux/slices/playlistContentSlice"
 import db from "../../../database/database"
+import { PlaylistBridge } from '../../../database/componentBridge';
 
 
 const FeatherNB = Factory(Feather);
@@ -33,6 +34,7 @@ const TrackListPage = ({ navigation, route }) => {
     const dispatch = useDispatch();
     
     let selectedIDs = useRef(new Set()).current;
+    const [areAllSelected, setAllSelected] = useState(false);
 
     const ownTracks = useMemo(() => {
         const ownIDs = playlistsContent
@@ -41,8 +43,6 @@ const TrackListPage = ({ navigation, route }) => {
 
         return tracks.filter(tr => !ownIDs.includes(tr.id)).map(tr => tr.id);
     }, [playlistsContent]);
-
-    const [areAllSelected, setAllSelected] = useState(false);
 
     const handleHomeNav = () => {
         navigation.popToTop();
@@ -73,21 +73,12 @@ const TrackListPage = ({ navigation, route }) => {
 
     const handleSubmit = () => {
         if(selectedIDs.size > 0) {
-            db.insertBulkInto("PlaylistContent", tracks
-                .filter(tr => selectedIDs.has(tr.id))
-                .map(tr => ({ trackId: tr.id, playlistId: payload.id }))
-            ).then(rsArr => {
-                rsArr.forEach(rs => {
-                    const payl = rs.payload;
-                    dispatch(playlistContentAdded({ id: rs.insertId, ...payl }));
-                });
-            }).then(() => {
-                handleBack();
-                Toast.show("Piesele au fost adăugate!", {
-                    duration: Toast.durations.LONG,
-                    delay: 500
-                });
-            });
+            PlaylistBridge.linkTracks(
+                tracks
+                    .filter(tr => selectedIDs.has(tr.id))
+                    .map(tr => ({ trackId: tr.id, playlistId: payload.id })),
+                dispatch
+            ).then(handleBack);
         } else {
             Toast.show("Selectează câteva piese mai întâi", {
                 position: Toast.positions.CENTER
@@ -153,7 +144,7 @@ const TrackListPage = ({ navigation, route }) => {
             <Button w="50%" h="10" mb="5"
                 onPress={handleSubmit}
                 position="absolute"
-                bottom="0"
+                bottom="24"
                 alignSelf="center"
                 bg="primary.500"
                 borderRadius="lg"

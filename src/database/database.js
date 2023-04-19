@@ -1,6 +1,6 @@
 import * as SQLite from 'expo-sqlite'
 import { ResultSet } from 'expo-sqlite'
-import { TABLES } from '../constants';
+import { DEFAULT_QUOTE, TABLES } from '../constants';
 
 
 class Database {
@@ -11,30 +11,28 @@ class Database {
     * - instance = Database object used for sending SQL transactions. Is undefined by default
     */
     constructor() {
-        this.instance = undefined;
+        this.instance = SQLite.openDatabase("storage.db");
     }
 
     /**
-     * Opens the database and creates all required tables, if necessary.
+     * Creates all required tables, if necessary.
      * 
-     * @returns {Promise} Resolves when initialization is done
+     * @returns {Promise<void>} Resolves when initialization is done
      */
     init() {
         return new Promise(async (resolve, reject) => {
-            this.instance = SQLite.openDatabase("storage.db");
-
             await Promise.all([
                 this.createTable(TABLES.ARTIST,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    name TEXT UNIQUE NOT NULL,
-                    favorite BOOLEAN DEFAULT 0`
+                    name TEXT NOT NULL UNIQUE,
+                    favorite BOOLEAN DEFAULT 0 `
                 ),
                 this.createTable(TABLES.PLAYLIST,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    title TEXT NOT NULL DEFAULT 'Fara titlu',
+                    title TEXT NOT NULL DEFAULT 'Playlist',
                     description TEXT DEFAULT '',
                     coverURI TEXT,
-                    favorite BOOLEAN DEFAULT 0`
+                    favorite BOOLEAN DEFAULT 0 `
                 ),
                 this.createTable(TABLES.PLAYLIST_CONFIG,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -48,20 +46,20 @@ class Database {
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     title TEXT NOT NULL DEFAULT 'Fara titlu',
                     coverURI TEXT,
-                    fileURI TEXT UNIQUE,
-                    millis INTEGER DEFAULT 0,
+                    fileURI TEXT NOT NULL UNIQUE,
+                    millis INTEGER NOT NULL DEFAULT 0,
                     favorite BOOLEAN DEFAULT 0,
-                    platform TEXT CHECK(platform IN ('NONE', 'SPOTIFY', 'SOUNDCLOUD', 'YOUTUBE')) DEFAULT 'NONE',
+                    platform TEXT NOT NULL CHECK(platform IN('NONE', 'SPOTIFY', 'SOUNDCLOUD', 'YOUTUBE')) DEFAULT 'NONE',
                     artistId INTEGER NOT NULL,
                     FOREIGN KEY(artistId) REFERENCES Artist(id)`
                 ),
                 this.createTable(TABLES.TRACK_CONFIG,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    shuffleWeight REAL DEFAULT 0,
-                    loopRepeats INTEGER DEFAULT 1,
-                    volumeBoost REAL DEFAULT 0,
-                    pitch REAL DEFAULT 0,
-                    speed REAL DEFAULT 0,
+                    shuffleWeight REAL NOT NULL DEFAULT 0,
+                    loopRepeats INTEGER NOT NULL DEFAULT 1,
+                    volumeBoost REAL NOT NULL DEFAULT 0,
+                    pitch REAL NOT NULL DEFAULT 0,
+                    speed REAL NOT NULL DEFAULT 0,
                     startMillis INTEGER DEFAULT 0,
                     endMillis INTEGER DEFAULT 0,
                     playlistConfigId INTEGER NOT NULL,
@@ -77,23 +75,39 @@ class Database {
                 ),
                 this.createTable(TABLES.QUEUE,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    channel TEXT NOT NULL CHECK(channel IN ('MAIN', 'EAVESDROP')),
-                    currentTrack INTEGER,
+                    currentIndex INTEGER DEFAULT -1,
                     currentMillis INTEGER DEFAULT 0,
-                    playlistId INTEGER,
-                    FOREIGN KEY(playlistId) REFERENCES Playlist(id)`
+                    orderMap TEXT DEFAULT '[]',
+                    playlistConfigId INTEGER,
+                    FOREIGN KEY(playlistConfigId) REFERENCES PlaylistConfig(id)`
                 ),
                 this.createTable(TABLES.QUOTE,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    lastFetch INTEGER DEFAULT 0,
-                    quote TEXT DEFAULT 'default quote',
-                    author TEXT DEFAULT 'default author',
-                    updateDaily BOOLEAN DEFAULT 0`)
+                    lastFetch INTEGER NOT NULL DEFAULT 0,
+                    quote TEXT DEFAULT "${DEFAULT_QUOTE.CONTENT}",
+                    author TEXT DEFAULT "${DEFAULT_QUOTE.AUTHOR}",
+                    updateDaily BOOLEAN DEFAULT 0`
+                )
             ]).then(() => {
                 console.log("");
                 console.log("Tables were created successfully!");
                 console.log(`Registered tables: ${Array.from(Object.values(TABLES)).join(", ")}`);
                 resolve();
+            }).catch(error => reject(error));
+        });
+    }
+
+    /**
+     * Drops all tables and creates them back.
+     * 
+     * @returns {Promise<void>}
+     */
+    resetAndInit() {
+        return new Promise((resolve, reject) => {
+            this.dropAll().then(() => {
+                this.init().then(() => {
+                    resolve();
+                }).catch(error => reject(error));
             }).catch(error => reject(error));
         });
     }
@@ -106,7 +120,7 @@ class Database {
      * 
      * @returns {Promise} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    createTable(name, columns) {
+    async createTable(name, columns) {
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
                 await tx.executeSql(`CREATE TABLE IF NOT EXISTS ${name} (${columns})`, 
@@ -116,11 +130,10 @@ class Database {
                     },
                     (txObj, error) => {
                         reject(error);
-                        console.log(error);
                     }
                 );
             });
-        });
+        }).catch(error => console.log(error.message));
     }
 
     /**
@@ -133,7 +146,7 @@ class Database {
      * 
      * @returns {Promise<any[]>} An array of row objects on resolve, the error on reject. Prints the error to the console
      */
-    selectFrom(table, columns = ["*"], conditions, args = []) {
+    async selectFrom(table, columns = ["*"], conditions, args = []) {
         const cols = columns == null || columns == [] ? ["*"] : columns.join(", ");
         const conds = conditions ? ` WHERE ${conditions}` : ``;
 
@@ -144,11 +157,10 @@ class Database {
                     (txObj, rs) => resolve(rs.rows._array),
                     (txObj, error) => {
                         reject(error);
-                        console.log(error);
                     }
                 );
             });
-        });
+        }).catch(error => console.log(error.message));
     }
 
     /**
@@ -159,7 +171,7 @@ class Database {
      * 
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    insertInto(table, payload = {}) {
+    async insertInto(table, payload = {}) {
         const keys = Object.keys(payload);
         const values = Object.values(payload);
         const joinedColumns = keys.join(", ");
@@ -179,32 +191,35 @@ class Database {
                         return resolve(rs);
                     }, 
                     (txObj, error) => {
-                        console.log(error);
                         return reject(error);
                     }
                 );
             });
-        });
+        }).catch(error => console.log(error.message));
     }
 
     /**
-     * Performs an SQL insertion on the database, but only if the conditions are met.
+     * Performs an SQL insertion on the database, but only if there is no row that
+     * meets the specified conditions.
      * 
      * @param {string} table Table name, case sensitive
      * @param {object} payload Object containing the column names as keys and their values respectively
      * @param {string} [conditions] SQL conditions
      * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
      * 
-     * @returns {Promise<ResultSet|void>} Resolves with the ResultSet if conditions are met, void otherwise.
+     * @returns {Promise<ResultSet|{exists: false}>} Resolves with the ResultSet and an extra 'exists' truthy property if conditions are met.
      */
-    insertIfNotExists(table, payload={}, conditions, args) {
-        return this.existsIn(table, conditions, args).then(exists => {
-            if(!exists) return this.insertInto(table, payload).then(rs => {
-                rs.exists = true;
-                return rs;
+    async insertIfNotExists(table, payload={}, conditions, args) {
+        return this.existsIn(table, conditions, args)
+            .then(() => {
+                return Promise.resolve({ exists: false });
+            })
+            .catch(async () => {
+                return this.insertInto(table, payload).then(rs => {
+                    rs.exists = true;
+                    return rs;
+                });
             });
-            return Promise.resolve().then(() => ({ exists: false }));
-        });
     }
 
     /**
@@ -216,7 +231,9 @@ class Database {
      * @returns {Promise<ResultSet[]>} All ResultSets for each insert on resolve, the error on reject, if one failed. Prints the error to the console
      */
     insertBulkInto(table, payloads=[{}]) {
-        return Promise.all(payloads.map(payload => this.insertInto(table, payload)));
+        return Promise.all(payloads.map(payload => {
+            return this.insertInto(table, payload);
+        }));
     }
 
     /**
@@ -229,8 +246,9 @@ class Database {
      * 
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    update(table, values, conditions, args=[]) {
+    async update(table, values, conditions, args=[]) {
         const conds = conditions ? ` WHERE ${conditions}` : ``;
+
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
                 await tx.executeSql(`UPDATE ${table} SET ${values}${conds}`,
@@ -242,7 +260,7 @@ class Database {
                     }
                 )
             });
-        })
+        }).catch(error => console.log(error.message));
     }
 
     /**
@@ -254,8 +272,9 @@ class Database {
      * 
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    deleteFrom(table, conditions, args=[]) {
+    async deleteFrom(table, conditions, args=[]) {
         const conds = conditions ? ` WHERE ${conditions}` : ``;
+
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
                 await tx.executeSql(`DELETE FROM ${table}${conds}`,
@@ -267,7 +286,7 @@ class Database {
                     }
                 );
             });
-        });
+        }).catch(error => console.log(error.message));
     }
 
     /**
@@ -278,7 +297,7 @@ class Database {
      * 
      * @returns {Promise<ResultSet>} The ResultSet on resolve, the error on reject. Prints the error to the console
      */
-    exec(statement, args=[]) {
+    async exec(statement, args=[]) {
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
                 await tx.executeSql(statement, args,
@@ -289,7 +308,7 @@ class Database {
                     }
                 );
             });
-        });
+        }).catch(error => console.log(error.message));
     }
 
     /**
@@ -299,18 +318,16 @@ class Database {
      * @param {string} conditions SQL conditions. Accepts placeholders
      * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
      * 
-     * @returns {Promise<boolean>} Resolves with a boolean that indicates the existence of the data
+     * @returns {Promise<void>} Resolves if exists, rejects otherwise
      */
-    existsIn(table, conditions, args = []) {
-        return this.selectFrom(table, null, conditions, args)
-            .then(rows => rows.length > 0);
+    async existsIn(table, conditions, args = []) {
+        return new Promise(async (resolve, reject) => {
+            await this.selectFrom(table, null, conditions, args).then(rows => {
+                if (rows.length > 0) resolve();
+                else reject();
+            });
+        }).catch(error => console.log(error.message));
     }
-
-    /**
-     * @typedef ExistsWithRowsResult 
-     * @property {boolean} exists Boolean that indicates the existence of the data
-     * @property {object[]} rows The rows fetched during the operation, if any data exists
-     */
 
     /**
      * Checks if data following given conditions exists in a table, but also returns the rows, if any were found.
@@ -319,14 +336,16 @@ class Database {
      * @param {string} conditions SQL conditions. Accepts placeholders
      * @param {any[]} [args] Values to replace placeholders with, if specified in conditions
      * 
-     * @returns {Promise<ExistsWithRowsResult>} Resolves with an object containing the information
+     * @returns {Promise<any[]>} Resolves or rejects with an object containing the information,
+     * depending if it exists or not.
      */
-    existsWithRows(table, conditions, args = []) {
-        return this.selectFrom(table, null, conditions, args)
-            .then(rows => ({
-                exists: rows.length > 0,
-                rows
-            }));
+    async existsWithRows(table, conditions, args = []) {
+        return new Promise(async (resolve, reject) => {
+            await this.selectFrom(table, null, conditions, args).then(rows => {
+                if (rows.length > 0) resolve(rows);
+                else reject(rows);
+            });
+        }).catch(error => console.log(error.message));
     }
 
     /**
@@ -345,8 +364,9 @@ class Database {
      * 
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each drop when done
      */
-    dropAll() {
-        return Promise.all(Array.from(Object.values(TABLES)).map(table => this.drop(table)));
+    async dropAll() {
+        return Promise.all(Array.from(Object.values(TABLES)).map(table => this.drop(table)))
+            .catch(error => console.log(error.message));
     }
 
     /**
@@ -358,7 +378,7 @@ class Database {
      * 
      * @returns {Promise<ResultSet>} Resolves with a ResultSet when done
      */
-    truncate(table) {
+    async truncate(table) {
         return this.deleteFrom(table).then(() => this.resetSequenceFor(table));
     }
 

@@ -11,7 +11,7 @@ import Toast from 'react-native-root-toast';
 
 import PlaylistSettingsSheet from './PlaylistSettingsSheet';
 
-import { PlaylistUtils } from '../../../database/componentUtils';
+import { PlaylistBridge } from '../../../database/componentBridge';
 import { handleCoverURI, lng, composePlaylistInfo } from '../../../functions';
 import { IMAGE_QUALITY } from '../../../constants';
 import OptimizedTrackList from '../../general/OptimizedTrackList';
@@ -120,7 +120,7 @@ const PlaylistCover = memo(({
             });
         } else {
             toggleTitleEditor(false);
-            PlaylistUtils.setTitle(title, playlist.id, dispatch);
+            PlaylistBridge.setTitle(title, playlist.id, dispatch);
         }
     }
 
@@ -148,10 +148,11 @@ const PlaylistCover = memo(({
         });
 
         if (!result.canceled) {
-            PlaylistUtils.setCoverURI(result.assets[0].uri, playlist.id, dispatch);
+            PlaylistBridge.setCoverURI(result.assets[0].uri, playlist.id, dispatch);
         }
     }
 
+    // TODO add searchbar for tracks
     return (
         <Box w="100%" h="35%">
             <ImageNB w="100%" h="100%"
@@ -221,7 +222,7 @@ const PlaylistCover = memo(({
 
                     <Text color="white"
                         fontFamily="quicksand_r"
-                        fontSize="xs">{composePlaylistInfo(ownTracks.length, totalMillis)}</Text>
+                        fontSize="xs">{composePlaylistInfo(ownTracks.length, totalMillis / 1000)}</Text>
                 </Box>
             </Box>
         </Box>

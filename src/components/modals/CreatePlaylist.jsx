@@ -17,8 +17,9 @@ import * as ImagePicker from 'expo-image-picker'
 import { useDispatch } from 'react-redux'
 
 import NoCoverImage from '../general/NoCoverImage'
-import { PlaylistUtils } from '../../database/componentUtils'
+import { PlaylistBridge } from '../../database/componentBridge'
 import { IMAGE_QUALITY, RESERVED_PLAYLISTS } from '../../constants'
+import { createPlaylist } from '../../database/shapes'
 
 
 const initialCoverObjectURI = require("../../../assets/images/soundure_banner_dark.png");
@@ -87,11 +88,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
         if (Object.keys(err).length == 0) {
             let newTitle = title == "" ? "Playlist" : title;
 
-            // TODO debug
-            console.log(title);
-            console.log(description);
-
-            PlaylistUtils.addPlaylist({ title: newTitle, coverURI: coverStringURI, description }, dispatch);
+            PlaylistBridge.addPlaylist(createPlaylist(newTitle, description, coverStringURI), dispatch);
             handleClose();
         }
     }

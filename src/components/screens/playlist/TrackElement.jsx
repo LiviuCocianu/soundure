@@ -1,4 +1,4 @@
-import React, { useEffect, useState, memo } from 'react';
+import React, { useEffect, useState, memo, useCallback } from 'react';
 import { ImageBackground } from 'react-native';
 import { 
     HStack,
@@ -11,15 +11,16 @@ import {
     useDisclose
 } from 'native-base'
 
+import { useSelector } from 'react-redux';
 import { Entypo, AntDesign } from '@expo/vector-icons';
 import MarqueeText from 'react-native-marquee'
-import { useSelector } from 'react-redux';
 
 import { handleCoverURI, lng } from '../../../functions';
 import { ARTIST_NAME_PLACEHOLDER, PLATFORMS, TRACK_EL_HEIGHT } from '../../../constants';
 
 import PlatformIcon from '../../general/PlatformIcon';
 import TrackSettingsSheet from '../track/TrackSettingsSheet';
+import { useMemo } from 'react';
 
 
 const ImageNB = Factory(ImageBackground);
@@ -62,20 +63,18 @@ const TrackElement = ({
     const tracks = useSelector(state => state.tracks);
     const artists = useSelector(state => state.artists);
 
-    const [track, setTrack] = useState({});
-    const [artist, setArtist] = useState({});
-
     const [isSelected, setSelected] = useState(false);
 
-
-    useEffect(() => {
+    const track = useMemo(() => {
         const foundTrack = tracks.find(el => el.id == trackId);
-        if(foundTrack) setTrack(foundTrack);
+        if (foundTrack) return foundTrack;
+        return {};
     }, [tracks]);
 
-    useEffect(() => {
+    const artist = useMemo(() => {
         const foundArtist = artists.find(el => el.id == track.artistId);
-        if (foundArtist) setArtist(foundArtist);
+        if (foundArtist) return foundArtist;
+        return {};
     }, [track, artists]);
 
     useEffect(() => {
@@ -83,20 +82,18 @@ const TrackElement = ({
         selectionHandler(allSelected, null);
     }, [allSelected]);
 
-    const handleSelection = (isSelected) => {
+    const handleSelection = useCallback((isSelected) => {
         setSelected(isSelected);
         selectionHandler(isSelected, trackId);
-    }
+    }, [selectionHandler, trackId]);
 
-    const handlePress = () => {
-        if(selectionMode) {
-            handleSelection(!isSelected);
-        }
-    }
+    const handlePress = useCallback(() => {
+        if (selectionMode) handleSelection(!isSelected);
+    }, [selectionMode, isSelected, handleSelection]);
 
-    const handleSettingsButton = () => {
+    const handleSettingsButton = useCallback(() => {
         disclose.onOpen();
-    }
+    }, [disclose]);
 
     return (
         <Pressable _pressed={{ opacity: 0.8 }} 
@@ -107,13 +104,52 @@ const TrackElement = ({
                 rounded="lg" 
                 shadow={10}
             >
-                <TrackCover coverURI={track.coverURI}/>
-                <TrackInfo w={w} 
-                    title={track.title} 
-                    artistName={artist.name}
-                    millis={track.millis}
-                    isFavorite={track.favorite}
-                    platform={track.platform}/>
+                <AspectRatio ratio="4/4" h="auto">
+                    <ImageNB
+                        source={handleCoverURI(track.coverURI)}
+                        imageStyle={{
+                            borderTopLeftRadius: 10,
+                            borderBottomLeftRadius: 10
+                        }} />
+                </AspectRatio>
+
+                <VStack w="auto" pl="6" mr="auto"
+                    justifyContent="center"
+                    borderTopRightRadius="lg"
+                    borderBottomRightRadius="lg"
+                >
+                    <MarqueeNB w={w * 0.55}
+                        color="white"
+                        fontFamily="quicksand_b"
+                        fontSize="md"
+                        speed={0.3}>{track.title ? track.title : ""}</MarqueeNB>
+
+                    <Text color={artist.name == ARTIST_NAME_PLACEHOLDER ? "gray.400" : "white"}
+                        fontFamily={artist.name == ARTIST_NAME_PLACEHOLDER ? "manrope_li" : "manrope_r"}
+                        fontSize="xs">{artist.name ? artist.name : ""}</Text>
+
+                    <HStack space={1} mt="1" alignItems="center">
+                        <EntypoNB name="controller-play" color="primary.50">
+                            <Text
+                                color="primary.50"
+                                fontFamily="manrope_l"
+                                fontSize="xs"
+                            >
+                                {(track.millis / 1000).toString().toHHMMSS()}
+                            </Text>
+                        </EntypoNB>
+
+                        {
+                            track.favorite ? (
+                                <AntDesignNB
+                                    name="star"
+                                    color="yellow.300" />
+                            ) : (<></>)
+                        }
+
+                        <PlatformIcon platform={track.platform} />
+                    </HStack>
+                </VStack>
 
                 {
                     !selectionMode ? (
@@ -141,67 +177,5 @@ const TrackElement = ({
         </Pressable>
     );
 };
-
-// Separate component into smaller memo components for performance
-const TrackCover = memo(({coverURI}) => (
-    <AspectRatio ratio="4/4" h="auto">
-        <ImageNB
-            source={handleCoverURI(coverURI)}
-            imageStyle={{
-                borderTopLeftRadius: 10,
-                borderBottomLeftRadius: 10
-            }} />
-    </AspectRatio>
-), (prev, next) => prev.coverURI == next.coverURI);
-
-const TrackInfo = memo(({w, title="", artistName="", millis=0, isFavorite, platform=PLATFORMS.NONE}) => {
-    return (
-        <VStack w="auto" pl="6" mr="auto"
-            justifyContent="center"
-            borderTopRightRadius="lg"
-            borderBottomRightRadius="lg"
-        >
-            <MarqueeNB w={w * 0.55}
-                color="white"
-                fontFamily="quicksand_b"
-                fontSize="md"
-                speed={0.3}>{title ? title : ""}</MarqueeNB>
-
-            <Text color={artistName == ARTIST_NAME_PLACEHOLDER ? "gray.400" : "white"}
-                fontFamily={artistName == ARTIST_NAME_PLACEHOLDER ? "manrope_li" : "manrope_r"}
-                fontSize="xs">{artistName ? artistName : ""}</Text>
-
-            <HStack space={1} mt="1" alignItems="center">
-                <EntypoNB name="controller-play" color="primary.50">
-                    <Text 
-                        color="primary.50"
-                        fontFamily="manrope_l"
-                        fontSize="xs"
-                    >
-                        {millis.toString().toHHMMSS()}
-                    </Text>
-                </EntypoNB>
-
-                {
-                    isFavorite ? (
-                        <AntDesignNB 
-                        name="star"
-                        color="yellow.300"/>
-                    ) : (<></>)
-                }
-
-                <PlatformIcon platform={platform}/>
-            </HStack>
-        </VStack>
-    )
-}, (prev, next) => 
-    prev.title == next.title 
-    && prev.artistName == next.artistName
-    && prev.millis == next.millis
-    && prev.isFavorite == next.isFavorite
-    && prev.platform == next.platform
-    && prev.allSelected == next.allSelected
-);
-
 
 export default TrackElement

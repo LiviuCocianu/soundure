@@ -43,7 +43,7 @@ const HomePage = ({ navigation }) => {
 
                 {/* Content */}
                 <QuoteBox />
-                <Box w="100%" h="100%" pb="10"
+                <Box w="100%" h="100%" pb="15"
                     position="relative"
                     bottom={2}
                     bg="black"
