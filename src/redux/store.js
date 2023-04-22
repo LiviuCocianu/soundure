@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit'
 import { 
     playlistReducer,
     playlistContentReducer,
+    playlistConfigReducer,
     trackReducer,
     artistReducer,
     queueReducer,
@@ -12,6 +13,7 @@ const store = configureStore({
     reducer: {
         playlists: playlistReducer,
         playlistsContent: playlistContentReducer, // This state maps the relations between playlists and tracks
+        playlistConfig: playlistConfigReducer,
         tracks: trackReducer,
         artists: artistReducer,
         queue: queueReducer,

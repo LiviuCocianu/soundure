@@ -1,7 +1,7 @@
 import { Dispatch, AnyAction } from "redux";
 
 import db from "./database";
-import { ARTIST_NAME_PLACEHOLDER, ENV, PLATFORMS, QUOTE_API_URL, TABLES } from "../constants";
+import { ARTIST_NAME_PLACEHOLDER, ENV, ORDER_MUTATION_OPTIONS, PLATFORMS, QUOTE_API_URL, TABLES } from "../constants";
 import Toast from "react-native-root-toast";
 
 import { trackSet, trackAdded, trackRemoved } from "../redux/slices/trackSlice";
@@ -154,7 +154,7 @@ export const PlaylistBridge = {
                     if (redux) dispatch(playlistContentAdded({ id: rs.insertId, ...payl }));
                 });
 
-                Toast.show("Piesele au fost adăugate!");
+                Toast.show(links.length != 1 ? "Piesele au fost adăugate!" : "Piesa a fost adăugată!");
             });
     }
 }
@@ -218,49 +218,64 @@ export const QuoteBridge = {
 
 export const QueueBridge = {
     setIndex: (index, dispatch) => {
-        getFixedRow(TABLES.QUEUE).then(rows => {
-            const data = rows[0];
-            const orderMapLen = JSON.parse(data.orderMap).length;
-
-            if (index >= 0 && index < orderMapLen) {
-                db.update(TABLES.QUEUE, "currentIndex=?", "id=?", [index, 1]).then(rs => {
-                    dispatch(currentIndexSet(index));
-                });
+        getFixedRow(TABLES.QUEUE).then(row => {
+            if (row.playlistConfigId || row.playlistConfigId == -1) {
+                console.warn("Couldn't set queue index because destination config is not defined. Add a playlist to the queue then try again..");
+                return;
             }
+
+            db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "id=?", [row.playlistConfigId]).then(rows => {
+                const row = rows[0];
+                const orderMapLen = JSON.parse(row.orderMap).length;
+    
+                if (index >= 0 && index < orderMapLen) {
+                    db.update(TABLES.QUEUE, "currentIndex=?", "id=?", [index, 1]).then(rs => {
+                        dispatch(currentIndexSet(index));
+                    });
+                }
+            });
         });
     },
     incrementIndex: (dispatch) => {
-        getFixedRow(TABLES.QUEUE).then(rows => {
-            const data = rows[0];
-            QueueBridge.setIndex(data.currentIndex + 1, dispatch);
+        getFixedRow(TABLES.QUEUE).then(row => {
+            QueueBridge.setIndex(row.currentIndex + 1, dispatch);
         });
     },
-    setCurrentMillis: (millis, dispatch) => {
+    /**
+     * Set the millisecond the current track is at.
+     * 
+     * @param {number} millis 
+     * @param {Dispatch<AnyAction>} dispatch 
+     * @param {(['database']|['redux']|['database', 'redux'])} [sendTo] Where to send the changes.
+     * By default, they will be sent to both the database and the Redux store
+     */
+    setCurrentMillis: (millis, dispatch, sendTo=["database", "redux"]) => {
         if(millis >= 0) {
-            db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]).then(rs => {
+            if (sendTo.includes("database") && sendTo.includes("redux"))
+                db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]).then(() => {
+                    dispatch(currentMillisSet(millis));
+                });
+            else if (sendTo.includes("database"))
+                db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]);
+            else if (sendTo.includes("redux"))
                 dispatch(currentMillisSet(millis));
-            });
         }
     },
     setOrderMap: (map, dispatch) => {
         if(Array.isArray(map)) {
-            db.update(TABLES.QUEUE, "orderMap=?", "id=?", [JSON.stringify(map), 1]).then(() => {
-                dispatch(orderMapSet(map));
+            getFixedRow(TABLES.QUEUE).then(row => {
+                if (row.playlistConfigId || row.playlistConfigId == -1) {
+                    console.warn("Couldn't set order map because destination config is not defined. Add a playlist to the queue then try again..");
+                    return;
+                }
+
+                db.update(TABLES.PLAYLIST_CONFIG, "id=?, orderMap=?", "id=?", [row.playlistConfigId, JSON.stringify(map), 1]).then(() => {
+                    dispatch(orderMapSet(map));
+                });
             });
         }
     },
-    moveTrackFromTo: (from, to, dispatch) => {
-        getFixedRow(TABLES.QUEUE).then(rows => {
-            const data = rows[0];
-            let order = JSON.parse(data.orderMap);
+    toggleConfigOptionFor: (playlistId, dispatch, option=ORDER_MUTATION_OPTIONS.LOOP, value=false) => {
 
-            if (from < order.length && to < order.length) {
-                const trackId = order[from];
-                order = order.filter(id => id != trackId);
-                order.splice(to, 0, trackId);
-
-                QueueBridge.setOrderMap(order, dispatch);
-            }
-        });
-    },
+    }
 };

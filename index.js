@@ -9,7 +9,7 @@ import serviceCallback from "./src/sound/service"
 
 import App from './src/app'
 import store from './src/redux/store'
-import themes from "./assets/themes";
+import themes from "./src/themes";
 import TrackPlayer from "react-native-track-player";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 

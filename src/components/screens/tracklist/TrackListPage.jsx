@@ -11,6 +11,8 @@ import OptimizedTrackList from '../../general/OptimizedTrackList';
 import { playlistContentAdded } from "../../../redux/slices/playlistContentSlice"
 import db from "../../../database/database"
 import { PlaylistBridge } from '../../../database/componentBridge';
+import { PLAYER_DOWN_HEIGHT } from '../../../constants';
+import { lng } from '../../../functions';
 
 
 const FeatherNB = Factory(Feather);
@@ -88,22 +90,10 @@ const TrackListPage = ({ navigation, route }) => {
 
     return (
         <Box w="100%" h="100%"
-            bg={{
-                linearGradient: {
-                    colors: ["gray.800", "black"],
-                    start: [0.5, 0],
-                    end: [0.5, 1]
-                }
-            }}
+            bg={lng(["gray.800", "black"], "bottom")}
         >
             <HStack w="100%" h="16%" pl="6" pt="12"
-                bg={{
-                    linearGradient: {
-                        colors: ["primary.900", "primary.500"],
-                        start: [0.5, 0],
-                        end: [0.5, 1]
-                    }
-                }}
+                bg={lng(["primary.900", "primary.500"], "bottom")}
             >
                 <Box h="100%" justifyContent="center">
                     <Text color="white"
@@ -141,10 +131,10 @@ const TrackListPage = ({ navigation, route }) => {
                     selectionHandler: handleSelection
                 }}/>
 
-            <Button w="50%" h="10" mb="5"
+            <Button w="50%" h="10"
                 onPress={handleSubmit}
                 position="absolute"
-                bottom="24"
+                bottom="4"
                 alignSelf="center"
                 bg="primary.500"
                 borderRadius="lg"

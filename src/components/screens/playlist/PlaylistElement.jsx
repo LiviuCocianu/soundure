@@ -52,7 +52,7 @@ const PlaylistElement = ({
     const playlistsContent = useSelector(state => state.playlistsContent);
 
     const [title, setTitle] = useState(noTitle);
-    const [coverURI, setCoverURI] = useState(handleCoverURI(null));
+    const [coverURI, setCoverURI] = useState(handleCoverURI(undefined));
 
     const [ownTracks, setOwnTracks] = useState([]);
     const [totalDuration, setTotalDuration] = useState(0);

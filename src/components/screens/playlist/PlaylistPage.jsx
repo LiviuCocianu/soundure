@@ -1,5 +1,5 @@
 import React, { useState, useEffect, memo, useMemo } from 'react'
-import { ImageBackground, StyleSheet } from 'react-native';
+import { Dimensions, ImageBackground, StyleSheet } from 'react-native';
 import { Box, Factory, HStack, Text, useDisclose, FormControl, Input, Button, Pressable } from 'native-base'
 
 import { StackActions } from "@react-navigation/native"
@@ -10,10 +10,11 @@ import * as ImagePicker from 'expo-image-picker'
 import Toast from 'react-native-root-toast';
 
 import PlaylistSettingsSheet from './PlaylistSettingsSheet';
+import OrderPanel from './OrderPanel';
 
 import { PlaylistBridge } from '../../../database/componentBridge';
 import { handleCoverURI, lng, composePlaylistInfo } from '../../../functions';
-import { IMAGE_QUALITY } from '../../../constants';
+import { IMAGE_QUALITY, SCREEN_WITH_PLAYER_HEIGHT } from '../../../constants';
 import OptimizedTrackList from '../../general/OptimizedTrackList';
 
 
@@ -22,6 +23,7 @@ const handleTrackListNav = (navigation, payload) => {
 };
 
 const MAX_TITLE_LENGTH = 48;
+const SCREEN_HEIGHT = Dimensions.get("screen").height;
 
 const ImageNB = Factory(ImageBackground);
 const FeatherNB = Factory(Feather);
@@ -60,9 +62,11 @@ const PlaylistPage = ({ navigation, route: { params: { playlistId } } }) => {
     }
 
     return (
-        <Box w="100%" h="100%"
+        <Box w="100%" h={`${SCREEN_WITH_PLAYER_HEIGHT}px`}
             bg={lng(["gray.700", "black"], "bottom")}
         >
+            <OrderPanel />
+
             <PlaylistCover
                 playlist={playlist}
                 ownTracks={ownTracks}/>
@@ -152,7 +156,6 @@ const PlaylistCover = memo(({
         }
     }
 
-    // TODO add searchbar for tracks
     return (
         <Box w="100%" h="35%">
             <ImageNB w="100%" h="100%"

@@ -5,7 +5,7 @@ import { tracksSet } from "../redux/slices/trackSlice"
 import { playlistsContentSet } from "../redux/slices/playlistContentSlice"
 import { artistsSet } from "../redux/slices/artistSlice"
 import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
-import { currentIndexSet, currentMillisSet, orderMapSet } from "../redux/slices/queueSlice"
+import { currentIndexSet, currentMillisSet } from "../redux/slices/queueSlice"
 import { PlaylistBridge, TrackBridge } from "./componentBridge"
 import { createPlaylist, createTrack } from "./shapes"
 
@@ -16,7 +16,6 @@ const loadQueueFromDB = (dispatch) => {
 
         dispatch(currentIndexSet(data.currentIndex));
         dispatch(currentMillisSet(data.currentMillis));
-        dispatch(orderMapSet(JSON.parse(data.orderMap)));
     });
 }
 
@@ -50,8 +49,7 @@ export function setupDatabase(dispatch, setLoadedDatabase) {
                 await db.insertIfNotExists(TABLES.PLAYLIST, { title: reserved }, "title=?", [reserved]);
             }
 
-            // TODO empty hardcoded orderMap array when I implement a way to add tracks to the queue from the UI
-            await db.insertIfNotExists(TABLES.QUEUE, { orderMap: JSON.stringify([1, 2, 3, 4, 5]) }, "id=?", [1]).then(() => {
+            await db.insertIfNotExists(TABLES.QUEUE, { currentIndex: 3 }, "id=?", [1]).then(() => {
                 loadQueueFromDB(dispatch);
             });
 
@@ -63,8 +61,12 @@ export function setupDatabase(dispatch, setLoadedDatabase) {
                 dispatch(artistsSet(rows));
             });
 
-            await db.selectFrom(TABLES.PLAYLIST).then(rows => {
+            await db.selectFrom(TABLES.PLAYLIST).then(async rows => {
                 dispatch(playlistsSet(rows));
+
+                for(const row of rows) {
+                    await db.insertIfNotExists(TABLES.PLAYLIST_CONFIG, { playlistId: row.id });
+                }
             });
 
             await db.selectFrom(TABLES.PLAYLIST_CONTENT)

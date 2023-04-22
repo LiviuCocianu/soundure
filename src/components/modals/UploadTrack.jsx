@@ -55,7 +55,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     const [title, setTitle] = useState("");
     const [artist, setArtist] = useState(ARTIST_NAME_PLACEHOLDER);
     const [coverURI, setCoverURI] = useState(undefined);
-    const [fileURI, setFileURI] = useState(null);
+    const [fileURI, setFileURI] = useState(undefined);
     const [millis, setMillis] = useState(0);
     const [platform, setPlatform] = useState(PLATFORMS.SPOTIFY);
 
@@ -144,7 +144,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
             };
         } else delete err.artist;
 
-        if (fileURI == null) {
+        if (!fileURI) {
             err = {
                 ...err,
                 fileURI: "Încărcați un fișier audio!"
@@ -180,7 +180,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         setTitle("");
         setArtist(ARTIST_NAME_PLACEHOLDER);
         setCoverURI(undefined);
-        setFileURI(null);
+        setFileURI(undefined);
         setMillis(0);
         setPlatform(PLATFORMS.SPOTIFY);
 

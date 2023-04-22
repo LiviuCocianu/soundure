@@ -1,4 +1,5 @@
 import { getColorFromURL } from "rn-dominant-color";
+import themes from "./themes";
 
 
 const defURI = require("../assets/images/default_cover.jpg");
@@ -6,12 +7,12 @@ const defURI = require("../assets/images/default_cover.jpg");
 /**
  * Verifies if the given cover URI is defined and processes it.
  * 
- * @param {string|NodeRequire} coverURI The cover URI. This can be either a node-required image,
+ * @param {string|NodeRequire|object} coverURI The cover URI. This can be either a node-required image,
  * an HTTP/HTTPS url or a stringified JSON object that contains the URI
- * @param {string|NodeRequire} [defaultURI] The default URI. Can take the same type
+ * @param {string|NodeRequire|object} [defaultURI] The default URI. Can take the same type
  * of data as the coverURI. It will be used as a fallback if coverURI is undefined
  * 
- * @returns {object|NodeRequire} An object containing the URI of the cover, otherwise
+ * @returns {object|NodeRequire|object} An object containing the URI of the cover, otherwise
  * returns the default cover
  */
 export function handleCoverURI(coverURI, defaultURI=defURI) {
@@ -24,7 +25,11 @@ export function handleCoverURI(coverURI, defaultURI=defURI) {
         } catch(err) {}
     }
 
-    return !modified ? defaultURI : (modified.uri ? modified : { uri: modified });
+    const handleIfIsRequire = typeof(modified) == "string" ? { uri: modified } : modified;
+    const handleIfURIObj = modified && modified.uri ? modified : handleIfIsRequire;
+    const handleUndefined = !modified || modified == null ? defaultURI : handleIfURIObj;
+
+    return handleUndefined;
 }
 
 /**
@@ -42,16 +47,20 @@ export function handleColors(coverURI) {
 
     if(modified.uri) modified = modified.uri;
 
-    if (modified == defURI) {
-        return Promise.resolve(() => ({
-            primary: "gray.700",
-            secondary: "gray.700",
-            background: "gray.900",
-            detail: "gray.900"
-        }));
-    } else {
-        return getColorFromURL(coverURI);
-    }
+    return new Promise((resolve, reject) => {
+        if (modified == defURI) {
+            const defHex = "#a1a1aa";
+
+            resolve({
+                primary: defHex,
+                secondary: defHex,
+                background: defHex,
+                detail: defHex
+            });
+        } else {
+            getColorFromURL(modified).then(colors => resolve(colors));
+        }
+    });
 }
 
 /**
@@ -139,4 +148,29 @@ export async function firstConnected(urlList) {
     }
 
     return undefined;
+}
+
+/**
+ * Does a simple search on an object array by the key with the provided value
+ * 
+ * @param {object[]} arr Array of objects to search in
+ * @param {string} key The name of the key used for the lookup
+ * @param {*} value The value of the key for the lookup
+ * @param {object|null|undefined} [def] If nothing is found, this param is used as a
+ * default value. If not specified, the function returns an empty object
+ * 
+ * @returns {object|null|undefined} If found, returns the object, otherwise returns def
+ */
+export const find = (arr, key, value, def={}) => {
+    if(Array.isArray(arr) && typeof(key) == "string") {
+        for (let i = 0; i < arr.length; i++) {
+            if (
+                typeof(arr[i]) == "object" 
+                && !Array.isArray(arr[i])
+                && arr[i][key] === value
+            ) return arr[i];
+        }
+    }
+
+    return def;
 }

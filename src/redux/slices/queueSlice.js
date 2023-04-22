@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit"
 
 
 const initialState = {
-    currentIndex: -1,
+    currentIndex: 0,
     currentMillis: 0,
     orderMap: []
 };

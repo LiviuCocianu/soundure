@@ -6,8 +6,11 @@ import OptimizedTrackList from '../../general/OptimizedTrackList'
 import { StackActions } from '@react-navigation/native'
 import { Feather } from '@expo/vector-icons'
 import { lng } from '../../../functions'
+import { Dimensions } from 'react-native'
+import { PLAYER_DOWN_HEIGHT, SCREEN_WITH_PLAYER_HEIGHT } from '../../../constants'
 
 
+const SCREEN_HEIGHT = Dimensions.get("screen").height;
 const FeatherNB = Factory(Feather);
 
 /**
@@ -31,7 +34,7 @@ const TracksPreviewPage = ({
     }
 
     return (
-        <Box w="100%" h="100%"
+        <Box w="100%" h={`${SCREEN_WITH_PLAYER_HEIGHT}px`}
             bg={lng(["gray.700", "black"], "bottom")}
         >
             <HStack w="100%" h="16%" pl="6" pt="12"

@@ -42,7 +42,7 @@ const ImageNB = Factory(ImageBackground);
 const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [coverStringURI, setCoverStringURI] = useState(null);
+    const [coverStringURI, setCoverStringURI] = useState(undefined);
     const [coverObjectURI, setCoverObjectURI] = useState(initialCoverObjectURI);
  
     const [errors, setErrors] = useState({});
@@ -96,7 +96,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const handleClose = () => {
         setTitle("");
         setDescription("");
-        setCoverStringURI(null);
+        setCoverStringURI(undefined);
         setCoverObjectURI(initialCoverObjectURI);
         setErrors({})
 
@@ -114,7 +114,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
                 <Modal.CloseButton _icon={{ color: "white" }}/>
                 <Box w="100%" h="100%">
                     {
-                        coverStringURI === null ? (
+                        !coverStringURI ? (
                             <NoCoverImage h="35%"/>
                         ) : (
                             <ImageNB

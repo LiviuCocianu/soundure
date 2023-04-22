@@ -36,6 +36,7 @@ class Database {
                 ),
                 this.createTable(TABLES.PLAYLIST_CONFIG,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    orderMap TEXT DEFAULT '[]',
                     isLooping BOOLEAN DEFAULT 0,
                     isShuffling BOOLEAN DEFAULT 0,
                     isReversing BOOLEAN DEFAULT 0,
@@ -75,10 +76,9 @@ class Database {
                 ),
                 this.createTable(TABLES.QUEUE,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    currentIndex INTEGER DEFAULT -1,
+                    currentIndex INTEGER DEFAULT 0,
                     currentMillis INTEGER DEFAULT 0,
-                    orderMap TEXT DEFAULT '[]',
-                    playlistConfigId INTEGER,
+                    playlistConfigId INTEGER DEFAULT -1,
                     FOREIGN KEY(playlistConfigId) REFERENCES PlaylistConfig(id)`
                 ),
                 this.createTable(TABLES.QUOTE,
@@ -320,13 +320,13 @@ class Database {
      * 
      * @returns {Promise<void>} Resolves if exists, rejects otherwise
      */
-    async existsIn(table, conditions, args = []) {
+    existsIn(table, conditions, args = []) {
         return new Promise(async (resolve, reject) => {
             await this.selectFrom(table, null, conditions, args).then(rows => {
                 if (rows.length > 0) resolve();
                 else reject();
             });
-        }).catch(error => console.log(error.message));
+        });
     }
 
     /**
@@ -339,13 +339,13 @@ class Database {
      * @returns {Promise<any[]>} Resolves or rejects with an object containing the information,
      * depending if it exists or not.
      */
-    async existsWithRows(table, conditions, args = []) {
+    existsWithRows(table, conditions, args = []) {
         return new Promise(async (resolve, reject) => {
             await this.selectFrom(table, null, conditions, args).then(rows => {
                 if (rows.length > 0) resolve(rows);
                 else reject(rows);
             });
-        }).catch(error => console.log(error.message));
+        });
     }
 
     /**

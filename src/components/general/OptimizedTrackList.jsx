@@ -7,6 +7,8 @@ import NoContentInfo from './NoContentInfo';
 import { TRACK_EL_HEIGHT } from '../../constants';
 import { useCallback } from 'react';
 import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
+import { find } from '../../functions';
 
 
 /**
@@ -48,26 +50,32 @@ const OptimizedTrackList = ({
         selectionHandler: () => { }
     },
 }) => {
-    const screenW = Dimensions.get("screen").width;
+    const tracks = useSelector(state => state.tracks);
+    const artists = useSelector(state => state.artists);
+
+    const findTrackInfo = useCallback((trackId) => {
+        const track = find(tracks, "id", trackId);
+        const artist = find(artists, "id", track.artistId);
+
+        return [track, artist];
+    }, [tracks, artists]);
 
     const renderElements = ({ item }) => {
-        return <TrackElement
-        navigation={navigation}
-        w={screenW - (screenW * 0.05)}
-        trackId={item}
-        playlistId={playlist ? playlist.id : undefined}
-        selectionMode={selection.enabled}
-        allSelected={selection.areAllSelected}
-        selectionHandler={selection.selectionHandler} />
+        const [track, artist] = findTrackInfo(item);
+
+        return (
+            <TrackElement
+                navigation={navigation}
+                track={track}
+                artist={artist}
+                playlistId={playlist ? playlist.id : undefined}
+                selectionMode={selection.enabled}
+                allSelected={selection.areAllSelected}
+                selectionHandler={selection.selectionHandler} />
+        )
     };
 
-    const renderMemo = useMemo(() => renderElements, [playlist, selection.areAllSelected]);
-    
-    const getItemLayout = useCallback((data, index) => ({
-        length: TRACK_EL_HEIGHT,
-        offset: TRACK_EL_HEIGHT * index,
-        index
-    }), []);
+    const renderMemo = useMemo(() => renderElements, [findTrackInfo, playlist, selection.areAllSelected]);
 
     return <>
         {
@@ -77,11 +85,11 @@ const OptimizedTrackList = ({
                     subtitle={<><Text underline>Adaugă piese</Text> și începe să asculți</>}
                 />
             ) : (
-                <FlatList w="100%" h="100%" pt="2"
+                <FlatList w="100%" pt="2" flexGrow={1}
                     data={ownTracks}
                     renderItem={renderMemo}
                     keyExtractor={(_, index) => `optimizedlistitem_${index}`}
-                    _contentContainerStyle={{ alignItems: "center", paddingBottom: 5 }}/>
+                    _contentContainerStyle={{ alignItems: "center", paddingBottom: 10 }}/>
             )
         }
     </>
