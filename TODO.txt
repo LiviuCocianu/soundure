@@ -1,0 +1,5 @@
+- Add infinite scrolling feature to OptimizedTrackList and PlayerQueue
+
+- Add searchbar to OptimizedTrackList
+
+- Move all factoried icons to a dedicated js file

@@ -3,6 +3,7 @@ import { ImageBackground } from 'react-native'
 import { Box, AspectRatio, Factory, Pressable } from 'native-base'
 
 import MarqueeText from 'react-native-marquee'
+
 import { handleCoverURI } from '../../functions';
 
 
@@ -48,7 +49,6 @@ const HorizontalCategoryElement = ({
                         <Box w="100%" h="25%" 
                             overflow="hidden" 
                             justifyContent="center"
-                            rounded="xl"
                         >
                             <Box w="100%" h="100%" 
                                 bg="black" 
@@ -60,7 +60,12 @@ const HorizontalCategoryElement = ({
                                 fontFamily="manrope_r"
                                 fontSize="10"
                                 numberOfLines={1}
-                                speed={0.5}>{title}</MarqueeTextNB>
+                                style={{
+                                    textShadowRadius: 5,
+                                    textShadowColor: 'black',
+                                    textShadowOffset: { width: 1, height: 2 }
+                                }}
+                                speed={0.4}>{title}</MarqueeTextNB>
                         </Box>
                     </ImageNB>
                 </AspectRatio>

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Actionsheet, Text, HStack } from 'native-base';
+import { lng } from '../../functions';
 
 
 /**
@@ -36,13 +37,7 @@ const CustomActionsheet = ({
             _backdrop={{ opacity: 0.7 }}
         >
             <Actionsheet.Content w="auto" px="0" mx="2"
-                bg={{
-                    linearGradient: {
-                        colors: ["primary.700", "primary.900"],
-                        start: [0, 0.5],
-                        end: [1, 0.5]
-                    }
-                }}
+                bg={lng(["primary.700", "primary.900"])}
                 _dragIndicatorWrapper={{ bg:"primary.800" }}
                 _dragIndicator={{ bg: "primary.500", h: "0.5" }}
             >

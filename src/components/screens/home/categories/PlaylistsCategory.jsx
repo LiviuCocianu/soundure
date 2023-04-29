@@ -1,9 +1,12 @@
-import React from 'react'
-import { Box, Text, ScrollView } from 'native-base'
+import React, { useMemo } from 'react'
+import { Box, Text, Icon, ScrollView } from 'native-base'
 
 import { useSelector } from 'react-redux'
+import { faFolderPlus } from '@fortawesome/free-solid-svg-icons'
+import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome"
 
-import PlaylistElement from '../PlaylistElement'
+import PlaylistElement from '../../playlist/PlaylistElement'
+import NoContentInfo from '../../../general/NoContentInfo'
 import { RESERVED_PLAYLISTS } from '../../../../constants'
 
 
@@ -27,17 +30,19 @@ const PlaylistsCategory = ({
     navigation,
     navigateToPlaylist
 }) => {
-    const data = useSelector(state => state.playlists);
-    const renderContent = data.map(item => {
-        if (RESERVED_PLAYLISTS.includes(item.title)) return;
+    const playlists = useSelector(state => state.playlists);
+    const renderPlaylists = useMemo(() => {
+        return playlists.map(playlist => {
+            if (RESERVED_PLAYLISTS.includes(playlist.title)) return;
 
-        return <PlaylistElement
-            navigation={navigation}
-            playlistId={item.id}
-            navigateToPlaylist={navigateToPlaylist}
-            key={item.id}
-        />;
-    });
+            return <PlaylistElement
+                navigation={navigation}
+                playlistId={playlist.id}
+                navigateToPlaylist={navigateToPlaylist}
+                key={playlist.id}
+            />;
+        });
+    }, [playlists]);
 
     return (
         <Box w="90%" h="350" mt="6"
@@ -47,7 +52,7 @@ const PlaylistsCategory = ({
             bg="primary.900"
             rounded="2xl"
         >
-            <Box mt="4"
+            <Box py="4"
                 flex="0.2"
                 justifyContent="center"
                 alignItems="center"
@@ -63,11 +68,24 @@ const PlaylistsCategory = ({
                     fontSize="sm">Alege un playlist</Text>
             </Box>
 
-            <ScrollView w="90%" mt="4"
-                flex="0.8"
-                _contentContainerStyle={{ flexGrow: 1 }}
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled>{renderContent}</ScrollView>
+            {
+                playlists.length > RESERVED_PLAYLISTS.length ? (
+                    <ScrollView w="95%" flex="0.8"
+                        _contentContainerStyle={{ flexGrow: 1 }}
+                        nestedScrollEnabled
+                        showsVerticalScrollIndicator={false}
+                    >{renderPlaylists}</ScrollView>
+                ) : (
+                    <Box w="100%" flex="0.8">
+                        <NoContentInfo
+                            subtitle={<>
+                                Selectează <Icon as={FontAwesomeIcon} icon={faFolderPlus} color="primary.500"/>
+                                <Text color="primary.50"> Creează playlist</Text> pentru a începe!
+                            </>}/>
+                    </Box>
+                )
+            }
+            
         </Box>
     );
 };

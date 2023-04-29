@@ -5,10 +5,14 @@ import { registerRootComponent } from 'expo';
 import { LinearGradient } from "expo-linear-gradient"
 import { Provider } from 'react-redux';
 import { RootSiblingParent } from "react-native-root-siblings"
+import serviceCallback from "./src/sound/service"
 
 import App from './src/app'
 import store from './src/redux/store'
-import themes from "./assets/themes";
+import themes from "./src/themes";
+import TrackPlayer from "react-native-track-player";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+
 
 
 String.prototype.toHHMMSS = function () {
@@ -23,6 +27,8 @@ String.prototype.toHHMMSS = function () {
     return (parseInt(hours) < 1 ? "" : (hours + ':')) + minutes + ':' + seconds;
 }
 
+TrackPlayer.registerPlaybackService(() => serviceCallback);
+
 const config = {
     dependencies: {
         'linear-gradient': LinearGradient
@@ -32,17 +38,20 @@ const config = {
 const theme = extendTheme(themes);
 
 const ReduxApp = () => (
-    /* Provide the entire app with the Redux store */
-    <Provider store={store}>
-        {/* Allows the use of NativeBase components and settings */}
-        <NativeBaseProvider theme={theme} config={config}> 
-            {/* Used for showing toasts */}
-            <RootSiblingParent> 
-                <StatusBar />
-                <App />
-            </RootSiblingParent>
-        </NativeBaseProvider>
-    </Provider>
+    // Enable user gesture support
+    <GestureHandlerRootView style={{flex: 1, flexGrow: 1}}>
+        {/* Provide the Redux store to the entire app */}
+        <Provider store={store}>
+            {/* Allows the use of NativeBase components and settings */}
+            <NativeBaseProvider theme={theme} config={config}> 
+                {/* Used for showing toasts */}
+                <RootSiblingParent> 
+                    <StatusBar />
+                    <App />
+                </RootSiblingParent>
+            </NativeBaseProvider>
+        </Provider>
+    </GestureHandlerRootView>
 );
 
 registerRootComponent(ReduxApp);

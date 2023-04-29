@@ -10,6 +10,7 @@ import HistoryCategory from './categories/HistoryCategory'
 import PlaylistsCategory from './categories/PlaylistsCategory'
 import QuoteBox from './QuoteBox'
 import UploadTrack from '../../modals/UploadTrack'
+import TracksCategory from './categories/TracksCategory'
 
 
 /**
@@ -24,8 +25,8 @@ const HomePage = ({ navigation }) => {
     const [createModalOpened, toggleCreateModal] = useState(false);
     const [uploadModalOpened, toggleUploadModal] = useState(false);
 
-    const navigateToPlaylist = (playlistObj) => {
-        navigation.navigate("Playlist", { payload: playlistObj });
+    const navigateToPlaylist = (playlistId) => {
+        navigation.navigate("Playlist", { playlistId });
     }
 
     return (
@@ -42,7 +43,7 @@ const HomePage = ({ navigation }) => {
 
                 {/* Content */}
                 <QuoteBox />
-                <Box w="100%" h="100%" pb="10"
+                <Box w="100%" h="100%" pb="15"
                     position="relative"
                     bottom={2}
                     bg="black"
@@ -67,7 +68,8 @@ const HomePage = ({ navigation }) => {
                     </Box>
 
                     <PlaylistsCategory navigation={navigation} navigateToPlaylist={navigateToPlaylist} />
-                    <HistoryCategory />
+                    <TracksCategory navigation={navigation} />
+                    <HistoryCategory navigation={navigation} />
                     <FavoriteCategory navigation={navigation} />
                 </Box>
             </ScrollView>

@@ -17,8 +17,9 @@ import * as ImagePicker from 'expo-image-picker'
 import { useDispatch } from 'react-redux'
 
 import NoCoverImage from '../general/NoCoverImage'
-import { RESERVED_PLAYLISTS } from '../../constants'
-import { PlaylistUtils } from '../../database/componentUtils'
+import { PlaylistBridge } from '../../database/componentBridge'
+import { IMAGE_QUALITY, RESERVED_PLAYLISTS } from '../../constants'
+import { createPlaylist } from '../../database/shapes'
 
 
 const initialCoverObjectURI = require("../../../assets/images/soundure_banner_dark.png");
@@ -41,7 +42,7 @@ const ImageNB = Factory(ImageBackground);
 const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [coverStringURI, setCoverStringURI] = useState(null);
+    const [coverStringURI, setCoverStringURI] = useState(undefined);
     const [coverObjectURI, setCoverObjectURI] = useState(initialCoverObjectURI);
  
     const [errors, setErrors] = useState({});
@@ -52,7 +53,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 4],
-            quality: 0.5,
+            quality: IMAGE_QUALITY,
         });
 
         if(!result.canceled) {
@@ -64,11 +65,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const handleSubmit = () => {
         let err = {...errors};
 
-        if(title.length < 3) {
-            err = { ...err,
-                title: "Denumire mai mică de 3 caractere"
-            };
-        } else if(title.length > 64) {
+        if(title.length > 64) {
             err = { ...err,
                 title: "Denumire prea lungă"
             };
@@ -89,7 +86,9 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            PlaylistUtils.addPlaylist({title, description, coverURI: coverStringURI}, dispatch);
+            let newTitle = title == "" ? "Playlist" : title;
+
+            PlaylistBridge.addPlaylist(createPlaylist(newTitle, description, coverStringURI), dispatch);
             handleClose();
         }
     }
@@ -97,7 +96,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
     const handleClose = () => {
         setTitle("");
         setDescription("");
-        setCoverStringURI(null);
+        setCoverStringURI(undefined);
         setCoverObjectURI(initialCoverObjectURI);
         setErrors({})
 
@@ -115,7 +114,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
                 <Modal.CloseButton _icon={{ color: "white" }}/>
                 <Box w="100%" h="100%">
                     {
-                        coverStringURI === null ? (
+                        !coverStringURI ? (
                             <NoCoverImage h="35%"/>
                         ) : (
                             <ImageNB
@@ -170,12 +169,12 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
                                     color: "gray.400"
                                 }}>Descriere</FormControl.Label>
 
-                                <TextArea 
-                                    h="100"
+                                <TextArea h="100"
+                                    value={description}
+                                    onChangeText={setDescription}
                                     borderColor="primary.50"
                                     color="primary.50"
                                     fontFamily="manrope_r"
-                                    onChangeText={setDescription}
                                     _focus={{
                                         borderColor: "primary.50"
                                     }}

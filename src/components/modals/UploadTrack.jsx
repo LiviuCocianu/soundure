@@ -12,21 +12,28 @@ import {
     Button,
 } from 'native-base'
 
+import { useDispatch } from 'react-redux'
 import * as ImagePicker from 'expo-image-picker'
 import * as DocumentPicker from 'expo-document-picker'
-import { useDispatch } from 'react-redux'
+import { Entypo, AntDesign } from '@expo/vector-icons'
+import { Audio } from 'expo-av'
 
 import SourceSelectionBox from '../general/SourceSelectionBox'
 import NoCoverImage from '../general/NoCoverImage'
-import db from "../../database/database"
-import { handleCoverURI } from '../../functions'
 import CustomActionsheet, { CustomActionsheetItem } from '../general/CustomActionsheet'
-import { Entypo, AntDesign } from "@expo/vector-icons"
-import { TrackUtils } from '../../database/componentUtils'
+
+import { TrackBridge } from '../../database/componentBridge'
+import { createTrack } from '../../database/shapes'
+import { handleCoverURI } from '../../functions'
+import { ARTIST_NAME_PLACEHOLDER, IMAGE_QUALITY, PLATFORMS } from '../../constants'
 
 
 const EntypoNB = Factory(Entypo);
 const AntDesignNB = Factory(AntDesign);
+const ImageNB = Factory(ImageBackground);
+
+const defaultCoverURI = require("../../../assets/images/soundure_banner_dark.png");
+const screenHeight = parseInt(Dimensions.get("screen").height);
 
 /**
  * Modal visibility handler
@@ -44,29 +51,26 @@ const AntDesignNB = Factory(AntDesign);
  * @returns {Component} Component JSX
  */
 const UploadTrack = ({ isOpen, closeHandle }) => {
-    const defaultCoverURI = require("../../../assets/images/soundure_banner_dark.png");
-    const ImageNB = Factory(ImageBackground);
-    const screenHeight = parseInt(Dimensions.get("screen").height);
+    const dispatch = useDispatch();
 
     const [title, setTitle] = useState("");
-    const [artist, setArtist] = useState("Necunoscut");
-    const [coverURI, setCoverURI] = useState(undefined);
-    const [fileURI, setFileURI] = useState(null);
-    const [url, setURL] = useState("");
-    const [platform, setPlatform] = useState("NONE");
+    const [artist, setArtist] = useState(ARTIST_NAME_PLACEHOLDER);
+    const [coverURI, setCoverURI] = useState("DEFAULT");
+    const [fileURI, setFileURI] = useState(undefined);
+    const [millis, setMillis] = useState(0);
+    const [platform, setPlatform] = useState(PLATFORMS.SPOTIFY);
 
     const [sourceHelper, setSourceHelper] = useState("");
     const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
-    const [sheetIsOpen, toggleSheet] = useState(false);
+    const [sourceOptions, toggleSourceOptions] = useState(false);
     const [errors, setErrors] = useState({});
-    const dispatch = useDispatch();
 
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 4],
-            quality: 0.5,
+            quality: IMAGE_QUALITY,
         });
 
         if (!result.canceled) {
@@ -74,28 +78,44 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         }
     }
 
-    const handleFileChoice = async () => {
-        let result = await DocumentPicker.getDocumentAsync({ type: "audio/*" });
+    const handleFileChoice = async (platform) => {
+        toggleSourceOptions(false);
 
-        toggleSheet(false);
+        const result = await DocumentPicker.getDocumentAsync({ type: "audio/*" });
 
         if (result.type == "success") {
             setFileURI(result.uri);
             setSourceHelper(result.name);
+            setPlatform(platform);
 
-            if (title === "") {
-                setTitle(result.name.split(".")[0]);
+            const millis = await getMillis(result.uri);
+            setMillis(millis);
+
+            if(title === "") {
+                const fileName = result.name.split(".");
+                setTitle(fileName.slice(0, fileName.length - 1).join("."));
             }
         }
     }
 
-    const handleFileURLChoice = () => {
-        toggleSourceSelectionBox(true);
-        toggleSheet(false);
+    const getMillis = async (uri) => {
+        const sound = new Audio.Sound();
+
+        try {
+            await sound.loadAsync({ uri });
+            const data = await sound.getStatusAsync();
+
+            return data.durationMillis;
+        } catch (error) {
+            console.error(`Could not load track for '${uri}':`, error);
+        }
+
+        return 0;
     }
 
-    const handleSourceChoice = () => {
-        toggleSheet(true);
+    const handleSourceSelectionBox = () => {
+        toggleSourceSelectionBox(true);
+        toggleSourceOptions(false);
     }
 
     const handleSubmit = () => {
@@ -125,41 +145,46 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
             };
         } else delete err.artist;
 
-        if (fileURI == null) {
+        if (!fileURI) {
             err = {
                 ...err,
                 fileURI: "Încărcați un fișier audio!"
             };
         } else {
-            TrackUtils.trackExists(fileURI).then(exists => {
-                if(exists) {
+            TrackBridge.trackExists(fileURI)
+                .then(() => {
                     err = {
                         ...err,
                         fileURI: "O piesă la acestă locație este deja încărcată!"
                     };
-                } else delete err.fileURI;
-            });
+                })
+                .catch(() => {
+                    delete err.fileURI;
+                });
         }
 
         setErrors(err);
 
         // All validation have passed
         if (Object.keys(err).length == 0) {
-            let track = { title, fileURI, platform };
-            if (coverURI) track.coverURI = JSON.stringify(coverURI);
+            let track = createTrack(title, fileURI, "DEFAULT", platform, millis);
+            if (coverURI && coverURI != "DEFAULT") 
+                track.coverURI = coverURI == "DEFAULT" ? coverURI : JSON.stringify(coverURI);
 
-            TrackUtils.addTrack({artist, track}, dispatch);
+            const newArtist = artist == "" ? ARTIST_NAME_PLACEHOLDER : artist;
+
+            TrackBridge.addTrack({ artist: newArtist, track}, dispatch);
             handleClose();
         }
     }
 
     const handleClose = () => {
         setTitle("");
-        setArtist("Necunoscut");
+        setArtist(ARTIST_NAME_PLACEHOLDER);
         setCoverURI(undefined);
-        setFileURI(null);
-        setURL("");
-        setPlatform("NONE");
+        setFileURI(undefined);
+        setMillis(0);
+        setPlatform(PLATFORMS.SPOTIFY);
 
         setSourceHelper("");
         setErrors({});
@@ -172,18 +197,18 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         <Modal isOpen={isOpen} onClose={handleClose}>
             <CustomActionsheet
                 title="Sursă piesă"
-                isOpen={sheetIsOpen}
-                onClose={() => toggleSheet(false)}
+                isOpen={sourceOptions}
+                onClose={() => toggleSourceOptions(false)}
             >
                 <CustomActionsheetItem text="Preia din dispozitiv"
                     iconName="mobile"
                     IconType={EntypoNB}
-                    onPress={handleFileChoice} />
+                    onPress={() => handleFileChoice(PLATFORMS.NONE)} />
 
-                <CustomActionsheetItem text="Preia din URL"
+                <CustomActionsheetItem text="Preia din exterior"
                     iconName="link"
                     IconType={AntDesignNB}
-                    onPress={handleFileURLChoice} />
+                    onPress={handleSourceSelectionBox} />
             </CustomActionsheet>
 
             <Modal.Content w="90%" h={screenHeight}
@@ -204,7 +229,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                     >
                         <AspectRatio ratio="4/4" h="100%" alignSelf="center">
                             {
-                                !coverURI ? (
+                                (!coverURI || coverURI == "DEFAULT") ? (
                                     <NoCoverImage />
                                 ) : (
                                     <ImageNB
@@ -289,7 +314,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                                 }}>Sursă piesă</FormControl.Label>
 
                                 <Button h="30" p="0" px="6"
-                                    onPress={handleSourceChoice}
+                                    onPress={() => toggleSourceOptions(true)}
                                     _text={{
                                         fontFamily: "manrope_r",
                                         fontSize: "xs"
@@ -304,10 +329,9 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                         {
                             sourceSelectionBox ? (
                                 <SourceSelectionBox
-                                    url={url}
-                                    setURL={setURL}
                                     platform={platform}
                                     setPlatform={setPlatform}
+                                    handleFileChoice={handleFileChoice}
                                 />
                             ) : <></>
                         }

@@ -1,3 +1,4 @@
+import React from 'react'
 import { Box, Pressable, AspectRatio, Text, Image } from "native-base";
 
 /**
@@ -16,7 +17,7 @@ import { Box, Pressable, AspectRatio, Text, Image } from "native-base";
  */
 const NoContentInfo = ({
     onPress,
-    title="",
+    title="Cam pustiu pe aici...",
     subtitle=""
 }) => {
     const unavailableURI = require("../../../assets/images/soundure_unavailable_white.png");

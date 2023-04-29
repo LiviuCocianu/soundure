@@ -6,7 +6,7 @@ import { Box, Factory, Text } from 'native-base'
 /**
  * NoCoverImage component
  * 
- * @param {object} props Props object. Can take utility-first props from NativeBase
+ * @param {object} props props object. Can take utility-first props from NativeBase
  * 
  * @returns {JSX.Element} JSX component
  */

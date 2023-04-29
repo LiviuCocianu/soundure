@@ -1,8 +1,28 @@
-import React from 'react'
-import { Box, Text, FormControl, Input, Radio, Icon, Button } from 'native-base'
+import React, { memo } from 'react'
+import { Box, Text, FormControl, Radio, Icon, Button, HStack, VStack } from 'native-base'
+
+import * as Linking from 'expo-linking'
 
 import CustomIcon from "../../icons"
+import { PLATFORMS } from '../../constants'
+import { firstConnected } from '../../functions'
+import Toast from 'react-native-root-toast'
 
+
+const SOURCE_TOOLS = {
+    SPOTIFY: {
+        track: ["https://spotifydown.com/", "https://spotify-downloader.com/"],
+        cover: []
+    },
+    SOUNDCLOUD: {
+        track: ["https://www.klickaud.co/", "https://downcloud.cc/"],
+        cover: ["https://www.howtotechies.com/soundcloud-artwork-downloader"]
+    },
+    YOUTUBE: {
+        track: ["https://en.y2mate.is/231/youtube-to-mp3.html", "https://x2download.app/en66/download-youtube-to-mp3"],
+        cover: ["https://youtube-thumbnail-grabber.com/", "https://thumbnailphoto.net/"]
+    }
+}
 
 /**
  * SourceSelectionBox component
@@ -15,72 +35,99 @@ import CustomIcon from "../../icons"
  * 
  * @returns {JSX.Element} JSX component
  */
-const SourceSelectionBox = ({ url, setURL, platform, setPlatform }) => {
-  const handleURLRequest = async () => {
+const SourceSelectionBox = ({ platform, setPlatform, handleFileChoice }) => {
+    const handleTrackTool = () => {
+        firstConnected(SOURCE_TOOLS[platform].track).then(url => {
+            if(url) Linking.openURL(url);
+        });
+    }
 
-  }
+    const handleCoverTool = () => {
+        if (SOURCE_TOOLS[platform].cover.length == 0) {
+            Toast.show("Această platformă nu suportă descărcarea de coperți");
+            return;
+        }
 
-  return (
-    <Box mt="6" p="4" pb="6"
-      bg="primary.900"
-      rounded="lg"
-      alignItems="center"
-    >
-      <Text mb="2"
-        color="white"
-        fontFamily="quicksand_b">Specifică URL sursă</Text>
+        firstConnected(SOURCE_TOOLS[platform].cover).then(url => {
+            if (url) Linking.openURL(url);
+        });
+    }
 
-      <FormControl isRequired>
-        <Input h="35" mb="4"
-          bg="primary.700"
-          borderWidth="0"
-          color="primary.50"
-          fontFamily="manrope_r"
-          placeholder="https://"
-          value={url}
-          onChange={setURL}
-          _focus={{ bg: "primary.700" }}/>
-      </FormControl>
+    return (
+        <Box mt="6" p="4" pb="6"
+            bg="primary.900"
+            rounded="lg"
+            alignItems="center"
+        >
+            <VStack w="90%" space="5">
+                <FormControl isRequired w="auto">
+                    <Text mb="4"
+                        color="white"
+                        fontFamily="quicksand_b">Alege platforma</Text>
 
-      <Text mb="2"
-        color="white"
-        fontFamily="quicksand_b">Specifică platformă</Text>
+                    <Radio.Group value={platform} onChange={setPlatform}>
+                        <SourceRadio id="spotify" name="Spotify" color="green.400" value={PLATFORMS.SPOTIFY} />
+                        <Box mb="1.5" />
+                        <SourceRadio id="soundcloud" name="Soundcloud" color="orange.400" value={PLATFORMS.SOUNDCLOUD} />
+                        <Box mb="1.5" />
+                        <SourceRadio id="youtube" name="Youtube" color="red.400" value={PLATFORMS.YOUTUBE} />
+                    </Radio.Group>
+                </FormControl>
 
-      <FormControl isRequired w="auto">
-        <Radio.Group value={platform} onChange={setPlatform}>
-          <SourceRadio id="spotify" name="Spotify" color="green.400" value="SPOTIFY" />
-          <Box mb="1.5" />
-          <SourceRadio id="soundcloud" name="Soundcloud" color="orange.400" value="SOUNDCLOUD" />
-          <Box mb="1.5" />
-          <SourceRadio id="youtube" name="Youtube" color="red.400" value="YOUTUBE" />
-        </Radio.Group>
-      </FormControl>
+                <Text color="white"
+                    fontFamily="quicksand_b">Alege un instrument</Text>
 
-      <Button w="80%" mt="6"
-        onPress={handleURLRequest}
-        _text={{
-          fontFamily: "quicksand_b",
-          fontSize: "xs"
-        }}>Confirmă</Button>
-    </Box>
-  )
+                <HStack w="100%" flex="1">
+                    <Button flex="0.5"
+                        onPress={handleTrackTool}
+                        _text={{
+                            fontFamily: "quicksand_b",
+                            fontSize: "xs",
+                            lineHeight: 14,
+                            textAlign: "center",
+                        }}>Descarcă piesă</Button>
+
+                    <Button flex="0.5" ml="4"
+                        onPress={handleCoverTool}
+                        _text={{
+                            fontFamily: "quicksand_b",
+                            fontSize: "xs",
+                            lineHeight: 14,
+                            textAlign: "center",
+                        }}>Descarcă copertă</Button>
+                </HStack>
+
+                <FormControl isRequired alignItems="center">
+                    <Text w="100%" mb="4"
+                        onPress={() => handleFileChoice(platform)}
+                        color="white"
+                        underline
+                        fontFamily="quicksand_b">Încarcă piesa obținută aici</Text>
+                </FormControl>
+            </VStack>
+        </Box>
+    )
 }
 
-const SourceRadio = ({id, name, color, value}) => (
-  <Radio borderWidth="0"
-    bg="primary.700"
-    size="lg"
-    value={value}
-    icon={<Icon as={<CustomIcon name={`${id}_logo`} size={10} color="white"/>}/>}
-    _checked={{ 
-      bg: color,
-      _icon: { color: "white" }
-    }}
-    _text={{
-      fontFamily: "manrope_b",
-      fontSize: "xs",
-      color: "white",
-    }}>{name}</Radio>
+const SourceRadio = ({ id, name, color, value }) => (
+    <Radio borderWidth="0"
+        bg="primary.700"
+        size="lg"
+        value={value}
+        icon={<Icon as={<CustomIcon name={`${id}_logo`} size={10} color="white" />} />}
+        _checked={{
+            bg: color,
+            _icon: { color: "white" }
+        }}
+        _text={{
+            fontFamily: "manrope_b",
+            fontSize: "xs",
+            color: "white",
+        }}>{name}</Radio>
 );
 
-export default SourceSelectionBox
+export default memo(SourceSelectionBox, (prev, next) => prev.url == next.url
+    && prev.setURL == next.setURL
+    && prev.platform == next.platform
+    && prev.setPlatform == next.setPlatform
+);
