@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Box, Factory, HStack, Pressable, Text, VStack } from 'native-base'
 
-import { AntDesign, Entypo, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
+import { useDispatch, useSelector } from 'react-redux';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
-import { play } from './orderPanel/playFunctions';
-import { useDispatch } from 'react-redux';
-import { useEffect } from 'react';
+import { AntDesign, Entypo, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
+import { play } from '../../../sound/orderPanel/playFunctions';
+import Toast from 'react-native-root-toast';
 
 
 const AntDesignNB = Factory(AntDesign);
@@ -23,6 +23,8 @@ const OrderPanel = ({
     coverHeight
 }) => {
     const dispatch = useDispatch();
+    const links = useSelector(state => state.playlistsContent);
+    const ownLinks = useMemo(() => links.filter(link => link.playlistId == playlistId), [links]);
 
     const [panelDrawn, togglePanel] = useState(true);
 
@@ -39,12 +41,24 @@ const OrderPanel = ({
         animValue.value = !panelDrawn ? 1 : PANEL_WIDTH;
     }, [animValue, panelDrawn]);
 
-    const handleDisplay = useCallback(() => togglePanel(!panelDrawn), [panelDrawn]);
+    const handleDisplay = () => togglePanel(!panelDrawn);
 
-    const handleSimplePlay = useCallback(() => {
+    const canPlay = () => {
+        if(ownLinks.length == 0) {
+            Toast.show("Nu s-au găsit piese de redat..");
+            return false;
+        }
+
+        return true;
+    };
+
+    const handleSimplePlay = () => {
         handleDisplay();
+
+        if(!canPlay()) return;
+
         play(playlistId, dispatch);
-    }, [panelDrawn]);
+    };
 
     return (
         <Animated.View style={{
@@ -62,7 +76,7 @@ const OrderPanel = ({
                     left={-29}
                     onPress={handleDisplay}
                 >
-                    <Box w="100%" h="100%"
+                    <Box w={BUTTON_WIDTH} h={BUTTON_HEIGHT}
                         alignItems="center"
                         justifyContent="center"
                         bg="black"

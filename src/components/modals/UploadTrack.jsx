@@ -70,7 +70,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
             allowsEditing: true,
             aspect: [4, 4],
-            quality: IMAGE_QUALITY,
+            quality: IMAGE_QUALITY
         });
 
         if (!result.canceled) {
@@ -81,7 +81,9 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     const handleFileChoice = async (platform) => {
         toggleSourceOptions(false);
 
-        const result = await DocumentPicker.getDocumentAsync({ type: "audio/*" });
+        const result = await DocumentPicker.getDocumentAsync({ 
+            type: "audio/*"
+        });
 
         if (result.type == "success") {
             setFileURI(result.uri);

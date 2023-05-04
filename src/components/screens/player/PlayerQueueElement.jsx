@@ -30,7 +30,6 @@ const MaterialNB = Factory(MaterialCommunityIcons);
  * @param {object} props.artist Artist info
  * @param {drag} props.drag Callback used in dragging event
  * @param {boolean} props.isActive This boolean will toggle when the element is being dragged
- * @param {string} props.dominantColor Dominant color picked from the cover URI
  * 
  * @returns {JSX.Element} JSX component
  */
@@ -38,8 +37,7 @@ const PlayerQueueElement = ({
     track,
     artist,
     drag,
-    isActive,
-    dominantColor
+    isActive
 }) => {
     const dispatch = useDispatch();
 
@@ -86,7 +84,6 @@ const PlayerQueueElement = ({
                         coverURI={track.coverURI}
                         millis={track.millis}
                         artistName={artist.name}
-                        currentIconColor={dominantColor}
                         relativeToCurrent={relativeToCurrent}/>
 
                     <Box position="absolute"
@@ -121,34 +118,32 @@ const TrackInfo = memo(({
     coverURI,
     millis,
     artistName,
-    currentIconColor,
     relativeToCurrent
 }) => {
     return (
         <>
             <AspectRatio ratio="4/4" h="80%" ml="2">
                 <Image size="100%"
-                    borderWidth="2"
-                    borderColor="gray.800"
                     source={handleCoverURI(coverURI)}
                     alt="queue track element cover"/>
             </AspectRatio>
 
-            <VStack h="80%" maxW="65%" ml="4"
+            <VStack h="80%" maxW="72%" ml="4"
                 flexGrow={1}
                 justifyContent="center"
             >
-                <HStack maxW="80%" alignItems="center" space="2">
+                <HStack maxW="100%" alignItems="center" space="2">
                     {
                         relativeToCurrent == 0 ? (
                             <FoundationNB
                                 name="sound"
-                                color={currentIconColor}
+                                color="white"
                                 fontSize={20} />
                         ) : <></>
                     }
 
-                    <MarqueeNB position="relative" bottom="0.5"
+                    <MarqueeNB w="80%"
+                        position="relative" bottom="0.5"
                         color="white"
                         fontFamily="quicksand_b"
                         fontSize="md"
@@ -160,7 +155,8 @@ const TrackInfo = memo(({
                         fontFamily="manrope_l"
                         fontSize="2xs">{(millis / 1000).toString().toHHMMSS()} • </Text>
                     
-                    <MarqueeNB color="gray.400"
+                    <MarqueeNB flexGrow="1"
+                        color="gray.400"
                         fontFamily="manrope_r"
                         fontSize="2xs"
                         speed={0.5}>{artistName}</MarqueeNB>
@@ -177,7 +173,6 @@ const propsAreEqual = (prev, next) => (
     && prev.artist.name === next.artist.name
     && prev.drag === next.drag
     && prev.isActive === next.isActive
-    && prev.dominantColor === next.dominantColor
 );
 
 

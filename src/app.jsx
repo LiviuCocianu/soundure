@@ -16,6 +16,7 @@ import { setupDatabase } from "./database/index"
 import { setupPlayer } from "./sound/service"
 import TracksPreviewPage, { TracksPreviewHeader } from "./components/screens/trackspreview/TracksPreviewPage"
 import MusicPlayer from "./components/screens/player/MusicPlayer"
+import TrackPlayer, { AppKilledPlaybackBehavior, Capability } from "react-native-track-player"
 
 
 const Stack = createNativeStackNavigator();
@@ -29,7 +30,27 @@ const App = () => {
 
     useEffect(() => {
         setupDatabase(dispatch, setLoadedDatabase);
-        setupPlayer().then(isSetup => setLoadedTrackPlayer(isSetup));
+        setupPlayer().then(async isSetup => {
+            await TrackPlayer.updateOptions({
+                capabilities: [
+                    Capability.Play,
+                    Capability.Pause,
+                    Capability.SkipToNext,
+                    Capability.SkipToPrevious,
+                    Capability.Stop,
+                    Capability.SeekTo,
+                ],
+                compactCapabilities: [
+                    Capability.Play,
+                    Capability.Pause,
+                ],
+                android: {
+                    appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification
+                },
+              });
+
+              return isSetup;
+        }).then(isSetup => setLoadedTrackPlayer(isSetup));
     }, []);
 
     if (!loadedFonts || !loadedDatabase || !loadedTrackPlayer) {

@@ -7,6 +7,9 @@ import MarqueeText from 'react-native-marquee'
 import { handleCoverURI } from '../../functions';
 
 
+const MarqueeTextNB = Factory(MarqueeText);
+const ImageNB = Factory(ImageBackground);
+
 /**
  * @callback onPress
  */
@@ -32,19 +35,16 @@ const HorizontalCategoryElement = ({
     coverURI,
     placeholderColor="primary.50"
 }) => {
-    const MarqueeTextNB = Factory(MarqueeText);
-    const ImageNB = Factory(ImageBackground);
-
     return (
         <Pressable _pressed={{ opacity: 80 }} onPress={onPress}>
             <Box mr="2" rounded="xl">
                 <AspectRatio flexGrow="1" ratio="2/2">
                     <ImageNB w="100%" h="100%" mr="2"
-                        source={handleCoverURI(coverURI, require("../../../assets/icon/icon.png"))}
+                        source={handleCoverURI(coverURI)}
                         bg={placeholderColor}
                         justifyContent="flex-end"
                         rounded="xl"
-                        imageStyle={{ borderRadius: 20 }}
+                        imageStyle={{ borderRadius: 10 }}
                     >
                         <Box w="100%" h="25%" 
                             overflow="hidden" 
@@ -52,6 +52,8 @@ const HorizontalCategoryElement = ({
                         >
                             <Box w="100%" h="100%" 
                                 bg="black" 
+                                borderBottomLeftRadius={10}
+                                borderBottomRightRadius={10}
                                 opacity="50" 
                                 position="absolute"/>
 

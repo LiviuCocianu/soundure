@@ -4,10 +4,11 @@ import { playlistsSet } from '../redux/slices/playlistSlice'
 import { tracksSet } from "../redux/slices/trackSlice"
 import { playlistsContentSet } from "../redux/slices/playlistContentSlice"
 import { artistsSet } from "../redux/slices/artistSlice"
-import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
 import { currentIndexSet, currentMillisSet, orderMapSet } from "../redux/slices/queueSlice"
-import { PlaylistBridge, TrackBridge } from "./componentBridge"
+
+import { PlaylistBridge, QueueBridge, TrackBridge } from "./componentBridge"
 import { createPlaylist, createTrack } from "./shapes"
+import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
 
 
 const loadQueueFromDB = (dispatch) => {
@@ -21,24 +22,27 @@ const loadQueueFromDB = (dispatch) => {
 
 const createMockupPlaylist = (dispatch) => {
     return new Promise(async (resolve, reject) => {
+        await db.resetSequenceFor(TABLES.PLAYLIST);
+        await db.resetSequenceFor(TABLES.PLAYLIST_CONFIG);
+
         await db.existsIn(TABLES.PLAYLIST, "title=?", ["Un playlist"]).catch(async () => {
-            await PlaylistBridge.addPlaylist(createPlaylist("Un playlist", "descriere smechera"), dispatch, false, false);
+            const rs = await PlaylistBridge.addPlaylist(createPlaylist("Un playlist", "descriere smechera"), dispatch, false, false);
+            
+            await db.insertInto(TABLES.PLAYLIST_CONFIG, { playlistId: rs.insertId });
         });
 
-        await db.insertIfNotExists(TABLES.PLAYLIST_CONFIG, { playlistId: 1 });
-
-        await createMockupTracks(dispatch);
+        //await createMockupTracks(20, dispatch);
 
         resolve();
     });
 }
 
-const createMockupTracks = (dispatch) => {
+const createMockupTracks = (count, dispatch) => {
     return new Promise(async (resolve, reject) => {
         await db.existsIn(TABLES.PLAYLIST, "id=? AND title=?", [1, "Un playlist"]).then(async () => {
-            const idArr = Array.from(Array(50).keys());
+            const idArr = Array.from(Array(count).keys());
             idArr.shift();
-            idArr.push(50);
+            idArr.push(count);
 
             for (let num of idArr) {
                 const platforms = Object.keys(PLATFORMS);
@@ -48,7 +52,7 @@ const createMockupTracks = (dispatch) => {
             }
 
             await PlaylistBridge.linkTracks(1, idArr, dispatch, false, false);
-            await dispatch(orderMapSet([]));
+            QueueBridge.resetReduxState(dispatch);
 
             resolve();
         }).catch(reject);
@@ -58,7 +62,7 @@ const createMockupTracks = (dispatch) => {
 
 
 export function setupDatabase(dispatch, setLoadedDatabase) {
-    db.resetAndInit().then(() => {
+    db.init().then(() => {
         // TODO remove createMockupPlaylist when the app is done
         createMockupPlaylist(dispatch).then(async () => {
             await db.insertIfNotExists(TABLES.QUOTE, { lastFetch: 0 }, "id=?", [1]);

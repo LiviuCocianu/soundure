@@ -103,12 +103,11 @@ class Database {
      * @returns {Promise<void>}
      */
     resetAndInit() {
-        return new Promise((resolve, reject) => {
-            this.dropAll().then(() => {
-                this.init().then(() => {
-                    resolve();
-                }).catch(error => reject(error));
-            }).catch(error => reject(error));
+        return new Promise(async (resolve, reject) => {
+            await this.dropAll();
+            await this.init();
+            
+            resolve();
         });
     }
 

@@ -49,7 +49,8 @@ const PlaylistSettingsSheet = ({
     const dispatch = useDispatch();
 
     const descriptionDisclose = useDisclose();
-    const [deletionModal, toggleDeletionModal] = useState(false);
+    const [playlistDelModal, togglePlaylistDelModal] = useState(false);
+    const [coverDelModal, toggleCoverDelModal] = useState(false);
 
     const playlists = useSelector(state => state.playlists);
     const playlist = useMemo(() => {
@@ -76,22 +77,37 @@ const PlaylistSettingsSheet = ({
         handleTrackListNav(navigation, playlist);
     }
 
+    const handleCoverDelModal = async () => {
+        await onClose();
+        toggleCoverDelModal(true);
+    }
+
+    const handleCoverDeletion = async () => {
+        await PlaylistBridge.setCoverURI("DEFAULT", playlistId, dispatch);
+    }
+
     const handleDeletionModal = async () => {
         await onClose();
-        toggleDeletionModal(true);
+        togglePlaylistDelModal(true);
     }
 
     const handlePlaylistDeletion = () => {
-        PlaylistBridge.deletePlaylist(playlistId, dispatch);
         handleBack();
+        PlaylistBridge.deletePlaylist(playlistId, dispatch);
     }
 
     return (
         <>
             <ConfirmationWindow
-                isOpen={deletionModal}
-                toggleVisible={toggleDeletionModal}
+                isOpen={playlistDelModal}
+                toggleVisible={togglePlaylistDelModal}
                 onYes={handlePlaylistDeletion}
+            />
+
+            <ConfirmationWindow
+                isOpen={coverDelModal}
+                toggleVisible={toggleCoverDelModal}
+                onYes={handleCoverDeletion}
             />
 
             <PlaylistDescriptionSheet 
@@ -108,6 +124,11 @@ const PlaylistSettingsSheet = ({
                     iconName="tag"
                     IconType={AntDesignNB}
                     onPress={handlePlaylistDescription} />
+
+                <CustomActionsheetItem text="Șterge copertă"
+                    iconName="file-image-remove"
+                    IconType={MaterialCommunityIconsNB}
+                    onPress={handleCoverDelModal} />
 
                 <CustomActionsheetItem text="Adaugă o piesă"
                     iconName="playlist-plus"

@@ -45,8 +45,9 @@ const OptimizedTrackList = ({
     },
 }) => {
     const tracks = useSelector(state => state.tracks);
-
     const artists = useSelector(state => state.artists);
+
+    const playlistId = useMemo(() => !playlist ? undefined : playlist.id, [playlist]);
 
     const findTrackInfo = useCallback((trackId) => {
         const track = find(tracks, "id", trackId);
@@ -63,14 +64,14 @@ const OptimizedTrackList = ({
                 navigation={navigation}
                 track={track}
                 artist={artist}
-                playlistId={playlist.id}
+                playlistId={playlistId}
                 selectionMode={selection.enabled}
                 allSelected={selection.areAllSelected}
                 selectionHandler={selection.selectionHandler} />
         )
-    }, [playlist.id, selection]);
+    }, [playlistId, selection]);
 
-    const renderMemo = useMemo(() => renderElements, [playlist.id, selection]);
+    const renderMemo = useMemo(() => renderElements, [playlistId, selection]);
 
     return <>
         {

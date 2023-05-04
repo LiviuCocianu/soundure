@@ -1,4 +1,4 @@
-package io.github.idoomful.Soundure.android;
+package com.soundure;
 
 import android.os.Build;
 import android.os.Bundle;

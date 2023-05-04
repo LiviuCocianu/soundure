@@ -2,23 +2,29 @@ import React, { useEffect, useState, useMemo } from 'react'
 import { AspectRatio, Box, Factory, HStack, Image, Pressable, Slider, Text, VStack } from 'native-base'
 
 import { useDispatch, useSelector } from 'react-redux';
-import { Entypo } from '@expo/vector-icons'
+import { Entypo, MaterialCommunityIcons } from '@expo/vector-icons'
 import MarqueeText from 'react-native-marquee'
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { LightenDarkenColor } from 'lighten-darken-color';
 
 import PlayerQueue from './PlayerQueue';
 import { QueueBridge } from '../../../database/componentBridge';
-import { find, handleColors, handleCoverURI, lng } from '../../../functions';
+import { find, handleColors, handleCoverURI, isTooDark, lng } from '../../../functions';
 import { PLAYER_DOWN_HEIGHT, PLAYER_UP_HEIGHT } from '../../../constants';
-import { memo } from 'react';
+import TrackPlayer, { Event, State, useProgress, useTrackPlayerEvents } from 'react-native-track-player';
 
 
 const EntypoNB = Factory(Entypo);
+const MaterialNB = Factory(MaterialCommunityIcons);
 const MarqueeNB = Factory(MarqueeText);
 
 // TODO add documentation
 const MusicPlayer = () => {
     const dispatch = useDispatch();
+
+    const [isPlaying, togglePlayback] = useState(false);
+    const { position, buffered, duration } = useProgress(500);
+    const playbackState = TrackPlayer.getState();
 
     const heightAnimValue = useSharedValue(PLAYER_DOWN_HEIGHT);
     const heightAnimStyle = useAnimatedStyle(() => ({
@@ -44,7 +50,7 @@ const MusicPlayer = () => {
     }, [queue.orderMap, queue.currentIndex]);
 
     const cover = useMemo(() => {
-        return currentTrack.coverURI !== "DEFAULT"
+        return typeof(currentTrack.coverURI) !== "string"
             ? require("../../../../assets/images/soundure_unavailable_white.png")
             : handleCoverURI(currentTrack.coverURI);
     }, [currentTrack.coverURI]);
@@ -70,8 +76,34 @@ const MusicPlayer = () => {
     }, [queue.currentIndex]);
 
     useEffect(() => {
-        handleColors(currentTrack.coverURI).then(colors => setPrimaryColor(colors.primary));
+        handleColors(currentTrack.coverURI).then(colors => {
+            let output = colors.primary;
+
+            if(isTooDark(output)) output = LightenDarkenColor(output, 60);
+    
+            return output.length < 3 ? "#FFF" : output;
+        }).then(color => setPrimaryColor(color));
     }, [currentTrack, queue.currentIndex]);
+
+    useEffect(() => {
+        QueueBridge.setCurrentMillis(position * 1000, dispatch, ["redux"]);
+
+        if(position >= duration) {
+            togglePlayback(false);
+        }
+    }, [position, duration]);
+
+    useEffect(() => {
+        playbackState.then(state => {
+            if(state !== State.Playing) {
+                QueueBridge.setCurrentMillis(position * 1000, dispatch);
+            }
+        });
+    }, [isPlaying]);
+
+    useTrackPlayerEvents([Event.PlaybackState], event => {
+        togglePlayback(event.state === State.Playing);
+    });
 
     const handlePlayerExpansion = () => {
         toggleExpansion(!expanded);
@@ -81,8 +113,24 @@ const MusicPlayer = () => {
         QueueBridge.setCurrentMillis(value, dispatch, ["redux"]);
     }
 
-    const handleProgressFingerUp = (value) => {
+    const handleProgressFingerUp = async (value) => {
         QueueBridge.setCurrentMillis(value, dispatch);
+
+        const oldState = isPlaying;
+
+        await TrackPlayer.seekTo(value);
+
+        if(!oldState)
+            await TrackPlayer.pause();
+    }
+
+    const handlePlayPause = async () => {
+        const queue = await TrackPlayer.getQueue();
+
+        if(queue.length > 0) {
+            if(!isPlaying) await TrackPlayer.play();
+            else await TrackPlayer.pause();
+        }
     }
 
     return (
@@ -95,7 +143,7 @@ const MusicPlayer = () => {
             }}
         >
             <Box bg={lng(["gray.700", "gray.800"], "top")}
-                borderTopWidth="1"
+                borderTopWidth="2"
                 borderTopColor={primaryColor}
             >
                 <HStack w="100%" h="100%" maxH={maxH} px="4" mt={expanded ? "2" : "0"}
@@ -109,7 +157,7 @@ const MusicPlayer = () => {
                                     size="100%"
                                     source={cover}
                                     alt="music player track thumbnail"
-                                    key={currentTrack.id}
+                                    key={currentTrack.coverURI}
                                     rounded="lg" />
                             </AspectRatio>
                         </Pressable>
@@ -121,7 +169,7 @@ const MusicPlayer = () => {
                         >
                             <Pressable w="100%" onPress={handlePlayerExpansion}>
                                 <HStack w="100%" justifyContent="space-between">
-                                    <MarqueeNB color="white"
+                                    <MarqueeNB w="85%" color="white"
                                         fontFamily="quicksand_b"
                                         fontSize={expanded ? "sm" : "md"}
                                         lineHeight="xs"
@@ -129,22 +177,24 @@ const MusicPlayer = () => {
 
                                     <EntypoNB
                                         name="cog"
-                                        color={primaryColor}
+                                        color="primary.50"
                                         fontSize={expanded ? "md" : "lg"}/>
                                 </HStack>
 
-                                <Text color="gray.200"
+                                <MarqueeNB w="100%"
+                                    color="gray.200"
                                     fontFamily="quicksand_l"
                                     fontSize={expanded ? "10" : "xs"}
-                                    lineHeight="xs">{currentTrackArtist.name}</Text>
+                                    lineHeight="xs"
+                                    speed={0.5}>{currentTrackArtist.name}</MarqueeNB>
                             </Pressable>
 
                             <VStack w="100%" space="1">
                                 <Slider mt="2" w="100%" h={expanded ? "1.5" : "0.5"}
                                     defaultValue={0}
                                     minValue={0}
-                                    maxValue={currentTrack.millis}
-                                    value={queue.currentMillis}
+                                    maxValue={duration}
+                                    value={position}
                                     onChange={handleProgressChange}
                                     onChangeEnd={handleProgressFingerUp}
                                 >
@@ -154,7 +204,7 @@ const MusicPlayer = () => {
                                         size={expanded ? 10 : 5}
                                     >
                                         <Slider.FilledTrack 
-                                            bg={primaryColor}
+                                            bg="primary.50"
                                             rounded="none"
                                             size={expanded ? 10 : 5}/>
                                     </Slider.Track>
@@ -166,29 +216,43 @@ const MusicPlayer = () => {
                                         fontFamily="manrope_l"
                                         fontSize="8"
                                     >
-                                        {(queue.currentMillis / 1000).toString().toHHMMSS()}
+                                        {(position).toString().toHHMMSS()}
                                     </Text>
 
                                     <Text color="white"
                                         fontFamily="manrope_l"
                                         fontSize="8"
                                     >
-                                        {(currentTrack.millis / 1000).toString().toHHMMSS()}
+                                        {(duration).toString().toHHMMSS()}
                                     </Text>
                                 </HStack>
                             </VStack>
                         </VStack>
                     </HStack>
 
-                    <EntypoNB position="absolute" right="1"
-                        fontSize="40"
-                        name="controller-play"
-                        color={primaryColor} />
+                    <Pressable position="absolute" right="1"
+                        onPress={handlePlayPause}
+                    >
+                        {
+                            !isPlaying ? (
+                                <EntypoNB
+                                    fontSize="40"
+                                    name="controller-play"
+                                    color="primary.50" />
+                            ) : (
+                                <MaterialNB
+                                    fontSize="40"
+                                    name="pause"
+                                    color="primary.50" />
+                            )
+                        }
+                    </Pressable>
                 </HStack>
 
                 {/* // Order controller */}
                 <Animated.View style={opacityAnimStyle}>
-                    <PlayerQueue dominantColor={primaryColor}/>
+                    <PlayerQueue 
+                        handlePlayerExpansion={handlePlayerExpansion}/>
                 </Animated.View>
             </Box>
         </Animated.View>

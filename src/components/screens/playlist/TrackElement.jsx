@@ -8,13 +8,11 @@ import {
     Text,
     Pressable,
     Checkbox,
-    useDisclose,
-    Box
+    useDisclose
 } from 'native-base'
 
 import { Entypo, AntDesign } from '@expo/vector-icons';
 import MarqueeText from 'react-native-marquee'
-import FastImage from 'react-native-fast-image'
 
 import PlatformIcon from '../../general/PlatformIcon';
 import TrackSettingsSheet from '../track/TrackSettingsSheet';
@@ -93,20 +91,12 @@ const TrackElement = ({
                 shadow={10}
             >
                 <AspectRatio ratio="4/4" h="auto">
-                    <FastImage
-                        style={{
-                            borderTopLeftRadius: 10,
-                            borderBottomLeftRadius: 10
-                        }}
-                        source={handleCoverURI(track.coverURI)}
-                        resizeMode={FastImage.resizeMode.cover}
-                    />
-                    {/* <ImageNB
+                    <ImageNB
                         source={handleCoverURI(track.coverURI)}
                         imageStyle={{
                             borderTopLeftRadius: 10,
                             borderBottomLeftRadius: 10
-                        }} /> */}
+                        }} />
                 </AspectRatio>
 
                 <VStack w="auto" pl="6" mr="auto"
@@ -149,7 +139,7 @@ const TrackElement = ({
 
                 {
                     !selectionMode ? (
-                        <Pressable onPress={handleSettingsButton} zIndex={10}>
+                        <Pressable onPress={handleSettingsButton} justifyContent="center">
                             <EntypoNB mr="2" py="4"
                                 alignSelf="center"
                                 color="primary.50"

@@ -113,7 +113,7 @@ const PlaylistCover = memo(({
         return playlist.title.length > MAX_TITLE_LENGTH
             ? playlist.title.slice(0, MAX_TITLE_LENGTH - 3) + "..."
             : playlist.title;
-    }, [playlist]);
+    }, [playlist.title]);
 
     useEffect(() => {
         if (confirmedCoverEdit) {
@@ -161,7 +161,7 @@ const PlaylistCover = memo(({
         });
 
         if (!result.canceled) {
-            PlaylistBridge.setCoverURI(result.assets[0].uri, playlist.id, dispatch);
+            await PlaylistBridge.setCoverURI(handleCoverURI(result.assets[0].uri), playlist.id, dispatch);
         }
     }
 
@@ -239,8 +239,7 @@ const PlaylistCover = memo(({
             </Box>
         </Box>
     );
-}, (prev, next) => prev.playlist.title == next.playlist.title
-    && prev.playlist.coverURI == next.playlist.coverURI
+}, (prev, next) => prev.playlist == next.playlist
     && prev.ownTracks == next.ownTracks
 );
 

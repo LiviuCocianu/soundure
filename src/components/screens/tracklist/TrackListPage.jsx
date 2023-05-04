@@ -9,7 +9,7 @@ import { Feather, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-ico
 
 import OptimizedTrackList from '../../general/OptimizedTrackList';
 import { PlaylistBridge } from '../../../database/componentBridge';
-import { lng } from '../../../functions';
+import { handleCoverURI, lng } from '../../../functions';
 
 
 const FeatherNB = Factory(Feather);
@@ -72,11 +72,20 @@ const TrackListPage = ({ navigation, route }) => {
 
     const handleSubmit = () => {
         if(selectedIDs.size > 0) {
+            handleBack();
+
             PlaylistBridge.linkTracks(
                 payload.id,
                 tracks.filter(tr => selectedIDs.has(tr.id)).map(tr => tr.id),
                 dispatch
-            ).then(handleBack);
+            ).then(async () => {
+                if(!payload.coverURI || JSON.parse(payload.coverURI) === "DEFAULT") {
+                    const [firstId] = selectedIDs;
+                    const firstCover = tracks.find(tr => tr.id === firstId);
+
+                    await PlaylistBridge.setCoverURI(handleCoverURI(firstCover.coverURI), payload.id, dispatch);
+                }
+            });
         } else {
             Toast.show("Selectează câteva piese mai întâi", {
                 position: Toast.positions.CENTER

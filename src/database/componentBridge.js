@@ -12,8 +12,8 @@ import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet } from
 
 
 const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
-    db.selectFrom(table, null, "id=?", [id]).then(rows => {
-        db.update(table, `${column}=?`, "id=?", [value, id]).then(() => {
+    return db.selectFrom(table, null, "id=?", [id]).then(async rows => {
+        await db.update(table, `${column}=?`, "id=?", [value, id]).then(() => {
             dispatch(setAction({ ...rows[0], [`${column}`]: value }));
         });
     });
@@ -26,14 +26,18 @@ const getFixedRow = async (table) => {
 
 export const TrackBridge = {
     updateColumn: (column, value, trackId, dispatch) => {
-        updateColumn(TABLES.TRACK, trackId, trackSet, {
-            column, value, dispatch
+        return new Promise((resolve, reject) => {
+            updateColumn(TABLES.TRACK, trackId, trackSet, {
+                column, value, dispatch
+            });
+
+            resolve();
         });
     },
     toggleFavorite: (trackId, dispatch, toast=true) => {
-        db.selectFrom(TABLES.TRACK, null, "id=?", [trackId]).then(rows => {
+        db.selectFrom(TABLES.TRACK, null, "id=?", [trackId]).then(async rows => {
             const track = rows[0];
-            TrackBridge.updateColumn("favorite", !track.favorite, trackId, dispatch);
+            await TrackBridge.updateColumn("favorite", !track.favorite, trackId, dispatch);
     
             if(toast) {
                 if(!track.favorite) {
@@ -45,15 +49,20 @@ export const TrackBridge = {
         });
     },
     getArtist: async (trackId) => {
-        const artistId = await db.selectFrom(TABLES.TRACK, ["artistId"], "id=?", [trackId]).then(rows => rows[0]);
+        const artistId = await db.selectFrom(TABLES.TRACK, ["artistId"], "id=?", [trackId]).then(rows => {
+            if(rows.length == 0) {
+                throw new Error(`getArtist(${trackId}): Couldn't find artist for track with this ID`);
+            } else return rows[0].artistId;
+        });
+
         return db.selectFrom(TABLES.ARTIST, null, "id=?", [artistId]).then(rows => rows[0]);
     },
-    setTitle: (title, trackId, dispatch, toast=true) => {
-        TrackBridge.updateColumn("title", title, trackId, dispatch);
+    setTitle: async (title, trackId, dispatch, toast=true) => {
+        await TrackBridge.updateColumn("title", title, trackId, dispatch);
         if(toast) Toast.show("Titlul a fost actualizat!");
     },
-    setCoverURI: (coverURI, trackId, dispatch, toast=true) => {
-        TrackBridge.updateColumn("coverURI", JSON.stringify({ uri: coverURI }), trackId, dispatch);
+    setCoverURI: async (coverURI, trackId, dispatch, toast=true) => {
+        await TrackBridge.updateColumn("coverURI", JSON.stringify({ uri: coverURI }), trackId, dispatch);
         if(toast) Toast.show("Coperta a fost actualizată!");
     },
     /**
@@ -65,8 +74,8 @@ export const TrackBridge = {
     addTrack: async (payload, dispatch, redux=true) => {
         const {artist=ARTIST_NAME_PLACEHOLDER, track} = payload;
 
-        return db.insertIfNotExists(TABLES.ARTIST, { name: artist }, "name = ?", [artist]).then(() => {
-            db.selectFrom(TABLES.ARTIST, null, "name = ?", [artist]).then(rows => {
+        return db.insertIfNotExists(TABLES.ARTIST, { name: artist }, "name = ?", [artist]).then(async () => {
+            await db.selectFrom(TABLES.ARTIST, null, "name = ?", [artist]).then(async rows => {
                 const {
                     title,
                     fileURI,
@@ -81,18 +90,44 @@ export const TrackBridge = {
 
                 if (redux) dispatch(artistAdded(artist));
 
-                db.insertInto(TABLES.TRACK, toInsert).then(rs => {
+                await db.insertInto(TABLES.TRACK, toInsert).then(rs => {
                     const payload = { id: rs.insertId, ...toInsert };
                     if (redux) dispatch(trackAdded(payload));
                 });
             });
         });
     },
-    deleteTrack: (trackId, dispatch, toast=true) => {
-        db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=?", [trackId]).then(() => {
+    deleteTrack: async (trackId, dispatch, toast=true) => {
+        await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=?", [trackId]).then(async () => {
             dispatch(trackRelationsRemoved({ trackId }));
 
-            db.deleteFrom(TABLES.TRACK, "id=?", [trackId]).then(() => {
+            const row = await getFixedRow(TABLES.QUEUE);
+
+            // Remove the track from all configs
+            const configs = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["id", "orderMap"]);
+
+            for(const config of configs) {
+                let orderMap = JSON.parse(config.orderMap);
+
+                if(orderMap.includes(trackId)) {
+                    orderMap = JSON.stringify(orderMap.filter(id => id !== trackId));
+                    await db.update(TABLES.PLAYLIST_CONFIG, "orderMap = ?", "id = ?", [orderMap, config.id]);
+                }
+            }
+
+            // ... then update the queue, if there is a playlist playing
+            if(row.playlistConfigId != -1) {
+                const rows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "id = ?", [row.playlistConfigId]);
+                
+                if(rows.length > 0) {
+                    let orderMap = JSON.parse(rows[0].orderMap);
+                    dispatch(orderMapSet(orderMap));
+
+                    if(orderMap.length == 0) QueueBridge.resetReduxState(dispatch);
+                }
+            }
+
+            await db.deleteFrom(TABLES.TRACK, "id=?", [trackId]).then(() => {
                 dispatch(trackRemoved({ id: trackId }));
                 if(toast) Toast.show("Piesă eliminată!");
             });
@@ -111,16 +146,20 @@ export const TrackBridge = {
 
 export const PlaylistBridge = {
     updateColumn: (column, value, playlistId, dispatch) => {
-        updateColumn(TABLES.PLAYLIST, playlistId, playlistSet, {
-            column, value, dispatch
+        return new Promise(async (resolve, reject) => {
+            await updateColumn(TABLES.PLAYLIST, playlistId, playlistSet, {
+                column, value, dispatch
+            });
+
+            resolve();
         });
     },
-    setTitle: (title, playlistId, dispatch, toast=true) => {
-        PlaylistBridge.updateColumn("title", title, playlistId, dispatch);
+    setTitle: async (title, playlistId, dispatch, toast=true) => {
+        await PlaylistBridge.updateColumn("title", title, playlistId, dispatch);
         if(toast) Toast.show("Titlul a fost actualizat!");
     },
-    setCoverURI: (coverURI, playlistId, dispatch, toast=true) => {
-        PlaylistBridge.updateColumn("coverURI", JSON.stringify({ uri: coverURI }), playlistId, dispatch);
+    setCoverURI: async (coverURI, playlistId, dispatch, toast=true) => {
+        await PlaylistBridge.updateColumn("coverURI", JSON.stringify(coverURI), playlistId, dispatch);
         if(toast) Toast.show("Coperta a fost actualizată!");
     },
     /**
@@ -130,20 +169,36 @@ export const PlaylistBridge = {
      * @param {boolean} [redux=true] If playlist should be added to the Redux store as well
      */
     addPlaylist: async (payload, dispatch, redux=true, toast=true) => {
-        db.insertInto(TABLES.PLAYLIST, payload).then(rs => {
+        return db.insertInto(TABLES.PLAYLIST, payload).then(rs => {
             const completePayload = {id: rs.insertId, ...payload};
             if (redux) dispatch(playlistAdded(completePayload));
             if(toast) Toast.show("Playlist creat!");
+
+            return rs;
         });
     },
-    deletePlaylist: (playlistId, dispatch, toast=true) => {
-        db.deleteFrom(TABLES.PLAYLIST_CONTENT, "playlistId = ?", [playlistId]).then(() => {
+    deletePlaylist: async (playlistId, dispatch, toast=true) => {
+        return db.deleteFrom(TABLES.PLAYLIST_CONTENT, "playlistId = ?", [playlistId]).then(async () => {
             dispatch(playlistRelationsRemoved({ playlistId }));
 
-            db.deleteFrom(TABLES.PLAYLIST, "id = ?", [playlistId]).then(() => {
-                dispatch(playlistRemoved({ id: playlistId }));
-                if(toast) Toast.show("Playlist eliminat!");
+            await db.deleteFrom(TABLES.PLAYLIST, "id = ?", [playlistId]);
+            dispatch(playlistRemoved({ id: playlistId }));
+
+            await getFixedRow(TABLES.QUEUE).then(async row => {
+                const rows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["id"], "playlistId = ?", [playlistId]);
+
+                if(rows.length > 0) {
+                    if(row.playlistConfigId == rows[0].id) {
+                        QueueBridge.resetReduxState(dispatch);
+                    }
+                } else {
+                    console.warn(`Playlist delete warning: There is no config for playlist with ID ${playlistId}`);
+                }
             });
+
+            await db.deleteFrom(TABLES.PLAYLIST_CONFIG, "playlistId = ?", [playlistId]);
+
+            if(toast) Toast.show("Playlist eliminat!");
         });
     },
     /**
@@ -153,31 +208,39 @@ export const PlaylistBridge = {
      * @param {Dispatch<AnyAction>} dispatch 
      * @param {boolean} [redux=true] If link should be added to the Redux store as well
      */
-    linkTracks: async (targetPlaylistId, trackIds, dispatch, redux=true, toast=true) => {
-        const links = trackIds.map(trackId => ({
-            playlistId: targetPlaylistId,
-            trackId
-        }));
+    linkTracks: (targetPlaylistId, trackIds, dispatch, redux=true, toast=true) => {
+        return new Promise(async (resolve, reject) => {
+            const links = trackIds.map(trackId => ({
+                playlistId: targetPlaylistId,
+                trackId
+            }));
 
-        db.insertBulkInto(TABLES.PLAYLIST_CONTENT, links)
-            .then(rsArr => {
-                rsArr.forEach(rs => {
-                    const payl = rs.payload;
-                    if (redux) dispatch(playlistContentAdded({ id: rs.insertId, ...payl }));
+            db.insertBulkInto(TABLES.PLAYLIST_CONTENT, links)
+                .then(async rsArr => {
+                    rsArr.forEach(rs => {
+                        const payl = rs.payload;
+                        if (redux) dispatch(playlistContentAdded({ id: rs.insertId, ...payl }));
+                    });
+
+                    const config = await PlaylistBridge.getConfig(targetPlaylistId);
+                    const configMap = JSON.parse(config.orderMap);
+                    const notIncluded = trackIds.filter(id => !configMap.includes(id));
+
+                    if(notIncluded.length > 0) {
+                        const orderMap = JSON.stringify([...configMap, ...notIncluded]);
+
+                        await db.update(TABLES.PLAYLIST_CONFIG, "orderMap=?", "playlistId=?", [orderMap, targetPlaylistId]);
+                    }
+                }).then(() => {
+                    if(toast) Toast.show(links.length != 1 ? "Piesele au fost adăugate!" : "Piesa a fost adăugată!");
+                    resolve();
                 });
-            }).then(async () => {
-                const config = await PlaylistBridge.getConfig(targetPlaylistId);
-                const orderMap = [...JSON.parse(config.orderMap), ...trackIds];
-
-                await db.update(TABLES.PLAYLIST_CONFIG, "orderMap=?", "playlistId=?", [JSON.stringify(orderMap), targetPlaylistId]);
-            }).then(() => {
-                if(toast) Toast.show(links.length != 1 ? "Piesele au fost adăugate!" : "Piesa a fost adăugată!");
-            });
+        });
     },
     getConfig: async (playlistId) => {
         return await db.selectFrom(TABLES.PLAYLIST_CONFIG, null, "playlistId=?", [playlistId]).then(rows => {
             if(rows.length == 0) {
-                throw new Error(`getConfig(${playlistId}): Couldn't find a config for playlist with this ID`);
+                throw new Error(`Playlist getConfig(${playlistId}): Couldn't find a config for playlist with this ID`);
             } else return rows[0];
         });
     }
@@ -241,6 +304,12 @@ export const QuoteBridge = {
 }
 
 export const QueueBridge = {
+    resetReduxState: (dispatch) => {
+        dispatch(currentIndexSet(0));
+        dispatch(currentMillisSet(0));
+        dispatch(currentConfigSet(-1));
+        dispatch(orderMapSet([]));
+    },
     setIndex: (index, dispatch) => {
         getFixedRow(TABLES.QUEUE).then(row => {
             if (!row.playlistConfigId || row.playlistConfigId == -1) {

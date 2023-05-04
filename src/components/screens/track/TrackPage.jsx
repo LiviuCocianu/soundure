@@ -157,7 +157,7 @@ const TrackInfo = memo(({
         });
 
         if (!result.canceled) {
-            TrackBridge.setCoverURI(result.assets[0].uri, track.id, dispatch);
+            TrackBridge.setCoverURI(handleCoverURI(result.assets[0].uri), track.id, dispatch);
         }
     }
 

@@ -14,6 +14,7 @@ const playlistContentSlice = createSlice({
         playlistContentAdded(state, action) {
             const val = action.payload;
             state.push(val);
+            return state;
         },
         playlistContentRemoved(state, action) {
             const val = action.payload;

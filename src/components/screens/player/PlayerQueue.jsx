@@ -6,19 +6,19 @@ import { useDispatch, useSelector } from 'react-redux'
 import Toast from 'react-native-root-toast';
 import { Entypo, FontAwesome5 } from '@expo/vector-icons'
 import DraggableFlatList from 'react-native-draggable-flatlist'
-import { LightenDarkenColor } from 'lighten-darken-color';
 
 import PlayerQueueElement from './PlayerQueueElement';
 
 import { QueueBridge } from '../../../database/componentBridge';
 import { find } from '../../../functions';
+import NoContentInfo from '../../general/NoContentInfo';
 
 
 const EntypoNB = Factory(Entypo);
 const FontAwesomeNB = Factory(FontAwesome5);
 
 const PlayerQueue = ({
-    dominantColor
+    handlePlayerExpansion
 }) => {
     const dispatch = useDispatch();
 
@@ -37,11 +37,6 @@ const PlayerQueue = ({
         return [track, artist];
     }, [tracks, artists]);
 
-    const darkenedColor = useMemo(() => {
-        const output = LightenDarkenColor(dominantColor, -60);
-        return output.length < 3 ? "#000" : output;
-    }, [dominantColor]);
-
     // TODO finish this
     useEffect(() => {
         if(isLooping) {
@@ -57,10 +52,9 @@ const PlayerQueue = ({
                 track={track}
                 artist={artist}
                 drag={drag}
-                isActive={isActive}
-                dominantColor={dominantColor} />
+                isActive={isActive} />
         )
-    }, [dominantColor, tracks, artists, findTrackInfo]);
+    }, [tracks, artists, findTrackInfo]);
 
     const updateOrder = useCallback(({ data, from, to }) => {
         if (
@@ -93,7 +87,7 @@ const PlayerQueue = ({
                     onPress={() => toggleLoop(!isLooping)}
                     VectorIcon={EntypoNB}
                     name="loop"
-                    color={isLooping ? dominantColor : darkenedColor}
+                    color={isLooping ? "primary.50" : "primary.400"}
                     toastMessage="Redă în buclă"/>
 
                 <Box w="0.5" h="100%" bg="gray.800"/>
@@ -101,7 +95,7 @@ const PlayerQueue = ({
                 <OrderControlButton
                     VectorIcon={EntypoNB}
                     name="shuffle"
-                    color={dominantColor}
+                    color="primary.50"
                     toastMessage="Amestecă"/>
 
                 <Box w="0.5" h="100%" bg="gray.800" />
@@ -109,18 +103,26 @@ const PlayerQueue = ({
                 <OrderControlButton
                     VectorIcon={FontAwesomeNB}
                     name="angle-double-left"
-                    color={dominantColor}
+                    color="primary.50"
                     toastMessage="Redă invers"/>
             </HStack>
 
             <Box w="90%" h="32%" mt="4">
-                <DraggableFlatList
-                    data={orderMap}
-                    renderItem={renderCallback}
-                    keyExtractor={(_, index) => `queuelistitem_${index}`}
-                    onDragEnd={updateOrder}
-                    showsVerticalScrollIndicator={false}
-                    style={{ width: "100%", height: "100%" }} />
+                {
+                    orderMap.length > 0 ? (
+                        <DraggableFlatList
+                            data={orderMap}
+                            renderItem={renderCallback}
+                            keyExtractor={(_, index) => `queuelistitem_${index}`}
+                            onDragEnd={updateOrder}
+                            showsVerticalScrollIndicator={false}
+                            style={{ width: "100%", height: "100%" }} />
+                    ) : (
+                        <NoContentInfo
+                            onPress={handlePlayerExpansion}
+                            subtitle="Navighează către un playlist și alege o opțiune de redare"/>
+                    )
+                }
             </Box>
         </VStack>
     )
