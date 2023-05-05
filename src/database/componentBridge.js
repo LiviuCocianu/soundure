@@ -310,8 +310,31 @@ export const QueueBridge = {
         dispatch(currentConfigSet(-1));
         dispatch(orderMapSet([]));
     },
-    setIndex: (index, dispatch) => {
-        getFixedRow(TABLES.QUEUE).then(row => {
+    getCurrentPlaylist: async () => {
+        return getFixedRow(TABLES.QUEUE).then(async row => {
+            if(row.playlistConfigId != -1) {
+                const rows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["playlistId"], "id = ?", [row.playlistConfigId]);
+
+                if(rows.length > 0) {
+                    const playlistRows = await db.selectFrom(TABLES.PLAYLIST, null, "id = ?", [rows[0].playlistId]);
+                    
+                    if(playlistRows.length > 0) return playlistRows[0];
+                    else {
+                        console.warn(`getCurrentPlaylist(): There is no playlist with the ID of ${rows[0].playlistId}`);
+                        return null;
+                    }
+                } else {
+                    console.warn(`getCurrentPlaylist(): Couldn't find any config with the ID of ${row.playlistConfigId}`);
+                    return null;
+                }
+            } else {
+                console.warn("getCurrentPlaylist(): Currently the player is not assigned any config to play");
+                return null;
+            }
+        });
+    },
+    setIndex: async (index, dispatch) => {
+        return getFixedRow(TABLES.QUEUE).then(row => {
             if (!row.playlistConfigId || row.playlistConfigId == -1) {
                 console.warn("Couldn't set queue index because destination config is not defined. Add a playlist to the queue then try again..");
                 return;
@@ -329,9 +352,9 @@ export const QueueBridge = {
             });
         });
     },
-    incrementIndex: (dispatch) => {
-        getFixedRow(TABLES.QUEUE).then(row => {
-            QueueBridge.setIndex(row.currentIndex + 1, dispatch);
+    incrementIndex: async (dispatch) => {
+        return getFixedRow(TABLES.QUEUE).then(async row => {
+            await QueueBridge.setIndex(row.currentIndex + 1, dispatch);
         });
     },
     setCurrentConfig: async (playlistConfigId, dispatch) => {
@@ -347,14 +370,14 @@ export const QueueBridge = {
      * @param {(['database']|['redux']|['database', 'redux'])} [sendTo] Where to send the changes.
      * By default, they will be sent to both the database and the Redux store
      */
-    setCurrentMillis: (millis, dispatch, sendTo=["database", "redux"]) => {
+    setCurrentMillis: async (millis, dispatch, sendTo=["database", "redux"]) => {
         if(millis >= 0) {
             if (sendTo.includes("database") && sendTo.includes("redux"))
-                db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]).then(() => {
+                await db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]).then(() => {
                     dispatch(currentMillisSet(millis));
                 });
             else if (sendTo.includes("database"))
-                db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]);
+                await db.update(TABLES.QUEUE, "currentMillis=?", "id=?", [millis, 1]);
             else if (sendTo.includes("redux"))
                 dispatch(currentMillisSet(millis));
         }

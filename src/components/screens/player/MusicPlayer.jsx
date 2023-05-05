@@ -1,17 +1,18 @@
 import React, { useEffect, useState, useMemo } from 'react'
-import { AspectRatio, Box, Factory, HStack, Image, Pressable, Slider, Text, VStack } from 'native-base'
+import { AspectRatio, Box, Factory, HStack, Image, Pressable, Text, VStack } from 'native-base'
 
 import { useDispatch, useSelector } from 'react-redux';
 import { Entypo, MaterialCommunityIcons } from '@expo/vector-icons'
 import MarqueeText from 'react-native-marquee'
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LightenDarkenColor } from 'lighten-darken-color';
+import TrackPlayer, { Event, State, usePlaybackState, useProgress, useTrackPlayerEvents } from 'react-native-track-player';
+import { Slider } from '@miblanchard/react-native-slider';
 
 import PlayerQueue from './PlayerQueue';
 import { QueueBridge } from '../../../database/componentBridge';
 import { find, handleColors, handleCoverURI, isTooDark, lng } from '../../../functions';
 import { PLAYER_DOWN_HEIGHT, PLAYER_UP_HEIGHT } from '../../../constants';
-import TrackPlayer, { Event, State, useProgress, useTrackPlayerEvents } from 'react-native-track-player';
 
 
 const EntypoNB = Factory(Entypo);
@@ -24,7 +25,7 @@ const MusicPlayer = () => {
 
     const [isPlaying, togglePlayback] = useState(false);
     const { position, buffered, duration } = useProgress(500);
-    const playbackState = TrackPlayer.getState();
+    const playbackState = usePlaybackState();
 
     const heightAnimValue = useSharedValue(PLAYER_DOWN_HEIGHT);
     const heightAnimStyle = useAnimatedStyle(() => ({
@@ -86,7 +87,7 @@ const MusicPlayer = () => {
     }, [currentTrack, queue.currentIndex]);
 
     useEffect(() => {
-        QueueBridge.setCurrentMillis(position * 1000, dispatch, ["redux"]);
+        QueueBridge.setCurrentMillis(position * 1000, dispatch);
 
         if(position >= duration) {
             togglePlayback(false);
@@ -94,31 +95,31 @@ const MusicPlayer = () => {
     }, [position, duration]);
 
     useEffect(() => {
-        playbackState.then(state => {
-            if(state !== State.Playing) {
-                QueueBridge.setCurrentMillis(position * 1000, dispatch);
-            }
-        });
+        if (playbackState !== State.Playing) {
+            QueueBridge.setCurrentMillis(position * 1000, dispatch);
+        }
     }, [isPlaying]);
 
-    useTrackPlayerEvents([Event.PlaybackState], event => {
-        togglePlayback(event.state === State.Playing);
+    useTrackPlayerEvents([Event.PlaybackState, Event.PlaybackTrackChanged], async event => {
+        if(event.type == Event.PlaybackState) {
+            togglePlayback(event.state === State.Playing);
+        } else if (event.type == Event.PlaybackTrackChanged) {
+            if(event.nextTrack != null) {
+                await QueueBridge.setIndex(event.nextTrack, dispatch);
+            }
+        }
     });
 
     const handlePlayerExpansion = () => {
         toggleExpansion(!expanded);
     }
 
-    const handleProgressChange = (value) => {
-        QueueBridge.setCurrentMillis(value, dispatch, ["redux"]);
-    }
-
     const handleProgressFingerUp = async (value) => {
-        QueueBridge.setCurrentMillis(value, dispatch);
-
+        const val = Math.floor(value[0]);
         const oldState = isPlaying;
 
-        await TrackPlayer.seekTo(value);
+        await TrackPlayer.seekTo(val);
+        await QueueBridge.setCurrentMillis(val, dispatch);
 
         if(!oldState)
             await TrackPlayer.pause();
@@ -190,26 +191,16 @@ const MusicPlayer = () => {
                             </Pressable>
 
                             <VStack w="100%" space="1">
-                                <Slider mt="2" w="100%" h={expanded ? "1.5" : "0.5"}
-                                    defaultValue={0}
-                                    minValue={0}
-                                    maxValue={duration}
+                                <Slider trackClickable
+                                    containerStyle={{ width: "100%", height: 15 }}
+                                    trackStyle={{height: expanded ? 8 : 5}}
                                     value={position}
-                                    onChange={handleProgressChange}
-                                    onChangeEnd={handleProgressFingerUp}
-                                >
-                                    <Slider.Track 
-                                        bg="gray.500" 
-                                        rounded="none" 
-                                        size={expanded ? 10 : 5}
-                                    >
-                                        <Slider.FilledTrack 
-                                            bg="primary.50"
-                                            rounded="none"
-                                            size={expanded ? 10 : 5}/>
-                                    </Slider.Track>
-                                    <Slider.Thumb bg="transparent" borderWidth={0} _pressed={{ bg: "gray.200:alpha.50" }}/>
-                                </Slider>
+                                    minimumValue={0}
+                                    maximumValue={duration}
+                                    minimumTrackTintColor={primaryColor}
+                                    renderThumbComponent={() => <></>}
+                                    onSlidingComplete={handleProgressFingerUp}
+                                />
 
                                 <HStack w="100%" justifyContent="space-between">
                                     <Text color="white"

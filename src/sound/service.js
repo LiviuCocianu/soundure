@@ -1,11 +1,15 @@
 import TrackPlayer, {
     AppKilledPlaybackBehavior,
-    Capability
+    Capability,
+    Event
 } from "react-native-track-player";
 
 
 const serviceCallback = async () => {
-
+    TrackPlayer.addEventListener(Event.RemotePlay, () => TrackPlayer.play());
+    TrackPlayer.addEventListener(Event.RemotePause, () => TrackPlayer.pause());
+    TrackPlayer.addEventListener(Event.RemoteNext, () => TrackPlayer.skipToNext());
+    TrackPlayer.addEventListener(Event.RemotePrevious, () => TrackPlayer.skipToPrevious());
 }
 
 export async function setupPlayer() {
@@ -22,6 +26,7 @@ export async function setupPlayer() {
             capabilities: [
                 Capability.Play,
                 Capability.Pause,
+                Capability.Stop,
                 Capability.SkipToNext,
                 Capability.SkipToPrevious,
                 Capability.SeekTo,

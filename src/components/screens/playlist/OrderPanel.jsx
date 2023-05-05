@@ -4,7 +4,7 @@ import { Box, Factory, HStack, Pressable, Text, VStack } from 'native-base'
 import { useDispatch, useSelector } from 'react-redux';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { AntDesign, Entypo, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
-import { play } from '../../../sound/orderPanel/playFunctions';
+import { simplePlay } from '../../../sound/orderPanel/playFunctions';
 import Toast from 'react-native-root-toast';
 
 
@@ -57,7 +57,7 @@ const OrderPanel = ({
 
         if(!canPlay()) return;
 
-        play(playlistId, dispatch);
+        simplePlay(playlistId, dispatch);
     };
 
     return (

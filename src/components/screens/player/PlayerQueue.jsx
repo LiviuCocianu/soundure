@@ -12,6 +12,8 @@ import PlayerQueueElement from './PlayerQueueElement';
 import { QueueBridge } from '../../../database/componentBridge';
 import { find } from '../../../functions';
 import NoContentInfo from '../../general/NoContentInfo';
+import TrackPlayer, { Event, RepeatMode, useTrackPlayerEvents } from 'react-native-track-player';
+import { loopBack, play } from '../../../sound/orderPanel/playFunctions';
 
 
 const EntypoNB = Factory(Entypo);
@@ -37,12 +39,11 @@ const PlayerQueue = ({
         return [track, artist];
     }, [tracks, artists]);
 
-    // TODO finish this
-    useEffect(() => {
+    useTrackPlayerEvents([Event.PlaybackQueueEnded], async () => {
         if(isLooping) {
-            
+            await loopBack(dispatch);
         }
-    }, [isLooping]);
+    });
 
     const renderCallback = useCallback(({item, drag, isActive}) => {
         const [track, artist] = findTrackInfo(item);
@@ -60,12 +61,13 @@ const PlayerQueue = ({
         if (
             from <= currentIndex 
             || to < currentIndex
+            || (to == 0 && to == currentIndex)
         ) {
             if (from <= currentIndex) {
                 Toast.show("Nu poti muta o piesă care precede piesa curentă!", {
                     duration: Toast.durations.LONG
                 });
-            } else if (to < currentIndex) {
+            } else if (to < currentIndex || (to == 0 && to == currentIndex)) {
                 Toast.show("Nu poti muta o piesă inaintea piesei curente!", {
                     duration: Toast.durations.LONG
                 });

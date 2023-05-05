@@ -11,6 +11,7 @@ import { handleCoverURI } from '../../../functions'
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { QueueBridge } from '../../../database/componentBridge'
+import { skipTo } from '../../../sound/orderPanel/playFunctions'
 
 
 const MarqueeNB = Factory(MarqueeText);
@@ -56,9 +57,10 @@ const PlayerQueueElement = ({
     const elementBorder = useMemo(() => relativeToCurrent == 0 ? 1 : 0, [relativeToCurrent]);
     const elementIsDisabled = useMemo(() => isActive || relativeToCurrent == 0, [isActive, relativeToCurrent]);
 
-    const handlePress = useCallback(() => {
-        if(orderMap.length > 0)
-            QueueBridge.setIndex(ownOrderIndex, dispatch);
+    const handlePress = useCallback(async () => {
+        if(orderMap.length > 0) {
+            skipTo(ownOrderIndex, dispatch);
+        }
     }, [orderMap, ownOrderIndex]);
 
     // TODO finish this

@@ -174,6 +174,8 @@ export const find = (arr, key, value, def={}) => {
     return def;
 }
 
+export const waitFor = (millis) => new Promise((resolve, reject) => setTimeout(resolve, millis));
+
 /**
  * Checks if the hex color is too dark using Luma
  * 

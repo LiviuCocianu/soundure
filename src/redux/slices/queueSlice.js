@@ -5,7 +5,8 @@ const initialState = {
     currentIndex: 0,
     currentMillis: 0,
     playlistConfigId: -1,
-    orderMap: []
+    orderMap: [],
+    synced: false,
 };
 
 const queueSlice = createSlice({
@@ -42,6 +43,10 @@ const queueSlice = createSlice({
         orderMapTrackRemoved(state, action) {
             const val = action.payload;
             return state.orderMap.filter(el => el.id !== val.id);
+        },
+        syncedWithDatabase(state, action) {
+            state.synced = action.payload;
+            return state;
         }
     }
 });
@@ -55,6 +60,7 @@ export const {
     orderMapTrackSet,
     orderMapTrackAdded,
     orderMapTrackRemoved,
+    syncedWithDatabase
 } = queueSlice.actions;
 
 export default queueReducer = queueSlice.reducer

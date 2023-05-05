@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 
 import { useFonts } from 'expo-font'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
@@ -16,7 +16,8 @@ import { setupDatabase } from "./database/index"
 import { setupPlayer } from "./sound/service"
 import TracksPreviewPage, { TracksPreviewHeader } from "./components/screens/trackspreview/TracksPreviewPage"
 import MusicPlayer from "./components/screens/player/MusicPlayer"
-import TrackPlayer, { AppKilledPlaybackBehavior, Capability } from "react-native-track-player"
+import { loadTracks, skipTo } from "./sound/orderPanel/playFunctions"
+import TrackPlayer from "react-native-track-player"
 
 
 const Stack = createNativeStackNavigator();
@@ -28,30 +29,29 @@ const App = () => {
     const [loadedFonts] = useFonts(fonts);
     const [loadedTrackPlayer, setLoadedTrackPlayer] = useState(false);
 
-    useEffect(() => {
-        setupDatabase(dispatch, setLoadedDatabase);
-        setupPlayer().then(async isSetup => {
-            await TrackPlayer.updateOptions({
-                capabilities: [
-                    Capability.Play,
-                    Capability.Pause,
-                    Capability.SkipToNext,
-                    Capability.SkipToPrevious,
-                    Capability.Stop,
-                    Capability.SeekTo,
-                ],
-                compactCapabilities: [
-                    Capability.Play,
-                    Capability.Pause,
-                ],
-                android: {
-                    appKilledPlaybackBehavior: AppKilledPlaybackBehavior.StopPlaybackAndRemoveNotification
-                },
-              });
+    const queue = useSelector(state => state.queue);
 
-              return isSetup;
-        }).then(isSetup => setLoadedTrackPlayer(isSetup));
+    useEffect(() => {
+        (async () => {
+            await setupDatabase(dispatch);
+            setLoadedDatabase(true);
+        })();
     }, []);
+
+    // Load the state of the music player from the database
+    useEffect(() => {
+        if(loadedDatabase && !loadedTrackPlayer && queue.synced) {
+            (async () => {
+                const isSetup = await setupPlayer();
+
+                await loadTracks(queue.orderMap);
+                await skipTo(queue.currentIndex, dispatch, false);
+                await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
+
+                setLoadedTrackPlayer(isSetup);
+            })();
+        }
+    }, [queue, loadedDatabase]);
 
     if (!loadedFonts || !loadedDatabase || !loadedTrackPlayer) {
         return <LoadingPage />
