@@ -74,6 +74,12 @@ export async function setupDatabase(dispatch) {
         // TODO remove createMockupPlaylist when the app is done
         await createMockupPlaylist(dispatch);
 
+        // const tr = await db.selectFrom(TABLES.TRACK, null, "title LIKE ?", ["%See No Evil%"]); // TODO debug
+
+        // if(tr.length > 0) {
+        //     await TrackBridge.deleteTrack(tr[0].id, dispatch, false); // TODO debug
+        // }
+
         await db.insertIfNotExists(TABLES.QUOTE, { lastFetch: 0 }, "id=?", [1]);
 
         for(let reserved of RESERVED_PLAYLISTS) {

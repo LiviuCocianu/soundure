@@ -1,4 +1,4 @@
-import React, { memo } from 'react'
+import React, { memo, useEffect, useMemo } from 'react'
 import { ImageBackground } from 'react-native'
 import { Box, AspectRatio, Factory, Pressable } from 'native-base'
 
@@ -9,6 +9,13 @@ import { handleCoverURI } from '../../functions';
 
 const MarqueeTextNB = Factory(MarqueeText);
 const ImageNB = Factory(ImageBackground);
+
+const propsAreEqual = (prev, next) => (
+    prev.title == next.title
+    && prev.onPress == next.onPress
+    && prev.coverURI == next.coverURI
+    && prev.placeholderColor == next.placeholderColor
+);
 
 /**
  * @callback onPress
@@ -35,12 +42,14 @@ const HorizontalCategoryElement = ({
     coverURI,
     placeholderColor="primary.50"
 }) => {
+    const cover = useMemo(() => handleCoverURI(coverURI), [coverURI])
+
     return (
         <Pressable _pressed={{ opacity: 80 }} onPress={onPress}>
             <Box mr="2" rounded="xl">
                 <AspectRatio flexGrow="1" ratio="2/2">
                     <ImageNB w="100%" h="100%" mr="2"
-                        source={handleCoverURI(coverURI)}
+                        source={cover}
                         bg={placeholderColor}
                         justifyContent="flex-end"
                         rounded="xl"
@@ -77,10 +86,4 @@ const HorizontalCategoryElement = ({
 };
 
 
-export default memo(
-    HorizontalCategoryElement,
-    (prev, next) => prev.title == next.title 
-        && prev.coverURI == next.coverURI
-        && prev.placeholderColor == next.placeholderColor
-        && prev.onPress == next.onPress
-);
+export default memo(HorizontalCategoryElement, propsAreEqual);

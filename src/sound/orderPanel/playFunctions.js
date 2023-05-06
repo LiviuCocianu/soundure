@@ -4,20 +4,50 @@ import { TABLES } from "../../constants";
 import { PlaylistBridge, QueueBridge } from "../../database/componentBridge"
 import db from "../../database/database";
 import { wrap } from "../trackBridge";
+import { waitFor } from "../../functions";
 
 
 /**
- * Load the tracks into the player without playing
+ * Appends the tracks to the player queue without playing
  * 
  * @param {number[]} orderMap An ordered list of track IDs to play
  */
 export const loadTracks = async (orderMap) => {
-    const orderMapTracks = await db.selectFrom(TABLES.TRACK, null, `id IN (${orderMap.join(", ")})`);
+    const dbOrderMapTracks = await db.selectFrom(TABLES.TRACK, null, `id IN (${orderMap.join(", ")})`);
+    const orderMapTracks = orderMap.map(id => dbOrderMapTracks.find(tr => tr.id == id));
 
     for (const track of orderMapTracks) {
         const wrapped = await wrap(track);
         await TrackPlayer.add(wrapped);
     }
+}
+
+export const updateQueueOrder = async (orderMap, index) => {
+    const changedPart = orderMap.slice(index + 1, orderMap.length);
+    const queue = await TrackPlayer.getQueue();
+
+    await TrackPlayer.add(queue[index]);
+    
+    console.log(); // TODO debug
+    console.log(); // TODO debug
+    console.log("== before remove"); // TODO debug
+    queue.forEach(tr => console.log("- ", tr.title)); // TODO debug
+    console.log(queue[index]); // TODO debug
+
+    for (let i = 0; i < queue.length; i++) {
+        await TrackPlayer.remove(i);
+        console.log("index to remove:", i); // TODO debug
+    }
+    
+    console.log(); // TODO debug
+    console.log("== after remove:"); // TODO debug
+    (await TrackPlayer.getQueue()).forEach(tr => console.log("- ", tr.title)); // TODO debug
+    
+    await loadTracks(changedPart);
+
+    console.log(); // TODO debug
+    console.log("== after load"); // TODO debug
+    (await TrackPlayer.getQueue()).forEach(tr => console.log("- ", tr.title)); // TODO debug
 }
 
 /**

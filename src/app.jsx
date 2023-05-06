@@ -25,8 +25,8 @@ const Stack = createNativeStackNavigator();
 const App = () => {
     const dispatch = useDispatch();
 
-    const [loadedDatabase, setLoadedDatabase] = useState(false);
     const [loadedFonts] = useFonts(fonts);
+    const [loadedDatabase, setLoadedDatabase] = useState(false);
     const [loadedTrackPlayer, setLoadedTrackPlayer] = useState(false);
 
     const queue = useSelector(state => state.queue);

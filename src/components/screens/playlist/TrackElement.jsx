@@ -19,6 +19,7 @@ import TrackSettingsSheet from '../track/TrackSettingsSheet';
 
 import { handleCoverURI, lng } from '../../../functions';
 import { ARTIST_NAME_PLACEHOLDER, TRACK_EL_HEIGHT } from '../../../constants';
+import { useMemo } from 'react';
 
 
 const SCREEN_WIDTH = Dimensions.get("screen").width;
@@ -28,6 +29,14 @@ const ImageNB = Factory(ImageBackground);
 const EntypoNB = Factory(Entypo);
 const AntDesignNB = Factory(AntDesign);
 const MarqueeNB = Factory(MarqueeText);
+
+const arePropsEqual = (prev, next) => (
+    prev.title === next.title
+    && prev.artist === next.artist
+    && prev.playlistId === next.playlistId
+    && prev.selectionMode === next.selectionMode
+    && prev.selectionHandler === next.selectionHandler
+);
 
 /**
  * @callback selectionHandler
@@ -63,6 +72,8 @@ const TrackElement = ({
 
     const [isSelected, setSelected] = useState(false);
 
+    const cover = useMemo(() => handleCoverURI(track.coverURI), [track.coverURI]);
+
     useEffect(() => {
         setSelected(allSelected);
         selectionHandler(allSelected, null);
@@ -92,7 +103,7 @@ const TrackElement = ({
             >
                 <AspectRatio ratio="4/4" h="auto">
                     <ImageNB
-                        source={handleCoverURI(track.coverURI)}
+                        source={cover}
                         imageStyle={{
                             borderTopLeftRadius: 10,
                             borderBottomLeftRadius: 10
@@ -165,11 +176,5 @@ const TrackElement = ({
     );
 };
 
-const arePropsEqual = (prev, next) => {
-    return prev.artist === next.artist
-        && prev.playlistId === next.playlistId
-        && prev.selectionMode === next.selectionMode
-        && prev.selectionHandler === next.selectionHandler;
-};
 
 export default memo(TrackElement, arePropsEqual)

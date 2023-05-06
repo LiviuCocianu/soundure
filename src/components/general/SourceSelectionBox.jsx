@@ -24,14 +24,23 @@ const SOURCE_TOOLS = {
     }
 }
 
+const propsAreEqual = (prev, next) => (
+    prev.platform == next.platform
+    && prev.setPlatform == next.setPlatform
+    && prev.handleFileChoice == next.handleFileChoice
+);
+
+/**
+ * @callback handleFileChoice
+ */
+
 /**
  * SourceSelectionBox component
  * 
  * @param {object} props props object
- * @param {string} props.url Passed URL state
- * @param {React.Dispatch} props.setURL Passed setter for URL
  * @param {string} props.platform Passed platform state
  * @param {React.Dispatch} props.setPlatform Passed setter for platform
+ * @param {handleFileChoice} props.handleFileChoice Function that passes the chosen platform upwards
  * 
  * @returns {JSX.Element} JSX component
  */
@@ -126,8 +135,5 @@ const SourceRadio = ({ id, name, color, value }) => (
         }}>{name}</Radio>
 );
 
-export default memo(SourceSelectionBox, (prev, next) => prev.url == next.url
-    && prev.setURL == next.setURL
-    && prev.platform == next.platform
-    && prev.setPlatform == next.setPlatform
-);
+
+export default memo(SourceSelectionBox, propsAreEqual);

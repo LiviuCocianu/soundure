@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Box, VStack, HStack, Factory, Pressable} from 'native-base'
 
 import { useDispatch, useSelector } from 'react-redux'
@@ -6,14 +6,14 @@ import { useDispatch, useSelector } from 'react-redux'
 import Toast from 'react-native-root-toast';
 import { Entypo, FontAwesome5 } from '@expo/vector-icons'
 import DraggableFlatList from 'react-native-draggable-flatlist'
+import { Event, useTrackPlayerEvents } from 'react-native-track-player';
 
 import PlayerQueueElement from './PlayerQueueElement';
 
 import { QueueBridge } from '../../../database/componentBridge';
 import { find } from '../../../functions';
 import NoContentInfo from '../../general/NoContentInfo';
-import TrackPlayer, { Event, RepeatMode, useTrackPlayerEvents } from 'react-native-track-player';
-import { loopBack, play } from '../../../sound/orderPanel/playFunctions';
+import { loopBack, updateQueueOrder } from '../../../sound/orderPanel/playFunctions';
 
 
 const EntypoNB = Factory(Entypo);
@@ -27,10 +27,15 @@ const PlayerQueue = ({
     const tracks = useSelector(state => state.tracks);
     const artists = useSelector(state => state.artists);
 
-    const currentIndex = useSelector(state => state.queue.currentIndex);
-    const orderMap = useSelector(state => state.queue.orderMap);
-
+    const queue = useSelector(state => state.queue);
+    
     const [isLooping, toggleLoop] = useState(false);
+
+    useTrackPlayerEvents([Event.PlaybackQueueEnded], async () => {
+        if(isLooping) {
+            await loopBack(dispatch);
+        }
+    });
 
     const findTrackInfo = useCallback((trackId) => {
         const track = find(tracks, "id", trackId);
@@ -38,12 +43,6 @@ const PlayerQueue = ({
 
         return [track, artist];
     }, [tracks, artists]);
-
-    useTrackPlayerEvents([Event.PlaybackQueueEnded], async () => {
-        if(isLooping) {
-            await loopBack(dispatch);
-        }
-    });
 
     const renderCallback = useCallback(({item, drag, isActive}) => {
         const [track, artist] = findTrackInfo(item);
@@ -57,26 +56,26 @@ const PlayerQueue = ({
         )
     }, [tracks, artists, findTrackInfo]);
 
-    const updateOrder = useCallback(({ data, from, to }) => {
+    const updateOrder = useCallback(async ({ data, from, to }) => {
         if (
-            from <= currentIndex 
-            || to < currentIndex
-            || (to == 0 && to == currentIndex)
+            from <= queue.currentIndex 
+            || to < queue.currentIndex
+            || (to == 0 && to == queue.currentIndex)
         ) {
-            if (from <= currentIndex) {
+            if (from <= queue.currentIndex) {
                 Toast.show("Nu poti muta o piesă care precede piesa curentă!", {
                     duration: Toast.durations.LONG
                 });
-            } else if (to < currentIndex || (to == 0 && to == currentIndex)) {
+            } else if (to < queue.currentIndex || (to == 0 && to == queue.currentIndex)) {
                 Toast.show("Nu poti muta o piesă inaintea piesei curente!", {
                     duration: Toast.durations.LONG
                 });
             }
-            return;
+        } else {
+            await QueueBridge.setOrderMap(data, dispatch);
+            await updateQueueOrder(data, queue.currentIndex);
         }
-
-        QueueBridge.setOrderMap(data, dispatch);
-    }, [currentIndex]);
+    }, [queue.currentIndex]);
 
     return (
         <VStack h="100%" mt="2" alignItems="center">
@@ -111,11 +110,11 @@ const PlayerQueue = ({
 
             <Box w="90%" h="32%" mt="4">
                 {
-                    orderMap.length > 0 ? (
+                    queue.orderMap.length > 0 ? (
                         <DraggableFlatList
-                            data={orderMap}
+                            data={queue.orderMap}
                             renderItem={renderCallback}
-                            keyExtractor={(_, index) => `queuelistitem_${index}`}
+                            keyExtractor={(item) => `queuelistitem_${item}`}
                             onDragEnd={updateOrder}
                             showsVerticalScrollIndicator={false}
                             style={{ width: "100%", height: "100%" }} />

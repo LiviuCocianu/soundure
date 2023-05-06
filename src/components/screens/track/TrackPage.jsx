@@ -83,6 +83,16 @@ const TrackPage = ({
     );
 };
 
+const infoPropsAreEqual = (prev, next) => (
+    prev.navigation == next.navigation
+    && prev.track.coverURI == next.track.coverURI
+    && prev.track.title == next.track.title
+    && prev.track.millis == next.track.millis
+    && prev.track.platform == next.track.platform
+    && prev.track.favorite == next.track.favorite
+    && prev.artist.name == next.artist.name
+);
+
 const TrackInfo = memo(({
     navigation,
     track,
@@ -96,6 +106,8 @@ const TrackInfo = memo(({
     const [confirmedCoverEdit, toggleConfirmCoverEdit] = useState(false);
 
     const [deletionWindow, toggleDeletionWindow] = useState(false);
+
+    const cover = useMemo(() => handleCoverURI(track.coverURI), [track.coverURI]);
 
     useEffect(() => {
         if(confirmedCoverEdit) {
@@ -180,7 +192,7 @@ Fișierul asociat piesei nu va fi șters din dispozitiv!`}
                 <Pressable onPress={handlePreCoverEdit}>
                     <AspectRatio ratio="4/4" w="75%">
                         <Image
-                            source={handleCoverURI(track.coverURI)}
+                            source={cover}
                             alt="about track cover"
                             rounded="2xl"
                             shadow={10}
@@ -306,14 +318,7 @@ Fișierul asociat piesei nu va fi șters din dispozitiv!`}
         </>
         
     )
-}, (prev, next) => prev.navigation == next.navigation
-    && prev.track.coverURI == next.track.coverURI
-    && prev.track.title == next.track.title
-    && prev.track.millis == next.track.millis
-    && prev.track.platform == next.track.platform
-    && prev.track.favorite == next.track.favorite
-    && prev.artist.name == next.artist.name
-);
+}, infoPropsAreEqual);
 
 
 export const TrackHeader = ({ navigation }) => {

@@ -1,4 +1,4 @@
-import React, { useState, Component } from 'react'
+import React, { useState, Component, useMemo } from 'react'
 import { ImageBackground, Dimensions } from 'react-native'
 import {
     Box,
@@ -64,6 +64,8 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
     const [sourceOptions, toggleSourceOptions] = useState(false);
     const [errors, setErrors] = useState({});
+
+    const cover = useMemo(() => handleCoverURI(coverURI, defaultCoverURI), [coverURI]);
 
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -225,7 +227,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                         bg="primary.400"
                         imageStyle={{ height: "150%" }}
                         resizeMode="cover"
-                        source={handleCoverURI(coverURI, defaultCoverURI)}
+                        source={cover}
                         overflow="hidden"
                         blurRadius={10}
                     >
@@ -235,7 +237,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                                     <NoCoverImage />
                                 ) : (
                                     <ImageNB
-                                        source={handleCoverURI(coverURI, defaultCoverURI)}
+                                        source={cover}
                                         resizeMode="cover"
                                         imageStyle={{ height: "100%" }}
                                     ></ImageNB>

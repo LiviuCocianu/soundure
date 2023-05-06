@@ -21,6 +21,23 @@ export function handleCoverURI(coverURI, defaultURI=defURI) {
         // Parse from JSON if needed, otherwise it must be an URI string
         try {
             modified = JSON.parse(modified);
+
+            if(typeof(modified) == "object") {
+                if(!modified.uri) {
+                    console.warn("handleCoverURI warning: Parsed object with no URI property");
+                    modified = "DEFAULT";
+                } else if (typeof (modified.uri) != "string") {
+                    console.warn("handleCoverURI warning: Parsed object with a nonstring URI");
+
+                    if(typeof(modified.uri) == "object" && modified.uri.uri) {
+                        modified = modified.uri;
+
+                        console.log("handleCoverURI mutation: Found URI object inside URI property! Flattening..")
+                    } else {
+                        modified = "DEFAULT";
+                    }
+                }
+            }
         } catch(err) {}
     }
 
@@ -48,7 +65,7 @@ export function handleColors(coverURI) {
 
     return new Promise((resolve, reject) => {
         if (modified == defURI) {
-            const defHex = "#a1a1aa";
+            const defHex = "#72729e";
 
             resolve({
                 primary: defHex,

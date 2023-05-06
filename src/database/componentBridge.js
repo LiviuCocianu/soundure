@@ -9,6 +9,7 @@ import { playlistAdded, playlistRemoved, playlistSet } from "../redux/slices/pla
 import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved, playlistContentAdded } from "../redux/slices/playlistContentSlice";
 import { artistAdded } from "../redux/slices/artistSlice";
 import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet } from "../redux/slices/queueSlice";
+import { handleCoverURI } from "../functions";
 
 
 const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
@@ -62,7 +63,7 @@ export const TrackBridge = {
         if(toast) Toast.show("Titlul a fost actualizat!");
     },
     setCoverURI: async (coverURI, trackId, dispatch, toast=true) => {
-        await TrackBridge.updateColumn("coverURI", JSON.stringify({ uri: coverURI }), trackId, dispatch);
+        await TrackBridge.updateColumn("coverURI", JSON.stringify(handleCoverURI(coverURI)), trackId, dispatch);
         if(toast) Toast.show("Coperta a fost actualizată!");
     },
     /**
@@ -159,7 +160,7 @@ export const PlaylistBridge = {
         if(toast) Toast.show("Titlul a fost actualizat!");
     },
     setCoverURI: async (coverURI, playlistId, dispatch, toast=true) => {
-        await PlaylistBridge.updateColumn("coverURI", JSON.stringify(coverURI), playlistId, dispatch);
+        await PlaylistBridge.updateColumn("coverURI", JSON.stringify(handleCoverURI(coverURI)), playlistId, dispatch);
         if(toast) Toast.show("Coperta a fost actualizată!");
     },
     /**
@@ -420,9 +421,5 @@ export const QueueBridge = {
                 reject();
             }
         });
-    },
-    // TODO finish this
-    toggleConfigOptionFor: (playlistId, dispatch, option=ORDER_MUTATION_OPTIONS.LOOP, value=false) => {
-
     }
 };

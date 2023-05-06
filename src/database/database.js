@@ -415,10 +415,10 @@ class Database {
      * 
      * @param {string} table Table name
      */
-    valuesOf(table) {
+    async valuesOf(table) {
         console.log("");
 
-        this.selectFrom(table).then(rows => {
+        await this.selectFrom(table).then(rows => {
             if(rows.length == 0) {
                 console.log(`No values for ${table}...`);
             } else {

@@ -10,7 +10,6 @@ import { QUEUE_TRACK_EL_HEIGHT } from '../../../constants'
 import { handleCoverURI } from '../../../functions'
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { QueueBridge } from '../../../database/componentBridge'
 import { skipTo } from '../../../sound/orderPanel/playFunctions'
 
 
@@ -18,6 +17,14 @@ const MarqueeNB = Factory(MarqueeText);
 const EntypoNB = Factory(Entypo);
 const FoundationNB = Factory(Foundation);
 const MaterialNB = Factory(MaterialCommunityIcons);
+
+const propsAreEqual = (prev, next) => (
+    prev.title == next.title
+    && prev.coverURI == next.coverURI
+    && prev.millis == next.millis
+    && prev.artistName == next.artistName
+    && prev.relativeToCurrent == next.relativeToCurrent
+);
 
 /**
  * @callback drag
@@ -122,11 +129,13 @@ const TrackInfo = memo(({
     artistName,
     relativeToCurrent
 }) => {
+    const cover = useMemo(() => handleCoverURI(coverURI), [coverURI]);
+
     return (
         <>
             <AspectRatio ratio="4/4" h="80%" ml="2">
                 <Image size="100%"
-                    source={handleCoverURI(coverURI)}
+                    source={cover}
                     alt="queue track element cover"/>
             </AspectRatio>
 
@@ -167,15 +176,6 @@ const TrackInfo = memo(({
         </>
     )
 });
-
-const propsAreEqual = (prev, next) => (
-    prev.track.coverURI === next.track.coverURI
-    && prev.track.title === next.track.title
-    && prev.track.millis === next.track.millis
-    && prev.artist.name === next.artist.name
-    && prev.drag === next.drag
-    && prev.isActive === next.isActive
-);
 
 
 export default memo(PlayerQueueElement, propsAreEqual);

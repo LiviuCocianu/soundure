@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import MarqueeText from 'react-native-marquee'
 
 import { handleColors, handleCoverURI, lng } from '../../../functions';
+import { useEffect } from 'react';
 
 
 const MarqueeNB = Factory(MarqueeText);
@@ -38,26 +39,29 @@ const PlaylistDescriptionSheet = ({
     const [coverColors, setCoverColors] = useState({});
 
     const playlists = useSelector(state => state.playlists);
+
     const playlist = useMemo(() => {
         const found = playlists.find(pl => pl.id == playlistId);
-
-        handleColors(found.coverURI).then(color => {
-            setCoverColors(color);
-        });
-
         return found ? found : {};
     }, [playlists]);
+
+    const cover = useMemo(() => handleCoverURI(playlist.coverURI), [playlist.coverURI]);
+    const sheetGradient = useMemo(() => lng([coverColors.primary, coverColors.detail], "bottom"), [coverColors]);
+
+    useEffect(() => {
+        handleColors(cover).then(color => setCoverColors(color));
+    }, [cover]);
 
     return (
         <Actionsheet isOpen={isOpen} onOpen={onOpen} onClose={onClose} >
             <Actionsheet.Content w="100%"
-                bg={lng([coverColors.primary, coverColors.detail], "bottom")}
+                bg={sheetGradient}
                 _dragIndicator={{bg: "transparent"}}
             >
                 <HStack w="100%" minH="100" pb="4" pl="2" space="4">
                     <AspectRatio ratio="4/4">
                         <Image w="100%" maxW="100" maxH="100"
-                            source={handleCoverURI(playlist.coverURI)}
+                            source={cover}
                             alt="playlist description cover"
                             size="100%"
                             rounded="xl"

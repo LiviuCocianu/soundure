@@ -28,9 +28,6 @@ const ImageNB = Factory(ImageBackground);
 const FeatherNB = Factory(Feather);
 const EntypoNB = Factory(Entypo);
 
-// TODO make playlist title and cover editable, like TrackPage!!
-// TODO add description field somewhere
-
 /**
  * PlaylistPage component
  * 
@@ -88,6 +85,12 @@ const PlaylistPage = ({ navigation, route: { params: { playlistId } } }) => {
     );
 };
 
+const coverPropsAreEqual = (prev, next) => (
+    prev.playlist == next.playlist
+    && prev.ownTracks == next.ownTracks
+    && prev.handleCoverHeight == next.handleCoverHeight
+);
+
 const PlaylistCover = memo(({
     playlist,
     ownTracks,
@@ -114,6 +117,8 @@ const PlaylistCover = memo(({
             ? playlist.title.slice(0, MAX_TITLE_LENGTH - 3) + "..."
             : playlist.title;
     }, [playlist.title]);
+
+    const cover = useMemo(() => handleCoverURI(playlist.coverURI), [playlist.coverURI]);
 
     useEffect(() => {
         if (confirmedCoverEdit) {
@@ -168,7 +173,7 @@ const PlaylistCover = memo(({
     return (
         <Box w="100%" h="35%" onLayout={handleCoverHeight}>
             <ImageNB w="100%" h="100%"
-                source={handleCoverURI(playlist.coverURI)}
+                source={cover}
                 imageStyle={{ height: "100%" }} />
 
             <Box w="100%" h="100%" style={{ ...StyleSheet.absoluteFillObject }}>
@@ -239,9 +244,7 @@ const PlaylistCover = memo(({
             </Box>
         </Box>
     );
-}, (prev, next) => prev.playlist == next.playlist
-    && prev.ownTracks == next.ownTracks
-);
+}, coverPropsAreEqual);
 
 
 export const PlaylistHeader = ({ navigation, route: { params: { playlistId } } }) => {
@@ -278,6 +281,5 @@ export const PlaylistHeader = ({ navigation, route: { params: { playlistId } } }
         </Box>
     )
 };
-
 
 export default PlaylistPage
