@@ -209,5 +209,35 @@ export const isTooDark = (hex) => {
 
     const luma = 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
-    return luma < 40;
+    return luma < 80;
+}
+
+/**
+ * Randomly shuffles the elements in the array using the Fisher-Yates algorithm
+ * 
+ * @param {any[]} array Array of any data type
+ * 
+ * @returns {any[]} The shuffled array
+ */
+export const shuffle = array => {
+    let cpy = [...array];
+
+    for (let i = cpy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = cpy[i];
+        cpy[i] = cpy[j];
+        cpy[j] = temp;
+    }
+
+    return cpy;
+}
+
+export const reverse = (array) => {
+    let out = [];
+
+    for(let i = array.length - 1; i >= 0; i--) {
+        out.push(array[i]);
+    }
+
+    return out;
 }

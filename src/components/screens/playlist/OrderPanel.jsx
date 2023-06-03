@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { Box, Factory, HStack, Pressable, Text, VStack } from 'native-base'
 
 import { useDispatch, useSelector } from 'react-redux';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { AntDesign, Entypo, FontAwesome5, MaterialCommunityIcons } from '@expo/vector-icons'
-import { simplePlay } from '../../../sound/orderPanel/playFunctions';
+import { reversedPlay, shuffledPlay, simplePlay } from '../../../sound/orderPanel/playFunctions';
 import Toast from 'react-native-root-toast';
 
 
@@ -23,8 +23,10 @@ const OrderPanel = ({
     coverHeight
 }) => {
     const dispatch = useDispatch();
+    const tracks = useSelector(state => state.tracks);
     const links = useSelector(state => state.playlistsContent);
-    const ownLinks = useMemo(() => links.filter(link => link.playlistId == playlistId), [links]);
+
+    const ownLinks = useMemo(() => links.filter(link => link.playlistId == playlistId), [links, playlistId]);
 
     const [panelDrawn, togglePanel] = useState(true);
 
@@ -52,13 +54,29 @@ const OrderPanel = ({
         return true;
     };
 
-    const handleSimplePlay = () => {
+    const handleSimplePlay = useCallback(() => {
         handleDisplay();
 
         if(!canPlay()) return;
 
-        simplePlay(playlistId, dispatch);
-    };
+        simplePlay(playlistId, tracks, dispatch);
+    }, [playlistId, tracks]);
+
+    const handleShuffledPlay = useCallback(() => {
+        handleDisplay();
+
+        if(!canPlay()) return;
+
+        shuffledPlay(playlistId, tracks, dispatch);
+    }, [playlistId, tracks]);
+
+    const handleReversedPlay = useCallback(() => {
+        handleDisplay();
+
+        if(!canPlay()) return;
+
+        reversedPlay(playlistId, tracks, dispatch);
+    }, [playlistId, tracks]);
 
     return (
         <Animated.View style={{
@@ -106,21 +124,17 @@ const OrderPanel = ({
 
                 <OrderButton 
                     IconType={EntypoNB}
-                    name="loop"
-                    color="white"
-                    text="Redă în buclă"/>
-
-                <OrderButton 
-                    IconType={EntypoNB}
                     name="shuffle"
                     color="white"
-                    text="Redă amestecat"/>
+                    text="Redă amestecat"
+                    onPress={handleShuffledPlay}/>
 
                 <OrderButton 
                     IconType={FontAwesomeNB}
                     name="angle-double-left"
                     color="white"
-                    text="Redă inversat"/>
+                    text="Redă inversat"
+                    onPress={handleReversedPlay}/>
 
                 <OrderButton
                     IconType={MaterialNB}

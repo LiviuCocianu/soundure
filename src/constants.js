@@ -37,8 +37,8 @@ export const QUOTE_API_URL = "https://api.api-ninjas.com/v1/quotes?category=insp
 export const RESERVED_PLAYLISTS = ["_HISTORY"];
 export const TRACK_EL_HEIGHT = 85;
 export const QUEUE_TRACK_EL_HEIGHT = 65;
-export const PLAYER_UP_HEIGHT = SCREEN_HEIGHT * 0.6;
-export const PLAYER_DOWN_HEIGHT = SCREEN_HEIGHT * 0.12;
+export const PLAYER_UP_HEIGHT = SCREEN_HEIGHT * 0.7;
+export const PLAYER_DOWN_HEIGHT = SCREEN_HEIGHT * 0.08;
 export const SCREEN_WITH_PLAYER_HEIGHT = SCREEN_HEIGHT - PLAYER_DOWN_HEIGHT * 1.7;
 export const ARTIST_NAME_PLACEHOLDER = "Necunoscut";
 

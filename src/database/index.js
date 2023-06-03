@@ -9,6 +9,7 @@ import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, synce
 import { PlaylistBridge, QueueBridge, TrackBridge } from "./componentBridge"
 import { createPlaylist, createTrack } from "./shapes"
 import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
+import { setBoolean } from "../redux/slices/playlistConfigSlice"
 
 
 const loadQueueFromDB = async (dispatch) => {
@@ -19,10 +20,15 @@ const loadQueueFromDB = async (dispatch) => {
     dispatch(currentMillisSet(data.currentMillis));
     dispatch(currentConfigSet(data.playlistConfigId));
 
-    const configRows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "id = ?", [data.playlistConfigId]);
+    const configRows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, null, "id = ?", [data.playlistConfigId]);
 
     if(configRows.length > 0) {
-        dispatch(orderMapSet(JSON.parse(configRows[0].orderMap)));
+        const data = configRows[0];
+
+        dispatch(orderMapSet(JSON.parse(data.orderMap)));
+        dispatch(setBoolean({value: data.isLooping, optionName: "LOOP"}));
+        dispatch(setBoolean({value: data.isShuffling, optionName: "SHUFFLE"}));
+        dispatch(setBoolean({value: data.isReversing, optionName: "REVERSE"}));
     }
 
     dispatch(syncedWithDatabase(true));
@@ -80,6 +86,8 @@ export async function setupDatabase(dispatch) {
         //     await TrackBridge.deleteTrack(tr[0].id, dispatch, false); // TODO debug
         // }
 
+        //await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "playlistId=?", [2]);
+
         await db.insertIfNotExists(TABLES.QUOTE, { lastFetch: 0 }, "id=?", [1]);
 
         for(let reserved of RESERVED_PLAYLISTS) {
@@ -101,14 +109,13 @@ export async function setupDatabase(dispatch) {
         await db.selectFrom(TABLES.PLAYLIST).then(async rows => {
             dispatch(playlistsSet(rows));
             const links = await db.selectFrom(TABLES.PLAYLIST_CONTENT);
-            const withoutReserved = rows.filter(pl => !RESERVED_PLAYLISTS.includes(pl.title));
 
-            for(const playlist of withoutReserved) {
+            for(const playlist of rows) {
                 const defaultMap = links
                     .filter(link => link.playlistId == playlist.id)
                     .map(link => link.trackId);
 
-                await db.insertIfNotExists(TABLES.PLAYLIST_CONFIG, { playlistId: playlist.id, orderMap: JSON.stringify(defaultMap) });
+                await db.insertIfNotExists(TABLES.PLAYLIST_CONFIG, { playlistId: playlist.id, orderMap: JSON.stringify(defaultMap) }, "playlistId=?", [playlist.id]);
             }
         });
 

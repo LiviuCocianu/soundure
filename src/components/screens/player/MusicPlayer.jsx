@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import React, { useEffect, useState, useMemo, useCallback } from 'react'
 import { AspectRatio, Box, Factory, HStack, Image, Pressable, Text, VStack } from 'native-base'
 
 import { useDispatch, useSelector } from 'react-redux';
@@ -19,17 +19,24 @@ const EntypoNB = Factory(Entypo);
 const MaterialNB = Factory(MaterialCommunityIcons);
 const MarqueeNB = Factory(MarqueeText);
 
+const animationDuration = 600;
+
 // TODO add documentation
 const MusicPlayer = () => {
     const dispatch = useDispatch();
 
     const [isPlaying, togglePlayback] = useState(false);
-    const { position, buffered, duration } = useProgress(500);
+    const [sliderIsVisible, toggleSlider] = useState(false);
+
+    const { position, duration } = useProgress(500);
     const playbackState = usePlaybackState();
 
     const heightAnimValue = useSharedValue(PLAYER_DOWN_HEIGHT);
     const heightAnimStyle = useAnimatedStyle(() => ({
-        height: withTiming(heightAnimValue.value, { duration: 600, easing: Easing.inOut(Easing.cubic) })
+        height: withTiming(
+            heightAnimValue.value, 
+            { duration: animationDuration, easing: Easing.inOut(Easing.cubic) }
+        )
     }));
 
     const opacityAnimValue = useSharedValue(0);
@@ -40,6 +47,10 @@ const MusicPlayer = () => {
     const tracks = useSelector(state => state.tracks);
     const artists = useSelector(state => state.artists);
     const queue = useSelector(state => state.queue);
+
+    const [expanded, toggleExpansion] = useState(false);
+    const [primaryColor, setPrimaryColor] = useState("primary.50");
+    const maxH = useMemo(() => expanded ? "20" : "16", [expanded]);
 
     const currentTrack = useMemo(() => {
         const found = find(tracks, "id", queue.orderMap[queue.currentIndex], {
@@ -62,14 +73,17 @@ const MusicPlayer = () => {
         });
     }, [artists, currentTrack]);
 
-    const [expanded, toggleExpansion] = useState(false);
-    const [primaryColor, setPrimaryColor] = useState("primary.50");
-
-    const maxH = expanded ? "20" : "24";
+    const sliderColor = useMemo(() => {
+        if(isTooDark(primaryColor)) return primaryColor;
+        return LightenDarkenColor(primaryColor, -60);
+    }, [primaryColor]);
 
     useEffect(() => {
         heightAnimValue.value = expanded ? PLAYER_UP_HEIGHT : PLAYER_DOWN_HEIGHT;
         opacityAnimValue.value = expanded ? 1 : 0;
+
+        if(expanded) setTimeout(() => toggleSlider(true), Math.floor(animationDuration / 300));
+        else toggleSlider(false);
     }, [expanded]);
 
     useEffect(() => {
@@ -129,7 +143,7 @@ const MusicPlayer = () => {
         const queue = await TrackPlayer.getQueue();
 
         if(queue.length > 0) {
-            if(!isPlaying) await TrackPlayer.play();
+            if(playbackState != State.Playing) await TrackPlayer.play();
             else await TrackPlayer.pause();
         }
     }
@@ -143,11 +157,11 @@ const MusicPlayer = () => {
                 ...heightAnimStyle
             }}
         >
-            <Box bg={lng(["gray.700", "gray.800"], "top")}
+            <Box bg="gray.800"
                 borderTopWidth="2"
                 borderTopColor={primaryColor}
             >
-                <HStack w="100%" h="100%" maxH={maxH} px="4" mt={expanded ? "2" : "0"}
+                <HStack w="100%" h="100%" maxH={maxH} px="4" py="2" mt={expanded ? "2" : "0"}
                     alignItems="center"
                     space="2"
                 >
@@ -165,7 +179,7 @@ const MusicPlayer = () => {
 
                         
                         <VStack flexGrow="1" h="100%"
-                            maxW="62%" maxH={maxH}
+                            maxW={expanded ? "75%" : "72%"} maxH={maxH}
                             justifyContent="center"
                         >
                             <Pressable w="100%" onPress={handlePlayerExpansion}>
@@ -190,54 +204,62 @@ const MusicPlayer = () => {
                                     speed={0.5}>{currentTrackArtist.name}</MarqueeNB>
                             </Pressable>
 
-                            <VStack w="100%" space="1">
-                                <Slider trackClickable
-                                    containerStyle={{ width: "100%", height: 15 }}
-                                    trackStyle={{height: expanded ? 8 : 5}}
-                                    value={position}
-                                    minimumValue={0}
-                                    maximumValue={duration}
-                                    minimumTrackTintColor={primaryColor}
-                                    renderThumbComponent={() => <></>}
-                                    onSlidingComplete={handleProgressFingerUp}
-                                />
+                            {
+                                sliderIsVisible ? (
+                                    <VStack w="100%" space="1">
+                                        <Slider trackClickable
+                                            containerStyle={{ width: "100%", height: 15 }}
+                                            trackStyle={{height: expanded ? 8 : 5}}
+                                            value={position}
+                                            minimumValue={0}
+                                            maximumValue={duration}
+                                            minimumTrackTintColor={sliderColor}
+                                            renderThumbComponent={() => <></>}
+                                            onSlidingComplete={handleProgressFingerUp}
+                                        />
 
-                                <HStack w="100%" justifyContent="space-between">
-                                    <Text color="white"
-                                        fontFamily="manrope_l"
-                                        fontSize="8"
-                                    >
-                                        {(position).toString().toHHMMSS()}
-                                    </Text>
+                                        <HStack w="100%" justifyContent="space-between">
+                                            <Text color="white"
+                                                fontFamily="manrope_l"
+                                                fontSize="8"
+                                            >
+                                                {(position).toString().toHHMMSS()}
+                                            </Text>
 
-                                    <Text color="white"
-                                        fontFamily="manrope_l"
-                                        fontSize="8"
-                                    >
-                                        {(duration).toString().toHHMMSS()}
-                                    </Text>
-                                </HStack>
-                            </VStack>
+                                            <Text color="white"
+                                                fontFamily="manrope_l"
+                                                fontSize="8"
+                                            >
+                                                {(duration).toString().toHHMMSS()}
+                                            </Text>
+                                        </HStack>
+                                    </VStack>
+                                ) : <></>
+                            }
                         </VStack>
                     </HStack>
 
-                    <Pressable position="absolute" right="1"
-                        onPress={handlePlayPause}
-                    >
-                        {
-                            !isPlaying ? (
-                                <EntypoNB
-                                    fontSize="40"
-                                    name="controller-play"
-                                    color="primary.50" />
-                            ) : (
-                                <MaterialNB
-                                    fontSize="40"
-                                    name="pause"
-                                    color="primary.50" />
-                            )
-                        }
-                    </Pressable>
+                    {
+                        !expanded ? (
+                            <Pressable position="absolute" right="1"
+                                onPress={handlePlayPause}
+                            >
+                                {
+                                    !isPlaying ? (
+                                        <EntypoNB
+                                            fontSize="40"
+                                            name="controller-play"
+                                            color="primary.50" />
+                                    ) : (
+                                        <MaterialNB
+                                            fontSize="40"
+                                            name="pause"
+                                            color="primary.50" />
+                                    )
+                                }
+                            </Pressable>
+                        ) : <></>
+                    }
                 </HStack>
 
                 {/* // Order controller */}

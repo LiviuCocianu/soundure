@@ -29,6 +29,7 @@ const App = () => {
     const [loadedDatabase, setLoadedDatabase] = useState(false);
     const [loadedTrackPlayer, setLoadedTrackPlayer] = useState(false);
 
+    const tracks = useSelector(state => state.tracks);
     const queue = useSelector(state => state.queue);
 
     useEffect(() => {
@@ -44,7 +45,7 @@ const App = () => {
             (async () => {
                 const isSetup = await setupPlayer();
 
-                await loadTracks(queue.orderMap);
+                await loadTracks(queue.orderMap, tracks);
                 await skipTo(queue.currentIndex, dispatch, false);
                 await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
 
@@ -72,8 +73,7 @@ const App = () => {
                             headerTransparent: true,
                             headerBackButtonMenuEnabled: false,
                             headerBackVisible: false,
-                            animation: "slide_from_right",
-                            freezeOnBlur: true,
+                            animation: "slide_from_right"
                         }} />
 
                     <Stack.Screen name="TrackList"

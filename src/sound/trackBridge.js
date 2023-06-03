@@ -14,11 +14,13 @@ export const wrap = async (track) => {
         coverURI="DEFAULT",
         millis=0
     } = track;
+
     const artist = await TrackBridge.getArtist(id);
     const cover = handleCoverURI(coverURI);
     const artwork = cover.uri ? cover.uri : cover;
 
     return {
+        id,
         url: fileURI,
         title: title,
         artist: artist.name,

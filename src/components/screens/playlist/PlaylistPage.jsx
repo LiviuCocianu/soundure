@@ -1,4 +1,4 @@
-import React, { useState, useEffect, memo, useMemo } from 'react'
+import React, { useState, useEffect, memo, useMemo, useCallback } from 'react'
 import { ImageBackground, StyleSheet } from 'react-native';
 import { Box, Factory, HStack, Text, useDisclose, FormControl, Input, Button, Pressable } from 'native-base'
 
@@ -42,26 +42,29 @@ const EntypoNB = Factory(Entypo);
 const PlaylistPage = ({ navigation, route: { params: { playlistId } } }) => {
     const playlistsContent = useSelector(state => state.playlistsContent);
     const playlists = useSelector(state => state.playlists);
-
+    
     const [coverHeight, setCoverHeight] = useState(0);
     
     const playlist = useMemo(() => {
         return playlists.find(pl => pl.id == playlistId);
     }, [playlists]);
     
-    const ownTracks = useMemo(() => {
+    const ownLinks = useMemo(() => {
         return playlistsContent
-            .filter(link => link.playlistId == playlist.id)
-            .map(link => link.trackId);
-    }, [playlistsContent]); // !! List of IDs !!
+            .filter(link => link.playlistId == playlist.id);
+    }, [playlistsContent]);
 
-    const handleInfoPress = () => {
+    const ownTracks = useMemo(() => {
+        return ownLinks.map(link => link.trackId);
+    }, [ownLinks]); // !! List of IDs !!
+    
+    const handleInfoPress = useCallback(() => {
         if (playlist) handleTrackListNav(navigation, playlist);
-    }
+    }, [playlist, navigation])
 
-    const handleCoverHeight = (e) => {
+    const handleCoverHeight = useCallback((e) => {
         setCoverHeight(e.nativeEvent.layout.height);
-    }
+    }, []);
 
     return (
         <Box w="100%" h={`${SCREEN_WITH_PLAYER_HEIGHT}px`}
@@ -76,20 +79,14 @@ const PlaylistPage = ({ navigation, route: { params: { playlistId } } }) => {
                 ownTracks={ownTracks}
                 handleCoverHeight={handleCoverHeight}/>
 
-            <OptimizedTrackList 
+            <PlaylistList
                 navigation={navigation}
                 playlist={playlist}
                 ownTracks={ownTracks}
-                onInfoPress={handleInfoPress}/>
+                handleInfoPress={handleInfoPress}/>
         </Box>
     );
 };
-
-const coverPropsAreEqual = (prev, next) => (
-    prev.playlist == next.playlist
-    && prev.ownTracks == next.ownTracks
-    && prev.handleCoverHeight == next.handleCoverHeight
-);
 
 const PlaylistCover = memo(({
     playlist,
@@ -244,7 +241,22 @@ const PlaylistCover = memo(({
             </Box>
         </Box>
     );
-}, coverPropsAreEqual);
+});
+
+const PlaylistList = memo(({
+    navigation,
+    playlist,
+    ownTracks,
+    handleInfoPress
+}) => {
+    return (
+        <OptimizedTrackList 
+            navigation={navigation}
+            playlist={playlist}
+            ownTracks={ownTracks}
+            onInfoPress={handleInfoPress}/>
+    );
+});
 
 
 export const PlaylistHeader = ({ navigation, route: { params: { playlistId } } }) => {

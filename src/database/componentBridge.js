@@ -6,10 +6,11 @@ import Toast from "react-native-root-toast";
 
 import { trackSet, trackAdded, trackRemoved } from "../redux/slices/trackSlice";
 import { playlistAdded, playlistRemoved, playlistSet } from "../redux/slices/playlistSlice";
-import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved, playlistContentAdded } from "../redux/slices/playlistContentSlice";
+import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved, playlistContentAdded, playlistContentRemoved } from "../redux/slices/playlistContentSlice";
 import { artistAdded } from "../redux/slices/artistSlice";
 import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet } from "../redux/slices/queueSlice";
 import { handleCoverURI } from "../functions";
+import { setBoolean } from "../redux/slices/playlistConfigSlice";
 
 
 const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
@@ -35,8 +36,8 @@ export const TrackBridge = {
             resolve();
         });
     },
-    toggleFavorite: (trackId, dispatch, toast=true) => {
-        db.selectFrom(TABLES.TRACK, null, "id=?", [trackId]).then(async rows => {
+    toggleFavorite: async (trackId, dispatch, toast=true) => {
+        await db.selectFrom(TABLES.TRACK, null, "id=?", [trackId]).then(async rows => {
             const track = rows[0];
             await TrackBridge.updateColumn("favorite", !track.favorite, trackId, dispatch);
     
@@ -50,10 +51,12 @@ export const TrackBridge = {
         });
     },
     getArtist: async (trackId) => {
-        const artistId = await db.selectFrom(TABLES.TRACK, ["artistId"], "id=?", [trackId]).then(rows => {
+        const artistId = await db.selectFrom(TABLES.TRACK, null, "id=?", [trackId]).then(rows => {
             if(rows.length == 0) {
                 throw new Error(`getArtist(${trackId}): Couldn't find artist for track with this ID`);
-            } else return rows[0].artistId;
+            } else {
+                return rows[0].artistId;
+            }
         });
 
         return db.selectFrom(TABLES.ARTIST, null, "id=?", [artistId]).then(rows => rows[0]);
@@ -208,6 +211,7 @@ export const PlaylistBridge = {
      * @param {number[]} trackIds The tracks to link to the playlist
      * @param {Dispatch<AnyAction>} dispatch 
      * @param {boolean} [redux=true] If link should be added to the Redux store as well
+     * @param {boolean} [toast=true] If a tost message should be displayed
      */
     linkTracks: (targetPlaylistId, trackIds, dispatch, redux=true, toast=true) => {
         return new Promise(async (resolve, reject) => {
@@ -238,12 +242,32 @@ export const PlaylistBridge = {
                 });
         });
     },
+    isLinkedTo: async (trackId, playlistId) => {
+        return db.existsIn(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, playlistId]).then(() => true).catch(() => false);
+    },
     getConfig: async (playlistId) => {
         return await db.selectFrom(TABLES.PLAYLIST_CONFIG, null, "playlistId=?", [playlistId]).then(rows => {
             if(rows.length == 0) {
                 throw new Error(`Playlist getConfig(${playlistId}): Couldn't find a config for playlist with this ID`);
             } else return rows[0];
         });
+    },
+    History: {
+        add: async (trackId, dispatch) => {
+            const rows = await db.selectFrom(TABLES.PLAYLIST, null, "title=?", ["_HISTORY"]);
+
+            if(rows.length > 0) {
+                const data = rows[0];
+                const isLinked = await PlaylistBridge.isLinkedTo(trackId, data.id);
+
+                if(isLinked) {
+                    await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, data.id]);
+                    dispatch(trackPlaylistRelationRemoved({trackId, playlistId: data.id}));
+                }
+                
+                await PlaylistBridge.linkTracks(data.id, [trackId], dispatch, true, false);
+            }
+        }
     }
 }
 
@@ -421,5 +445,18 @@ export const QueueBridge = {
                 reject();
             }
         });
+    },
+    ConfigBridge: {
+        setLooping: async (value, currentConfigId, dispatch) => {
+            if(currentConfigId != -1) {
+                await db.update(TABLES.PLAYLIST_CONFIG, "isLooping=?", "id=?", [value, currentConfigId]);
+                dispatch(setBoolean({value, optionName: "LOOP"}));
+    
+                if(value) Toast.show("Mod 'buclă' activat");
+                else Toast.show("Mod 'buclă' dezactivat");
+            } else {
+                console.warn("setLooping warning: There is currently no playlist loaded in the player");
+            }
+        }
     }
 };

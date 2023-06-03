@@ -18,14 +18,6 @@ const EntypoNB = Factory(Entypo);
 const FoundationNB = Factory(Foundation);
 const MaterialNB = Factory(MaterialCommunityIcons);
 
-const propsAreEqual = (prev, next) => (
-    prev.title == next.title
-    && prev.coverURI == next.coverURI
-    && prev.millis == next.millis
-    && prev.artistName == next.artistName
-    && prev.relativeToCurrent == next.relativeToCurrent
-);
-
 /**
  * @callback drag
  */
@@ -52,7 +44,7 @@ const PlayerQueueElement = ({
     const orderMap = useSelector(state => state.queue.orderMap);
     
     const currentIndex = useSelector(state => state.queue.currentIndex);
-    const ownOrderIndex = useMemo(() => orderMap.length != 0 ? orderMap.indexOf(track.id) : 0, [orderMap]);
+    const ownOrderIndex = useMemo(() => orderMap.length != 0 ? orderMap.indexOf(track.id) : 0, [orderMap, track.id]);
 
     const relativeToCurrent = useMemo(() => {
         return ownOrderIndex == currentIndex ? 0 
@@ -130,6 +122,7 @@ const TrackInfo = memo(({
     relativeToCurrent
 }) => {
     const cover = useMemo(() => handleCoverURI(coverURI), [coverURI]);
+    const duration = useMemo(() => (millis / 1000).toString().toHHMMSS(), [millis]);
 
     return (
         <>
@@ -164,7 +157,7 @@ const TrackInfo = memo(({
                 <HStack maxW="80%" alignItems="center">
                     <Text color="gray.400"
                         fontFamily="manrope_l"
-                        fontSize="2xs">{(millis / 1000).toString().toHHMMSS()} • </Text>
+                        fontSize="2xs">{duration} • </Text>
                     
                     <MarqueeNB flexGrow="1"
                         color="gray.400"
@@ -178,4 +171,4 @@ const TrackInfo = memo(({
 });
 
 
-export default memo(PlayerQueueElement, propsAreEqual);
+export default memo(PlayerQueueElement);

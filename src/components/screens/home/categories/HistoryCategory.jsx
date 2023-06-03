@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { useSelector } from 'react-redux'
 
 import HorizontalCategory from '../../../general/HorizontalCategory'
+import { find, reverse } from '../../../../functions';
 
 /**
  * HistoryCategory component
@@ -25,19 +26,18 @@ const HistoryCategory = ({
     const tracks = useSelector(state => state.tracks);
 
     const historyTracks = useMemo(() => {
-        // TODO test if this works when user can add tracks
         const histPlaylist = playlists.find(pl => pl.title == "_HISTORY");
 
         if(histPlaylist) {
-            const historyTrackIds = playlistsContent
+            const historyTrackIds = reverse(playlistsContent
                 .filter(rel => rel.playlistId === histPlaylist.id)
-                .map(rel => rel.trackId);
+                .map(rel => rel.trackId));
 
-            return tracks.filter(track => historyTrackIds.includes(track.id));
+            return historyTrackIds.map(id => find(tracks, "id", id, undefined)).filter(tr => tr != undefined);
         }
 
         return [];
-    }, [playlistsContent]);
+    }, [playlistsContent, playlists, tracks]);
 
     return (
         <HorizontalCategory 

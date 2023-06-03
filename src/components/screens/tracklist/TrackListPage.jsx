@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Box, HStack, Factory, Text, Button } from 'native-base';
 
 import { StackActions } from '@react-navigation/native';
@@ -26,13 +26,13 @@ const MaterialComNB = Factory(MaterialCommunityIcons);
  * @returns {JSX.Element} JSX component
  */
 const TrackListPage = ({ navigation, route }) => {
-    const payload = route.params.payload; // Playlist info from database
+    const payload = useMemo(() => route.params.payload, [route]); // Playlist info from database
 
     const tracks = useSelector(state => state.tracks);
     const playlistsContent = useSelector(state => state.playlistsContent);
     const dispatch = useDispatch();
     
-    let selectedIDs = useRef(new Set()).current;
+    const [selectedIDs, setSelectedIDs] = useState(new Set());
     const [areAllSelected, setAllSelected] = useState(false);
 
     const ownTracks = useMemo(() => {
@@ -41,36 +41,34 @@ const TrackListPage = ({ navigation, route }) => {
             .map(pc => pc.trackId);
 
         return tracks.filter(tr => !ownIDs.includes(tr.id)).map(tr => tr.id);
-    }, [playlistsContent]);
+    }, [playlistsContent, payload, tracks]);
 
-    const handleHomeNav = () => {
+    const handleHomeNav = useCallback(() => {
         navigation.popToTop();
-    }
+    }, [navigation]);
 
-    const handleBack = () => {
+    const handleBack = useCallback(() => {
         navigation.dispatch(StackActions.pop());
-    }
+    }, [navigation]);
 
-    const handleSelection = (isSelected, trackId) => {
-        const set = new Set();
-        selectedIDs.forEach(el => set.add(el));
+    const handleSelection = useCallback((isSelected, trackId) => {
+        setSelectedIDs(prevIDs => {
+            let set = new Set([...prevIDs]);
 
-        if(isSelected) {
-            if(trackId) set.add(trackId);
-            else {
-                ownTracks.forEach(tr => selectedIDs.add(tr));
-                set.clear();
-                selectedIDs.forEach(el => set.add(el));
+            // If trackId is undefined, we select/deselect everything
+            if(isSelected) {
+                if(trackId) set.add(trackId);
+                else set = new Set([...ownTracks]);
+            } else {
+                if(trackId) set.delete(trackId);
+                else set = new Set();
             }
-        } else {
-            if(trackId) set.delete(trackId);
-            else set.clear();
-        }
 
-        selectedIDs = set;
-    }
+            return set;
+        });
+    }, [ownTracks]);
 
-    const handleSubmit = () => {
+    const handleSubmit = useCallback(() => {
         if(selectedIDs.size > 0) {
             handleBack();
 
@@ -91,7 +89,7 @@ const TrackListPage = ({ navigation, route }) => {
                 position: Toast.positions.CENTER
             });
         }
-    }
+    }, [selectedIDs, payload, tracks]);
 
     return (
         <Box w="100%" h="100%"

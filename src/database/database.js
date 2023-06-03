@@ -151,8 +151,8 @@ class Database {
 
         return new Promise(async (resolve, reject) => {
             await this.instance.transaction(async tx => {
-                await tx.executeSql(`SELECT ${cols} FROM ${table}${conds}`, 
-                    args, 
+                await tx.executeSql(`SELECT ${cols} FROM ${table}${conds}`,
+                    args,
                     (txObj, rs) => resolve(rs.rows._array),
                     (txObj, error) => {
                         reject(error);
@@ -211,11 +211,11 @@ class Database {
     async insertIfNotExists(table, payload={}, conditions, args) {
         return this.existsIn(table, conditions, args)
             .then(() => {
-                return Promise.resolve({ exists: false });
+                return Promise.resolve({ exists: true });
             })
             .catch(async () => {
                 return this.insertInto(table, payload).then(rs => {
-                    rs.exists = true;
+                    rs.exists = false;
                     return rs;
                 });
             });
