@@ -5,6 +5,7 @@ import TrackPlayer, {
 } from "react-native-track-player";
 import { skipTo } from "./orderPanel/playFunctions";
 import store from "../redux/store"
+import { PlaylistBridge } from "../database/componentBridge";
 
 
 const serviceCallback = async () => {
@@ -13,13 +14,15 @@ const serviceCallback = async () => {
     TrackPlayer.addEventListener(Event.RemoteNext, async () => {
         const current = await TrackPlayer.getCurrentTrack();
         const queue = await TrackPlayer.getQueue();
-        if(current == (queue.length - 1)) return
+        if(current == (queue.length - 1)) return;
         await skipTo(current + 1, store.dispatch);
+        await PlaylistBridge.History.add(current + 1, store.dispatch);
     });
     TrackPlayer.addEventListener(Event.RemotePrevious, async () => {
         const current = await TrackPlayer.getCurrentTrack();
         if(current == 0) return;
         await skipTo(current - 1, store.dispatch);
+        await PlaylistBridge.History.add(current - 1, store.dispatch);
     });
 }
 

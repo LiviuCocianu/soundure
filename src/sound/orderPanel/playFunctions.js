@@ -66,14 +66,8 @@ export const loopBack = async (tracks, dispatch) => {
     const currentPlaylist = await QueueBridge.getCurrentPlaylist();
 
     if (currentPlaylist) {
-        const row = await PlaylistBridge.getConfig(currentPlaylist.id);
-        const parsedMap = JSON.parse(row.orderMap);
-    
         await QueueBridge.setIndex(0, dispatch);
         await QueueBridge.setCurrentMillis(0, dispatch);
-
-        await TrackPlayer.reset();
-        await play(parsedMap, tracks);
     } else {
         throw new Error("loopBack error: Cannot loop as there is no playlist to loop tracks from");
     }

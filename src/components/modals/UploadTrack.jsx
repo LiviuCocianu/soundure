@@ -81,7 +81,11 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     }
 
     const handleFileChoice = async (platform) => {
-        toggleSourceOptions(false);
+        toggleSourceSelectionBox(false);
+
+        if (platform == PLATFORMS.NONE) {
+            toggleSourceOptions(false);
+        }
 
         const result = await DocumentPicker.getDocumentAsync({ 
             type: "audio/*"
@@ -118,6 +122,12 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     }
 
     const handleSourceSelectionBox = () => {
+        setFileURI(undefined);
+        setSourceHelper("");
+        setPlatform(PLATFORMS.SPOTIFY);
+        setTitle("");
+        setArtist(ARTIST_NAME_PLACEHOLDER);
+
         toggleSourceSelectionBox(true);
         toggleSourceOptions(false);
     }
@@ -256,8 +266,56 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                             borderBottomColor="primary.600"
                             borderBottomWidth="1">Încarcă o piesă</Text>
 
+                        <FormControl mt="3" mb="1" isRequired isInvalid={"fileURI" in errors}>
+                            <Box
+                                justifyContent="space-between"
+                                alignItems="center"
+                                flexDir="row"
+                            >
+                                <FormControl.Label _text={{
+                                    fontFamily: "manrope_r",
+                                    fontSize: "xs",
+                                    color: "gray.400"
+                                }}>Sursă piesă</FormControl.Label>
+
+                                <Button h="30" p="0" px="6"
+                                    onPress={() => toggleSourceOptions(true)}
+                                    _text={{
+                                        fontFamily: "manrope_r",
+                                        fontSize: "xs"
+                                    }}>Alege</Button>
+                            </Box>
+                            <FormControl.ErrorMessage mt="0">
+                                {'fileURI' in errors ? errors.fileURI : ""}
+                            </FormControl.ErrorMessage>
+                            {
+                                sourceHelper != "" ? (
+                                    <FormControl.HelperText mb="4">{sourceHelper}</FormControl.HelperText>
+                                ) : <></>
+                            }
+                        </FormControl>
+
+                        <FormControl
+                            justifyContent="space-between"
+                            alignItems="center"
+                            flexDir="row"
+                        >
+                            <FormControl.Label _text={{
+                                fontFamily: "manrope_r",
+                                fontSize: "xs",
+                                color: "gray.400"
+                            }}>Poză de copertă</FormControl.Label>
+
+                            <Button h="30" p="0" px="6"
+                                onPress={handleCoverChoice}
+                                _text={{
+                                    fontFamily: "manrope_r",
+                                    fontSize: "xs"
+                                }}>Alege</Button>
+                        </FormControl>
+
                         <FormControl h="35" isRequired isInvalid={"title" in errors}>
-                            <Input value={title}
+                            <Input mt="2" value={title}
                                 onChangeText={setTitle}
                                 color="primary.50"
                                 placeholder="Titlu piesă"
@@ -286,50 +344,6 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                             </FormControl.ErrorMessage>
                         </FormControl>
 
-                        <FormControl mt="6"
-                            justifyContent="space-between"
-                            alignItems="center"
-                            flexDir="row"
-                        >
-                            <FormControl.Label _text={{
-                                fontFamily: "manrope_r",
-                                fontSize: "xs",
-                                color: "gray.400"
-                            }}>Poză de copertă</FormControl.Label>
-
-                            <Button h="30" p="0" px="6"
-                                onPress={handleCoverChoice}
-                                _text={{
-                                    fontFamily: "manrope_r",
-                                    fontSize: "xs"
-                                }}>Alege</Button>
-                        </FormControl>
-
-                        <FormControl mt="6" isRequired isInvalid={"fileURI" in errors}>
-                            <Box
-                                justifyContent="space-between"
-                                alignItems="center"
-                                flexDir="row"
-                            >
-                                <FormControl.Label _text={{
-                                    fontFamily: "manrope_r",
-                                    fontSize: "xs",
-                                    color: "gray.400"
-                                }}>Sursă piesă</FormControl.Label>
-
-                                <Button h="30" p="0" px="6"
-                                    onPress={() => toggleSourceOptions(true)}
-                                    _text={{
-                                        fontFamily: "manrope_r",
-                                        fontSize: "xs"
-                                    }}>Alege</Button>
-                            </Box>
-                            <FormControl.ErrorMessage mt="0">
-                                {'fileURI' in errors ? errors.fileURI : ""}
-                            </FormControl.ErrorMessage>
-                            <FormControl.HelperText>{sourceHelper}</FormControl.HelperText>
-                        </FormControl>
-
                         {
                             sourceSelectionBox ? (
                                 <SourceSelectionBox
@@ -340,7 +354,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                             ) : <></>
                         }
 
-                        <Button mt="6" onPress={handleSubmit}
+                        <Button mt="12" onPress={handleSubmit}
                             _text={{ fontFamily: "quicksand_b" }}>Încarcă</Button>
                     </ScrollView>
                 </Box>

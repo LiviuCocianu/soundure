@@ -54,12 +54,12 @@ const MusicPlayer = () => {
 
     const currentTrack = useMemo(() => {
         const found = find(tracks, "id", queue.orderMap[queue.currentIndex], {
-            title: "--",
+            title: "Coadă de redare goală",
             millis: 0
         });
         
         return found;
-    }, [queue.orderMap, queue.currentIndex]);
+    }, [tracks, queue.orderMap, queue.currentIndex]);
 
     const cover = useMemo(() => {
         return typeof(currentTrack.coverURI) !== "string"
@@ -69,7 +69,7 @@ const MusicPlayer = () => {
 
     const currentTrackArtist = useMemo(() => {
         return find(artists, "id", currentTrack.artistId, {
-            name: "--"
+            name: "Se așteaptă redarea unui playlist.."
         });
     }, [artists, currentTrack]);
 
@@ -118,7 +118,7 @@ const MusicPlayer = () => {
         if(event.type == Event.PlaybackState) {
             togglePlayback(event.state === State.Playing);
         } else if (event.type == Event.PlaybackTrackChanged) {
-            if(event.nextTrack != null) {
+            if (event.nextTrack) {
                 await QueueBridge.setIndex(event.nextTrack, dispatch);
             }
         }
@@ -184,16 +184,11 @@ const MusicPlayer = () => {
                         >
                             <Pressable w="100%" onPress={handlePlayerExpansion}>
                                 <HStack w="100%" justifyContent="space-between">
-                                    <MarqueeNB w="85%" color="white"
+                                    <MarqueeNB w="100%" color="white"
                                         fontFamily="quicksand_b"
                                         fontSize={expanded ? "sm" : "md"}
                                         lineHeight="xs"
                                         speed={0.5}>{currentTrack.title}</MarqueeNB>
-
-                                    <EntypoNB
-                                        name="cog"
-                                        color="primary.50"
-                                        fontSize={expanded ? "md" : "lg"}/>
                                 </HStack>
 
                                 <MarqueeNB w="100%"

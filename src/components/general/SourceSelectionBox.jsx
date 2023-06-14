@@ -63,7 +63,7 @@ const SourceSelectionBox = ({ platform, setPlatform, handleFileChoice }) => {
     }
 
     return (
-        <Box mt="6" p="4" pb="6"
+        <Box mt="12" p="4" pb="6"
             bg="primary.900"
             rounded="lg"
             alignItems="center"

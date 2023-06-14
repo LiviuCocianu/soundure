@@ -6,17 +6,18 @@ import { useDispatch, useSelector } from 'react-redux'
 import Toast from 'react-native-root-toast';
 import { Entypo, FontAwesome5, AntDesign } from '@expo/vector-icons'
 import DraggableFlatList from 'react-native-draggable-flatlist'
-import TrackPlayer, { Event, State, usePlaybackState, useTrackPlayerEvents } from 'react-native-track-player';
+import TrackPlayer, { Event, RepeatMode, State, usePlaybackState, useTrackPlayerEvents } from 'react-native-track-player';
 
 import PlayerQueueElement from './PlayerQueueElement';
 import NoContentInfo from '../../general/NoContentInfo';
 import LoadingPage from '../loading/LoadingPage';
 
 import { PlaylistBridge, QueueBridge, TrackBridge } from '../../../database/componentBridge';
-import { find } from '../../../functions';
+import { find, reverse, shuffle } from '../../../functions';
 import { loopBack, updateQueueOrder } from '../../../sound/orderPanel/playFunctions';
 import { skipTo } from '../../../sound/orderPanel/playFunctions';
 import { useMemo } from 'react';
+import { useEffect } from 'react';
 
 
 const EntypoNB = Factory(Entypo);
@@ -39,13 +40,25 @@ const PlayerQueue = ({
 
     useTrackPlayerEvents([Event.PlaybackQueueEnded, Event.PlaybackTrackChanged], async event => {
         if(event.type == Event.PlaybackQueueEnded) {
-            if(currentConfig.isLooping) 
-                await loopBack(dispatch, tracks);
+
         } else if(event.type == Event.PlaybackTrackChanged) {
-            const track = await TrackPlayer.getTrack(event.nextTrack);
-            await PlaylistBridge.History.add(track.id, dispatch);
+            if(event.nextTrack) {
+                const track = await TrackPlayer.getTrack(event.nextTrack);
+                await PlaylistBridge.History.add(track.id, dispatch);
+            } else {
+                if (currentConfig.isLooping)
+                    await loopBack(tracks, dispatch);
+            }
         }
     });
+
+    useEffect(() => {
+        (async () => {
+            if (queue.orderMap.length == 0) {
+                await TrackPlayer.reset();
+            }
+        })();
+    }, [queue.orderMap]);
 
     const currentIsFavorite = useMemo(() => {
         const track = find(tracks, "id", queue.orderMap[queue.currentIndex], {favorite: false});
@@ -89,16 +102,22 @@ const PlayerQueue = ({
             await updateQueueOrder(tracks, data, queue.currentIndex, millisBeforeUpdate, isPlaying, dispatch);
             toggleOrderChanging(false);
         }
-    }, [queue.currentIndex, queue.currentMillis]);
+    }, [tracks, queue.currentIndex, queue.currentMillis]);
 
     const handlePlayPause = useCallback(async () => {
-        const queue = await TrackPlayer.getQueue();
+        const playerQueue = await TrackPlayer.getQueue();
 
-        if(queue.length > 0) {
-            if(playbackState != State.Playing) await TrackPlayer.play();
-            else await TrackPlayer.pause();
+        if (playerQueue.length > 0) {
+            if(playbackState != State.Playing) {
+                const currentTrack = find(tracks, "id", queue.orderMap[queue.currentIndex]);
+
+                if (queue.currentMillis >= currentTrack.millis) 
+                    await TrackPlayer.seekTo(0);
+
+                await TrackPlayer.play();
+            } else await TrackPlayer.pause();
         }
-    }, [playbackState]);
+    }, [playbackState, tracks, queue]);
 
     const handleStepBackward = useCallback(async () => {
         if(queue.currentIndex == 0) return;
@@ -116,9 +135,52 @@ const PlayerQueue = ({
         await TrackBridge.toggleFavorite(queue.orderMap[queue.currentIndex], dispatch);
     }, [queue.orderMap, queue.currentIndex]);
 
-    const handleLoopButton = useCallback(() => {
+    const handleLoopButton = useCallback(async () => {
         QueueBridge.ConfigBridge.setLooping(!currentConfig.isLooping, queue.playlistConfigId, dispatch);
+
+        if (!currentConfig.isLooping)
+            await TrackPlayer.setRepeatMode(RepeatMode.Queue);
+        else
+            await TrackPlayer.setRepeatMode(RepeatMode.Off);
     }, [queue.playlistConfigId, currentConfig.isLooping]);
+
+    const handleShuffleButton = useCallback(async () => {
+        if(queue.currentIndex < queue.orderMap.length - 2 && queue.orderMap.length > 2) {
+            toggleOrderChanging(true);
+    
+            const shuffled = shuffle(queue.orderMap.slice(queue.currentIndex + 1));
+            shuffled.unshift(...queue.orderMap.slice(0, queue.currentIndex + 1));
+    
+            await QueueBridge.setOrderMap(shuffled, dispatch);
+            const millisBeforeUpdate = queue.currentMillis;
+            const isPlaying = playbackState == State.Playing;
+    
+            await updateQueueOrder(tracks, shuffled, queue.currentIndex, millisBeforeUpdate, isPlaying, dispatch);
+    
+            toggleOrderChanging(false);
+        } else {
+            Toast.show("Amestecarea este redundantă..");
+        }
+    }, [tracks, queue]);
+
+    const handleReverseButton = useCallback(async () => {
+        if (queue.currentIndex < queue.orderMap.length - 2 && queue.orderMap.length > 2) {
+            toggleOrderChanging(true);
+
+            const reversed = reverse(queue.orderMap.slice(queue.currentIndex + 1));
+            reversed.unshift(...queue.orderMap.slice(0, queue.currentIndex + 1));
+
+            await QueueBridge.setOrderMap(reversed, dispatch);
+            const millisBeforeUpdate = queue.currentMillis;
+            const isPlaying = playbackState == State.Playing;
+
+            await updateQueueOrder(tracks, reversed, queue.currentIndex, millisBeforeUpdate, isPlaying, dispatch);
+
+            toggleOrderChanging(false);
+        } else {
+            Toast.show("Inversarea este redundantă..");
+        }
+    }, [tracks, queue]);
 
     return (
         <VStack h="100%" mt="2" alignItems="center">
@@ -167,6 +229,7 @@ const PlayerQueue = ({
                 <Box w="0.5" h="100%" bg="gray.800"/>
 
                 <MusicPlayerButton
+                    onPress={handleShuffleButton}
                     VectorIcon={EntypoNB}
                     name="shuffle"
                     color="primary.50"
@@ -175,6 +238,7 @@ const PlayerQueue = ({
                 <Box w="0.5" h="100%" bg="gray.800" />
 
                 <MusicPlayerButton
+                    onPress={handleReverseButton}
                     VectorIcon={FontAwesomeNB}
                     name="angle-double-left"
                     color="primary.50"

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react"
 
+import { LogBox } from "react-native"
 import { useFonts } from 'expo-font'
 import { useDispatch, useSelector } from 'react-redux'
 import { NavigationContainer } from "@react-navigation/native"
@@ -17,7 +18,7 @@ import { setupPlayer } from "./sound/service"
 import TracksPreviewPage, { TracksPreviewHeader } from "./components/screens/trackspreview/TracksPreviewPage"
 import MusicPlayer from "./components/screens/player/MusicPlayer"
 import { loadTracks, skipTo } from "./sound/orderPanel/playFunctions"
-import TrackPlayer from "react-native-track-player"
+import TrackPlayer, { RepeatMode } from "react-native-track-player"
 
 
 const Stack = createNativeStackNavigator();
@@ -31,12 +32,17 @@ const App = () => {
 
     const tracks = useSelector(state => state.tracks);
     const queue = useSelector(state => state.queue);
+    const currentConfig = useSelector(state => state.playlistConfig);
 
     useEffect(() => {
         (async () => {
             await setupDatabase(dispatch);
             setLoadedDatabase(true);
         })();
+
+        LogBox.ignoreLogs([
+            "We can not support a function callback. See Github Issues for details https://github.com/adobe/react-spectrum/issues/2320",
+        ]);
     }, []);
 
     // Load the state of the music player from the database
@@ -51,12 +57,17 @@ const App = () => {
                     await loadTracks(queue.orderMap, tracks);
                     await skipTo(queue.currentIndex, dispatch, false);
                     await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
+
+                    if (currentConfig.isLooping)
+                        await TrackPlayer.setRepeatMode(RepeatMode.Queue);
+                    else
+                        await TrackPlayer.setRepeatMode(RepeatMode.Off);
                 }
 
                 setLoadedTrackPlayer(isSetup);
             })();
         }
-    }, [queue, loadedDatabase]);
+    }, [currentConfig, queue, loadedDatabase]);
 
     if (!loadedFonts || !loadedDatabase || !loadedTrackPlayer) {
         return <LoadingPage />

@@ -45,14 +45,14 @@ const OrderPanel = ({
 
     const handleDisplay = () => togglePanel(!panelDrawn);
 
-    const canPlay = () => {
-        if(ownLinks.length == 0) {
+    const canPlay = useCallback(() => {
+        if (ownLinks.length == 0) {
             Toast.show("Nu s-au găsit piese de redat..");
             return false;
         }
 
         return true;
-    };
+    }, [ownLinks]);
 
     const handleSimplePlay = useCallback(() => {
         handleDisplay();
@@ -60,7 +60,7 @@ const OrderPanel = ({
         if(!canPlay()) return;
 
         simplePlay(playlistId, tracks, dispatch);
-    }, [playlistId, tracks]);
+    }, [ownLinks, playlistId, tracks]);
 
     const handleShuffledPlay = useCallback(() => {
         handleDisplay();
@@ -68,7 +68,7 @@ const OrderPanel = ({
         if(!canPlay()) return;
 
         shuffledPlay(playlistId, tracks, dispatch);
-    }, [playlistId, tracks]);
+    }, [ownLinks, playlistId, tracks]);
 
     const handleReversedPlay = useCallback(() => {
         handleDisplay();
@@ -76,7 +76,7 @@ const OrderPanel = ({
         if(!canPlay()) return;
 
         reversedPlay(playlistId, tracks, dispatch);
-    }, [playlistId, tracks]);
+    }, [ownLinks, playlistId, tracks]);
 
     return (
         <Animated.View style={{
@@ -135,12 +135,6 @@ const OrderPanel = ({
                     color="white"
                     text="Redă inversat"
                     onPress={handleReversedPlay}/>
-
-                <OrderButton
-                    IconType={MaterialNB}
-                    name="play-network"
-                    color="white"
-                    text="Redă începând cu"/>
             </VStack>
         </Animated.View>
     )

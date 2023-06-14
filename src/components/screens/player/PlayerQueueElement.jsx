@@ -11,6 +11,7 @@ import { handleCoverURI } from '../../../functions'
 import { useCallback } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { skipTo } from '../../../sound/orderPanel/playFunctions'
+import { PlaylistBridge } from '../../../database/componentBridge'
 
 
 const MarqueeNB = Factory(MarqueeText);
@@ -59,6 +60,7 @@ const PlayerQueueElement = ({
     const handlePress = useCallback(async () => {
         if(orderMap.length > 0) {
             skipTo(ownOrderIndex, dispatch);
+            await PlaylistBridge.History.add(track.id, dispatch);
         }
     }, [orderMap, ownOrderIndex]);
 

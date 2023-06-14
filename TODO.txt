@@ -1,5 +1,5 @@
-- Add infinite scrolling feature to OptimizedTrackList and PlayerQueue
+- Adauga searchbar la OptimizedTrackList
 
-- Add searchbar to OptimizedTrackList
+- Muta toate iconitele intr-un fisier JS dedicat
 
-- Move all factoried icons to a dedicated js file
+- Adauga optiunea "Reda incepand cu" in panoul cu optiuni de redare

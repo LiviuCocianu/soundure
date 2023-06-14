@@ -141,8 +141,26 @@ export const TrackBridge = {
         return db.existsIn(TABLES.TRACK, "fileURI = ?", [fileURI]);
     },
     deleteFromPlaylist: (playlistId, trackId, dispatch, toast=true) => {
-        db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, playlistId]).then(() => {
+        db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, playlistId]).then(async () => {
             dispatch(trackPlaylistRelationRemoved({ playlistId, trackId }));
+
+            const rows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["id", "orderMap"], "playlistId = ?", [playlistId]);
+            const queue = await getFixedRow(TABLES.QUEUE);
+
+            if (rows.length > 0) {
+                const thisConfigId = rows[0].id;
+                let orderMap = JSON.parse(rows[0].orderMap);
+
+                orderMap.splice(orderMap.indexOf(trackId), 1);
+
+                await db.update(TABLES.PLAYLIST_CONFIG, "orderMap=?", "playlistId=?", [JSON.stringify(orderMap), playlistId]);
+
+                // Removes the track from the queue, if this playlist is playing
+                if (queue.playlistConfigId == thisConfigId) {
+                    dispatch(orderMapSet(orderMap));
+                }
+            }
+
             if(toast) Toast.show("Piesă eliminată din playlist!");
         });
     }
@@ -248,7 +266,7 @@ export const PlaylistBridge = {
     getConfig: async (playlistId) => {
         return await db.selectFrom(TABLES.PLAYLIST_CONFIG, null, "playlistId=?", [playlistId]).then(rows => {
             if(rows.length == 0) {
-                throw new Error(`Playlist getConfig(${playlistId}): Couldn't find a config for playlist with this ID`);
+                console.warn(`Playlist getConfig(${playlistId}): Couldn't find a config for playlist with this ID`);
             } else return rows[0];
         });
     },
@@ -259,13 +277,15 @@ export const PlaylistBridge = {
             if(rows.length > 0) {
                 const data = rows[0];
                 const isLinked = await PlaylistBridge.isLinkedTo(trackId, data.id);
-
+                
                 if(isLinked) {
                     await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, data.id]);
                     dispatch(trackPlaylistRelationRemoved({trackId, playlistId: data.id}));
                 }
                 
-                await PlaylistBridge.linkTracks(data.id, [trackId], dispatch, true, false);
+                try {
+                    await PlaylistBridge.linkTracks(data.id, [trackId], dispatch, true, false);
+                } catch(e) {}
             }
         }
     }

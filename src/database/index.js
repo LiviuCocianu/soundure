@@ -10,6 +10,7 @@ import { PlaylistBridge, QueueBridge, TrackBridge } from "./componentBridge"
 import { createPlaylist, createTrack } from "./shapes"
 import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
 import { setBoolean } from "../redux/slices/playlistConfigSlice"
+import TrackPlayer, { RepeatMode } from "react-native-track-player"
 
 
 const loadQueueFromDB = async (dispatch) => {
@@ -78,15 +79,7 @@ const createMockupTracks = (count, dispatch) => {
 export async function setupDatabase(dispatch) {
     return db.init().then(async () => {
         // TODO remove createMockupPlaylist when the app is done
-        await createMockupPlaylist(dispatch);
-
-        // const tr = await db.selectFrom(TABLES.TRACK, null, "title LIKE ?", ["%See No Evil%"]); // TODO debug
-
-        // if(tr.length > 0) {
-        //     await TrackBridge.deleteTrack(tr[0].id, dispatch, false); // TODO debug
-        // }
-
-        //await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "playlistId=?", [2]);
+        //await createMockupPlaylist(dispatch);
 
         await db.insertIfNotExists(TABLES.QUOTE, { lastFetch: 0 }, "id=?", [1]);
 
