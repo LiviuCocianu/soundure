@@ -45,9 +45,13 @@ const App = () => {
             (async () => {
                 const isSetup = await setupPlayer();
 
-                await loadTracks(queue.orderMap, tracks);
-                await skipTo(queue.currentIndex, dispatch, false);
-                await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
+                // Checking if there was a config saved from a previous playback
+                // to load back
+                if(queue.playlistConfigId != -1) {
+                    await loadTracks(queue.orderMap, tracks);
+                    await skipTo(queue.currentIndex, dispatch, false);
+                    await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
+                }
 
                 setLoadedTrackPlayer(isSetup);
             })();

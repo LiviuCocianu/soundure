@@ -6,17 +6,18 @@
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": {
-        "resourceClass": "m-medium"
-      }
-    },
-    "preview": {
-      "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDevelopmentDebug"
+      },
       "ios": {
         "resourceClass": "m-medium"
       }
     },
     "production": {
+      "android": {
+        "gradleCommand": ":app:bundleProductionRelease",
+        "buildType": "apk"
+      },
       "ios": {
         "resourceClass": "m-medium"
       }

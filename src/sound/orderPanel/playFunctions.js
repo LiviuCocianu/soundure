@@ -16,7 +16,6 @@ export const loadTracks = async (orderMap, tracks) => {
     const orderMapTracks = orderMap.map(id => find(tracks, "id", id));
 
     await TrackPlayer.add(await Promise.all(orderMapTracks.map(async tr => {
-        console.log("wrapping load"); // TODO debug
         return await wrap(tr);
     })));
 }
