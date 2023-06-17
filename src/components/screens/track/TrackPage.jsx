@@ -26,6 +26,7 @@ import { TrackBridge } from '../../../database/componentBridge';
 import ConfirmationWindow from '../../modals/ConfirmationWindow';
 import { IMAGE_QUALITY } from '../../../constants';
 import { useMemo } from 'react';
+import { simplePlay, singlePlay } from '../../../sound/orderPanel/playFunctions';
 
 
 const FeatherNB = Factory(Feather);
@@ -76,6 +77,7 @@ const TrackPage = ({
             >
                 <TrackInfo 
                     navigation={navigation}
+                    tracks={tracks}
                     track={track}
                     artist={artist}/>
             </ScrollView>
@@ -85,6 +87,7 @@ const TrackPage = ({
 
 const infoPropsAreEqual = (prev, next) => (
     prev.navigation == next.navigation
+    && prev.tracks == next.tracks
     && prev.track.coverURI == next.track.coverURI
     && prev.track.title == next.track.title
     && prev.track.millis == next.track.millis
@@ -95,10 +98,13 @@ const infoPropsAreEqual = (prev, next) => (
 
 const TrackInfo = memo(({
     navigation,
+    tracks,
     track,
     artist
 }) => {
     const dispatch = useDispatch();
+
+    const queue = useSelector(state => state.queue);
 
     const [title, setTitle] = useState("");
     const [titleEditor, toggleTitleEditor] = useState(false);
@@ -171,6 +177,11 @@ const TrackInfo = memo(({
         if (!result.canceled) {
             TrackBridge.setCoverURI(handleCoverURI(result.assets[0].uri), track.id, dispatch);
         }
+    }
+
+    const handleTrackPlay = () => {
+        if (queue.currentIndex >= 0 && queue.orderMap[queue.currentIndex] == track.id) return;
+        singlePlay(track.id, tracks, dispatch);
     }
 
     return (
@@ -271,6 +282,7 @@ Fișierul asociat piesei nu va fi șters din dispozitiv!`}
                     alignItems="center"
                 >
                     <Button flexGrow="1" h="45" mr="2"
+                        onPress={handleTrackPlay}
                         bg="primary.500"
                         rounded="lg"
                         _pressed={{

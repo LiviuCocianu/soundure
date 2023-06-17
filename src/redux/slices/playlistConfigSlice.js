@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { ORDER_MUTATION_OPTIONS } from "../../constants";
 
 const initialState = {
+    historyOrder: [],
     isLooping: false,
     isShuffling: false,
     isReversing: false
@@ -38,13 +39,19 @@ const playlistConfigSlice = createSlice({
             }
 
             return state;
-        }
+        },
+        historyOrderSet(state, action) {
+            const data = action.payload;
+            state.historyOrder = data;
+            return state;
+        },
     }
 });
 
 
 export const {
-    setBoolean
+    setBoolean,
+    historyOrderSet
 } = playlistConfigSlice.actions;
 
 export default playlistConfigReducer = playlistConfigSlice.reducer;

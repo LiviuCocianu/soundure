@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useSelector } from 'react-redux'
 
 import HorizontalCategory from '../../../general/HorizontalCategory'
 import { find, reverse } from '../../../../functions';
+import { PlaylistBridge } from '../../../../database/componentBridge';
 
 /**
  * HistoryCategory component
@@ -21,23 +22,12 @@ const HistoryCategory = ({
      * We use the playlists content state here to update the component every time the user
      * listens to a track and it gets added to the history playlist
      * */
-    const playlistsContent = useSelector(state => state.playlistsContent);
-    const playlists = useSelector(state => state.playlists);
     const tracks = useSelector(state => state.tracks);
+    const historyOrder = useSelector(state => state.playlistConfig.historyOrder);
 
     const historyTracks = useMemo(() => {
-        const histPlaylist = playlists.find(pl => pl.title == "_HISTORY");
-
-        if(histPlaylist) {
-            const historyTrackIds = reverse(playlistsContent
-                .filter(rel => rel.playlistId === histPlaylist.id)
-                .map(rel => rel.trackId));
-
-            return historyTrackIds.map(id => find(tracks, "id", id, undefined)).filter(tr => tr != undefined);
-        }
-
-        return [];
-    }, [playlistsContent, playlists, tracks]);
+        return reverse(historyOrder.map(id => find(tracks, "id", id, undefined)).filter(tr => tr != undefined));
+    }, [historyOrder, tracks]);
 
     return (
         <HorizontalCategory 

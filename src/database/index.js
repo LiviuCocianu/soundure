@@ -4,13 +4,13 @@ import { playlistsSet } from '../redux/slices/playlistSlice'
 import { tracksSet } from "../redux/slices/trackSlice"
 import { playlistsContentSet } from "../redux/slices/playlistContentSlice"
 import { artistsSet } from "../redux/slices/artistSlice"
-import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, syncedWithDatabase } from "../redux/slices/queueSlice"
+import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, syncedWithDatabase, toggledDynamicSound } from "../redux/slices/queueSlice"
 
 import { PlaylistBridge, QueueBridge, TrackBridge } from "./componentBridge"
 import { createPlaylist, createTrack } from "./shapes"
 import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
-import { setBoolean } from "../redux/slices/playlistConfigSlice"
-import TrackPlayer, { RepeatMode } from "react-native-track-player"
+import { historyOrderSet, setBoolean } from "../redux/slices/playlistConfigSlice"
+import { PERMISSIONS, RESULTS, check } from "react-native-permissions"
 
 
 const loadQueueFromDB = async (dispatch) => {
@@ -41,9 +41,7 @@ const createMockupPlaylist = (dispatch) => {
         await db.resetSequenceFor(TABLES.PLAYLIST_CONFIG);
 
         await db.existsIn(TABLES.PLAYLIST, "title=?", ["Un playlist"]).catch(async () => {
-            const rs = await PlaylistBridge.addPlaylist(createPlaylist("Un playlist", "descriere smechera"), dispatch, false, false);
-            
-            await db.insertInto(TABLES.PLAYLIST_CONFIG, { playlistId: rs.insertId });
+            await PlaylistBridge.addPlaylist(createPlaylist("Un playlist", "descriere smechera"), dispatch, false, false);
         });
 
         //await createMockupTracks(20, dispatch);
@@ -89,6 +87,15 @@ export async function setupDatabase(dispatch) {
 
         await db.insertIfNotExists(TABLES.QUEUE, { currentIndex: 0, playlistConfigId: -1 }, "id=?", [1]);
 
+        await db.selectFrom(TABLES.QUEUE, ["dynamic"], "id=?", [1]).then(async rows => {
+            const queue = rows[0];
+
+            const checkRes = await check(PERMISSIONS.ANDROID.RECORD_AUDIO);
+
+            if(checkRes == RESULTS.GRANTED) dispatch(toggledDynamicSound(queue.dynamic));
+            else await QueueBridge.setDynamicSound(false, dispatch);
+        });
+
         await loadQueueFromDB(dispatch);
 
         await db.selectFrom(TABLES.TRACK).then(rows => {
@@ -109,6 +116,18 @@ export async function setupDatabase(dispatch) {
                     .map(link => link.trackId);
 
                 await db.insertIfNotExists(TABLES.PLAYLIST_CONFIG, { playlistId: playlist.id, orderMap: JSON.stringify(defaultMap) }, "playlistId=?", [playlist.id]);
+            }
+        });
+
+        await db.selectFrom(TABLES.PLAYLIST, null, "title=?", ["_HISTORY"]).then(async rows => {
+            if(rows && rows.length > 0) {
+                const hist = rows[0];
+                const confRows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "playlistId=?", [hist.id]);
+    
+                if(confRows && confRows.length > 0) {
+                    const config = confRows[0];
+                    dispatch(historyOrderSet(JSON.parse(config.orderMap)));
+                }
             }
         });
 

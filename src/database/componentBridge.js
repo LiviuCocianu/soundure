@@ -8,9 +8,9 @@ import { trackSet, trackAdded, trackRemoved } from "../redux/slices/trackSlice";
 import { playlistAdded, playlistRemoved, playlistSet } from "../redux/slices/playlistSlice";
 import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved, playlistContentAdded, playlistContentRemoved } from "../redux/slices/playlistContentSlice";
 import { artistAdded } from "../redux/slices/artistSlice";
-import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet } from "../redux/slices/queueSlice";
+import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, toggledDynamicSound } from "../redux/slices/queueSlice";
 import { handleCoverURI } from "../functions";
-import { setBoolean } from "../redux/slices/playlistConfigSlice";
+import { historyOrderSet, setBoolean } from "../redux/slices/playlistConfigSlice";
 
 
 const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
@@ -181,7 +181,8 @@ export const PlaylistBridge = {
         if(toast) Toast.show("Titlul a fost actualizat!");
     },
     setCoverURI: async (coverURI, playlistId, dispatch, toast=true) => {
-        await PlaylistBridge.updateColumn("coverURI", JSON.stringify(handleCoverURI(coverURI)), playlistId, dispatch);
+        const cover = coverURI !== "DEFAULT" ? JSON.stringify(handleCoverURI(coverURI)) : "DEFAULT";
+        await PlaylistBridge.updateColumn("coverURI", cover, playlistId, dispatch);
         if(toast) Toast.show("Coperta a fost actualizată!");
     },
     /**
@@ -191,9 +192,12 @@ export const PlaylistBridge = {
      * @param {boolean} [redux=true] If playlist should be added to the Redux store as well
      */
     addPlaylist: async (payload, dispatch, redux=true, toast=true) => {
-        return db.insertInto(TABLES.PLAYLIST, payload).then(rs => {
+        return db.insertInto(TABLES.PLAYLIST, payload).then(async rs => {
             const completePayload = {id: rs.insertId, ...payload};
             if (redux) dispatch(playlistAdded(completePayload));
+
+            await db.insertInto(TABLES.PLAYLIST_CONFIG, {playlistId: rs.insertId});
+
             if(toast) Toast.show("Playlist creat!");
 
             return rs;
@@ -276,16 +280,27 @@ export const PlaylistBridge = {
 
             if(rows.length > 0) {
                 const data = rows[0];
-                const isLinked = await PlaylistBridge.isLinkedTo(trackId, data.id);
+                const config = await PlaylistBridge.getConfig(data.id);
                 
-                if(isLinked) {
-                    await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, data.id]);
-                    dispatch(trackPlaylistRelationRemoved({trackId, playlistId: data.id}));
+                if(config) {
+                    const orderMap = JSON.parse(config.orderMap);
+
+                    if(orderMap.includes(trackId))
+                        orderMap.splice(orderMap.indexOf(trackId), 1);
+
+                    orderMap.push(trackId);
+
+                    await db.update(TABLES.PLAYLIST_CONFIG, "orderMap=?", "id=?", [JSON.stringify(orderMap), data.id]);
+
+                    dispatch(historyOrderSet(orderMap));
+
+                    //await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, data.id]);
+                    //dispatch(trackPlaylistRelationRemoved({trackId, playlistId: data.id}));
                 }
-                
-                try {
-                    await PlaylistBridge.linkTracks(data.id, [trackId], dispatch, true, false);
-                } catch(e) {}
+
+                // try {
+                //     await PlaylistBridge.linkTracks(data.id, [trackId], dispatch, true, false);
+                // } catch(e) {}
             }
         }
     }
@@ -464,6 +479,14 @@ export const QueueBridge = {
                 console.warn("Parameter 'map' is not an array");
                 reject();
             }
+        });
+    },
+    setDynamicSound: async (value, dispatch) => {
+        return db.update(TABLES.QUEUE, "dynamic=?", "id=?", [value, 1]).then(async () => {
+            dispatch(toggledDynamicSound(value));
+
+            if(value) Toast.show("Volumul dinamic a fost activat!");
+            else Toast.show("Volumul dinamic a fost dezactivat!");
         });
     },
     ConfigBridge: {

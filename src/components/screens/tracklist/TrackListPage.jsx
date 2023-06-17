@@ -77,7 +77,7 @@ const TrackListPage = ({ navigation, route }) => {
                 tracks.filter(tr => selectedIDs.has(tr.id)).map(tr => tr.id),
                 dispatch
             ).then(async () => {
-                if(!payload.coverURI || JSON.parse(payload.coverURI) === "DEFAULT") {
+                if(!payload.coverURI || payload.coverURI === "DEFAULT") {
                     const [firstId] = selectedIDs;
                     const firstCover = tracks.find(tr => tr.id === firstId);
 

@@ -15,9 +15,7 @@ import { find, shuffle } from "../../functions";
 export const loadTracks = async (orderMap, tracks) => {
     const orderMapTracks = orderMap.map(id => find(tracks, "id", id));
 
-    await TrackPlayer.add(await Promise.all(orderMapTracks.map(async tr => {
-        return await wrap(tr);
-    })));
+    await TrackPlayer.add(await Promise.all(orderMapTracks.map(async tr => await wrap(tr))));
 }
 
 /**
@@ -97,6 +95,16 @@ const prepareForPlay = async (playlistId, dispatch) => {
     return parsedMap;
 }
 
+export const singlePlay = async (trackId, tracks, dispatch) => {
+    QueueBridge.resetReduxState(dispatch);
+    await QueueBridge.setOrderMap([trackId], dispatch, false);
+    await TrackPlayer.reset();
+
+    await PlaylistBridge.History.add(trackId, dispatch);
+
+    await play([trackId], tracks);
+}
+
 /**
  * Adds the tracks from the playlist to the queue and plays them without any alteration to the order.
  * Any previous tracks in the player will be overwritten
@@ -107,6 +115,8 @@ const prepareForPlay = async (playlistId, dispatch) => {
  */
 export const simplePlay = async (playlistId, tracks, dispatch) => {
     const orderMap = await prepareForPlay(playlistId, dispatch);
+
+    await PlaylistBridge.History.add(orderMap[0], dispatch);
 
     await QueueBridge.setOrderMap(orderMap, dispatch, false);
     await play(orderMap, tracks);
@@ -124,6 +134,8 @@ export const shuffledPlay = async (playlistId, tracks, dispatch) => {
     let orderMap = await prepareForPlay(playlistId, dispatch);
     orderMap = shuffle(orderMap);
 
+    await PlaylistBridge.History.add(orderMap[0], dispatch);
+
     await QueueBridge.setOrderMap(orderMap, dispatch, false);
     await play(orderMap, tracks);
 }
@@ -139,6 +151,8 @@ export const shuffledPlay = async (playlistId, tracks, dispatch) => {
 export const reversedPlay = async (playlistId, tracks, dispatch) => {
     let orderMap = await prepareForPlay(playlistId, dispatch);
     orderMap = orderMap.reverse();
+
+    await PlaylistBridge.History.add(orderMap[0], dispatch);
 
     await QueueBridge.setOrderMap(orderMap, dispatch, false);
     await play(orderMap, tracks);

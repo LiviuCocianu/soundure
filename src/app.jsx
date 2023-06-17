@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react"
+import { AspectRatio, HStack, Image, Text, VStack } from "native-base"
 
 import { LogBox } from "react-native"
 import { useFonts } from 'expo-font'
 import { useDispatch, useSelector } from 'react-redux'
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
+import TrackPlayer, { RepeatMode } from "react-native-track-player"
+import { DrawerContentScrollView, DrawerItemList, createDrawerNavigator } from "@react-navigation/drawer"
 
 import HomePage from "./components/screens/home/HomePage"
 import LoadingPage from "./components/screens/loading/LoadingPage"
@@ -18,10 +21,11 @@ import { setupPlayer } from "./sound/service"
 import TracksPreviewPage, { TracksPreviewHeader } from "./components/screens/trackspreview/TracksPreviewPage"
 import MusicPlayer from "./components/screens/player/MusicPlayer"
 import { loadTracks, skipTo } from "./sound/orderPanel/playFunctions"
-import TrackPlayer, { RepeatMode } from "react-native-track-player"
+import themes from "./themes"
 
 
 const Stack = createNativeStackNavigator();
+const Drawer = createDrawerNavigator();
 
 const App = () => {
     const dispatch = useDispatch();
@@ -42,6 +46,7 @@ const App = () => {
 
         LogBox.ignoreLogs([
             "We can not support a function callback. See Github Issues for details https://github.com/adobe/react-spectrum/issues/2320",
+            "Error: Please call start before stopping recording"
         ]);
     }, []);
 
@@ -73,54 +78,103 @@ const App = () => {
         return <LoadingPage />
     }
 
+    const HomeStack = () => {
+        return (
+            <Stack.Navigator initialRouteName="Home">
+                <Stack.Screen name="Home"
+                    component={HomePage}
+                    options={{ headerShown: false }} />
+
+                <Stack.Screen name="Playlist"
+                    component={PlaylistPage}
+                    options={{
+                        header: PlaylistHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+
+                <Stack.Screen name="TrackList"
+                    component={TrackListPage}
+                    options={{
+                        header: TrackListHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+
+                <Stack.Screen name="TracksPreview"
+                    component={TracksPreviewPage}
+                    options={{
+                        header: TracksPreviewHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+
+                <Stack.Screen name="Track"
+                    component={TrackPage}
+                    options={{
+                        header: TrackHeader,
+                        headerTransparent: true,
+                        headerBackButtonMenuEnabled: false,
+                        headerBackVisible: false,
+                        animation: "slide_from_right"
+                    }} />
+            </Stack.Navigator>
+        );
+    }
+
+    const CustomDrawer = (props) => {
+        return (
+            <DrawerContentScrollView {...props}>
+                <HStack w="100%" p="2" px="4" space="2" bg="primary.700" 
+                    alignItems="center"
+                    justifyContent="flex-end"
+                >
+                    <VStack justifyContent="flex-start" flexGrow={0.8}>
+                        <Text color="white"
+                            fontFamily="quicksand_b"
+                            fontSize="md">Soundure</Text>
+
+                        <Text color="white"
+                            fontFamily="manrope_r"
+                            fontSize="2xs">Credits: C. Liviu-Ionuț</Text>
+                    </VStack>
+
+                    <AspectRatio ratio="4/4" h="10" flexGrow={0.2}>
+                        <Image w="100%" h="100%"
+                            source={require("../assets/images/soundure_logo_white.png")}
+                            alt="drawer logo"/>
+                    </AspectRatio>
+                </HStack>
+                <DrawerItemList {...props}/>
+            </DrawerContentScrollView>
+        );
+    }
+
     return (
         <>
             <NavigationContainer>
-                <Stack.Navigator initialRouteName="Home">
-                    <Stack.Screen name="Home"
-                        component={HomePage}
-                        options={{ headerShown: false }} />
-
-                    <Stack.Screen name="Playlist"
-                        component={PlaylistPage}
-                        options={{
-                            header: PlaylistHeader,
-                            headerTransparent: true,
-                            headerBackButtonMenuEnabled: false,
-                            headerBackVisible: false,
-                            animation: "slide_from_right"
-                        }} />
-
-                    <Stack.Screen name="TrackList"
-                        component={TrackListPage}
-                        options={{
-                            header: TrackListHeader,
-                            headerTransparent: true,
-                            headerBackButtonMenuEnabled: false,
-                            headerBackVisible: false,
-                            animation: "slide_from_right"
-                        }} />
-
-                    <Stack.Screen name="TracksPreview"
-                        component={TracksPreviewPage}
-                        options={{
-                            header: TracksPreviewHeader,
-                            headerTransparent: true,
-                            headerBackButtonMenuEnabled: false,
-                            headerBackVisible: false,
-                            animation: "slide_from_right"
-                        }} />
-
-                    <Stack.Screen name="Track"
-                        component={TrackPage}
-                        options={{
-                            header: TrackHeader,
-                            headerTransparent: true,
-                            headerBackButtonMenuEnabled: false,
-                            headerBackVisible: false,
-                            animation: "slide_from_right"
-                        }} />
-                </Stack.Navigator>
+                <Drawer.Navigator 
+                    initialRouteName="MainHome" 
+                    drawerContent={(props) => <CustomDrawer {...props}/>} 
+                    screenOptions={{
+                        drawerStyle: {
+                            backgroundColor: themes.colors.primary["600"]
+                        },
+                        drawerActiveBackgroundColor: "transparent",
+                        drawerActiveTintColor: "white"
+                    }}
+                >
+                    <Drawer.Screen
+                        name="MainHome"
+                        component={HomeStack}
+                        options={{ headerShown: false, title: "Acasă" }}/>
+                </Drawer.Navigator>
             </NavigationContainer>
 
             <MusicPlayer/>

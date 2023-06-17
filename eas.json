@@ -8,18 +8,12 @@
       "distribution": "internal",
       "android": {
         "gradleCommand": ":app:assembleDevelopmentDebug"
-      },
-      "ios": {
-        "resourceClass": "m-medium"
       }
     },
     "production": {
+      "distribution": "internal",
       "android": {
-        "gradleCommand": ":app:bundleProductionRelease",
         "buildType": "apk"
-      },
-      "ios": {
-        "resourceClass": "m-medium"
       }
     }
   },

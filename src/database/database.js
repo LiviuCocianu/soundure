@@ -79,6 +79,7 @@ class Database {
                     currentIndex INTEGER DEFAULT 0,
                     currentMillis INTEGER DEFAULT 0,
                     playlistConfigId INTEGER DEFAULT -1,
+                    dynamic BOOLEAN DEFAULT 0,
                     FOREIGN KEY(playlistConfigId) REFERENCES PlaylistConfig(id)`
                 ),
                 this.createTable(TABLES.QUOTE,

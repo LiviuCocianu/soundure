@@ -113,13 +113,13 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.soundure"
+    namespace 'io.github.idoomful.Soundure.android'
     defaultConfig {
-        applicationId "com.soundure"
+        applicationId 'io.github.idoomful.Soundure.android'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.0"
     }
 
     flavorDimensions "env"

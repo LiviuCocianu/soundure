@@ -14,15 +14,23 @@ const serviceCallback = async () => {
     TrackPlayer.addEventListener(Event.RemoteNext, async () => {
         const current = await TrackPlayer.getCurrentTrack();
         const queue = await TrackPlayer.getQueue();
+
         if(current == (queue.length - 1)) return;
+
+        const nextTrack = store.getState().tracks[current + 1];
+
         await skipTo(current + 1, store.dispatch);
-        await PlaylistBridge.History.add(current + 1, store.dispatch);
+        await PlaylistBridge.History.add(nextTrack.id, store.dispatch);
     });
     TrackPlayer.addEventListener(Event.RemotePrevious, async () => {
         const current = await TrackPlayer.getCurrentTrack();
+
         if(current == 0) return;
+
+        const prevTrack = store.getState().tracks[current - 1];
+
         await skipTo(current - 1, store.dispatch);
-        await PlaylistBridge.History.add(current - 1, store.dispatch);
+        await PlaylistBridge.History.add(prevTrack.id, store.dispatch);
     });
 }
 
