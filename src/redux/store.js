@@ -6,6 +6,7 @@ import {
     trackReducer,
     artistReducer,
     queueReducer,
+    appSettingsReducer
 } from "../redux/reducers"
 
 
@@ -17,6 +18,7 @@ const store = configureStore({
         tracks: trackReducer,
         artists: artistReducer,
         queue: queueReducer,
+        appSettings: appSettingsReducer
     }
 });
 

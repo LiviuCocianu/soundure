@@ -4,6 +4,7 @@ import plcR from "./slices/playlistContentSlice"
 import arR from "./slices/artistSlice"
 import quR from "./slices/queueSlice"
 import plcoR from './slices/playlistConfigSlice'
+import asR from './slices/appSettingsSlice'
 
 
 export const playlistReducer = plR
@@ -12,3 +13,4 @@ export const playlistContentReducer = plcR
 export const artistReducer = arR
 export const queueReducer = quR
 export const playlistConfigReducer = plcoR
+export const appSettingsReducer = asR

@@ -17,7 +17,8 @@ export const TABLES = {
     TRACK_CONFIG: "TrackConfig",
     PLAYLIST_CONTENT: "PlaylistContent",
     QUEUE: "Queue",
-    QUOTE: "Quote"
+    QUOTE: "Quote",
+    SETTINGS: "Settings",
 };
 
 export const PLATFORMS = {
@@ -31,6 +32,12 @@ export const ORDER_MUTATION_OPTIONS = {
     LOOP: "LOOP",
     SHUFFLE: "SHUFFLE",
     REVERSE: "REVERSE"
+}
+
+export const APP_SETTINGS = {
+    DYNAMIC_MIN_VOLUME: "0.2",
+    DYNAMIC_MAX_VOLUME: "0.8",
+    DYNAMIC_SENSITIVITY: "40000"
 }
 
 export const QUOTE_API_URL = "https://api.api-ninjas.com/v1/quotes?category=inspirational";

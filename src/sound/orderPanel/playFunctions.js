@@ -98,11 +98,31 @@ const prepareForPlay = async (playlistId, dispatch) => {
 export const singlePlay = async (trackId, tracks, dispatch) => {
     QueueBridge.resetReduxState(dispatch);
     await QueueBridge.setOrderMap([trackId], dispatch, false);
+    await QueueBridge.setIndex(0, dispatch);
+    await QueueBridge.setCurrentConfig(-2, dispatch);
     await TrackPlayer.reset();
 
     await PlaylistBridge.History.add(trackId, dispatch);
 
     await play([trackId], tracks);
+}
+
+export const eavesdropOnTrack = async (trackId, tracks) => {
+    await TrackPlayer.reset();
+    await TrackPlayer.add(await wrap(find(tracks, "id", trackId)));
+    await TrackPlayer.play();
+}
+
+export const resumeFromEavesdrop = async (queue, tracks) => {
+    if(queue.playlistConfigId != -1) {
+        await TrackPlayer.reset();
+        await loadTracks(queue.orderMap, tracks);
+
+        await TrackPlayer.skip(queue.currentIndex);
+        await TrackPlayer.seekTo(queue.currentMillis / 1000);
+
+        await TrackPlayer.play();
+    }
 }
 
 /**

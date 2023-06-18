@@ -17,7 +17,15 @@ const PANEL_WIDTH = 170;
 const BUTTON_WIDTH = 30;
 const BUTTON_HEIGHT = 50;
 
-// TODO document this
+/**
+ * OrderPanel component
+ * 
+ * @param {object} props props object
+ * @param {number} props.playlistId The parent playlist of this panel
+ * @param {number} props.coverHeight This value will be used to center the panel 
+ * 
+ * @returns {JSX.Element} JSX component
+ */
 const OrderPanel = ({
     playlistId,
     coverHeight

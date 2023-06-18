@@ -7,7 +7,8 @@ const initialState = {
     playlistConfigId: -1,
     orderMap: [],
     synced: false,
-    dynamic: false
+    dynamic: false,
+    eavesdrop: false,
 };
 
 const queueSlice = createSlice({
@@ -52,6 +53,10 @@ const queueSlice = createSlice({
         toggledDynamicSound(state, action) {
             state.dynamic = action.payload;
             return state;
+        },
+        toggledEavesdrop(state, action) {
+            state.eavesdrop = action.payload;
+            return state;
         }
     }
 });
@@ -66,7 +71,8 @@ export const {
     orderMapTrackAdded,
     orderMapTrackRemoved,
     syncedWithDatabase,
-    toggledDynamicSound
+    toggledDynamicSound,
+    toggledEavesdrop,
 } = queueSlice.actions;
 
 export default queueReducer = queueSlice.reducer

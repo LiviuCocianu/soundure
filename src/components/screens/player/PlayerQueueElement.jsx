@@ -64,11 +64,6 @@ const PlayerQueueElement = ({
         }
     }, [orderMap, ownOrderIndex]);
 
-    // TODO finish this
-    const handleSettingsButton = useCallback(() => {
-    
-    }, []);
-
     return (
         <OpacityDecorator>
             <TouchableHighlight
@@ -94,13 +89,7 @@ const PlayerQueueElement = ({
                         alignSelf="center"
                     >
                         {
-                            relativeToCurrent == 0 ? (
-                                <EntypoNB pr="2" py="4"
-                                    name="dots-three-vertical"
-                                    color="white"
-                                    onPress={handleSettingsButton}
-                                    fontSize={20}/>
-                            ) : relativeToCurrent == 1 
+                            relativeToCurrent == 1 
                             ? (
                                 <MaterialNB pr="2" py="4"
                                     name="drag-horizontal-variant"

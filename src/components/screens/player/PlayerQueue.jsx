@@ -38,9 +38,11 @@ const PlayerQueue = ({
 
     const queue = useSelector(state => state.queue);
     const currentConfig = useSelector(state => state.playlistConfig);
+    const appS = useSelector(state => state.appSettings);
     const playbackState = usePlaybackState();
     
     const [isChangingOrder, toggleOrderChanging] = useState(false);
+    const [dynamicOptionEnabled, toggleDynamicOption] = useState(false);
 
     useTrackPlayerEvents([Event.PlaybackQueueEnded, Event.PlaybackTrackChanged], async event => {
         if(event.type == Event.PlaybackQueueEnded) {
@@ -66,7 +68,11 @@ const PlayerQueue = ({
 
     useEffect(() => {
         if(queue.dynamic) RNSoundLevel.start();
-        else RNSoundLevel.stop();
+        else if(dynamicOptionEnabled) {
+            RNSoundLevel.stop();
+        }
+
+        toggleDynamicOption(queue.dynamic);
     }, [queue.dynamic]);
 
     const clamp = (a, min = 0, max = 1) => Math.min(max, Math.max(min, a));
@@ -82,18 +88,13 @@ const PlayerQueue = ({
                 } else {
                     const avg = samples.reduce((a, b) => a + b) / samples.length;
     
-                    console.log(avg, Math.min(invlerp(200, 40000, avg) + 0.2, 0.8));
-                    VolumeManager.setVolume(Math.min(invlerp(200, 40000, avg) + 0.2, 0.8));
+                    VolumeManager.setVolume(Math.min(invlerp(200, appS.dynamicSensitivity, avg) + appS.dynamicMinVolume, appS.dynamicMaxVolume));
     
                     samples = [];
                 }
             }
         }
-
-        return () => {
-            RNSoundLevel.stop();
-        }
-    }, [queue.orderMap]);
+    }, [queue.orderMap, appS.dynamicSensitivity, appS.dynamicMinVolume, appS.dynamicMaxVolume]);
 
     const currentIsFavorite = useMemo(() => {
         const track = find(tracks, "id", queue.orderMap[queue.currentIndex], {favorite: false});

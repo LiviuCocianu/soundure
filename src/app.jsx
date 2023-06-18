@@ -22,6 +22,10 @@ import TracksPreviewPage, { TracksPreviewHeader } from "./components/screens/tra
 import MusicPlayer from "./components/screens/player/MusicPlayer"
 import { loadTracks, skipTo } from "./sound/orderPanel/playFunctions"
 import themes from "./themes"
+import AppSettings from "./components/screens/drawer/AppSettings"
+import { memo } from "react"
+import { useMemo } from "react"
+import { useCallback } from "react"
 
 
 const Stack = createNativeStackNavigator();
@@ -37,46 +41,6 @@ const App = () => {
     const tracks = useSelector(state => state.tracks);
     const queue = useSelector(state => state.queue);
     const currentConfig = useSelector(state => state.playlistConfig);
-
-    useEffect(() => {
-        (async () => {
-            await setupDatabase(dispatch);
-            setLoadedDatabase(true);
-        })();
-
-        LogBox.ignoreLogs([
-            "We can not support a function callback. See Github Issues for details https://github.com/adobe/react-spectrum/issues/2320",
-            "Error: Please call start before stopping recording"
-        ]);
-    }, []);
-
-    // Load the state of the music player from the database
-    useEffect(() => {
-        if(loadedDatabase && !loadedTrackPlayer && queue.synced) {
-            (async () => {
-                const isSetup = await setupPlayer();
-
-                // Checking if there was a config saved from a previous playback
-                // to load back
-                if(queue.playlistConfigId != -1) {
-                    await loadTracks(queue.orderMap, tracks);
-                    await skipTo(queue.currentIndex, dispatch, false);
-                    await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
-
-                    if (currentConfig.isLooping)
-                        await TrackPlayer.setRepeatMode(RepeatMode.Queue);
-                    else
-                        await TrackPlayer.setRepeatMode(RepeatMode.Off);
-                }
-
-                setLoadedTrackPlayer(isSetup);
-            })();
-        }
-    }, [currentConfig, queue, loadedDatabase]);
-
-    if (!loadedFonts || !loadedDatabase || !loadedTrackPlayer) {
-        return <LoadingPage />
-    }
 
     const HomeStack = () => {
         return (
@@ -131,7 +95,7 @@ const App = () => {
     const CustomDrawer = (props) => {
         return (
             <DrawerContentScrollView {...props}>
-                <HStack w="100%" p="2" px="4" space="2" bg="primary.700" 
+                <HStack w="100%" p="2" px="4" space="2" bg="primary.700"
                     alignItems="center"
                     justifyContent="flex-end"
                 >
@@ -148,34 +112,86 @@ const App = () => {
                     <AspectRatio ratio="4/4" h="10" flexGrow={0.2}>
                         <Image w="100%" h="100%"
                             source={require("../assets/images/soundure_logo_white.png")}
-                            alt="drawer logo"/>
+                            alt="drawer logo" />
                     </AspectRatio>
                 </HStack>
-                <DrawerItemList {...props}/>
+                <DrawerItemList {...props} />
             </DrawerContentScrollView>
         );
+    };
+
+    const NavigationApp = () => (
+        <NavigationContainer>
+            <Drawer.Navigator
+                initialRouteName="MainHome"
+                drawerContent={(props) => <CustomDrawer {...props} />}
+                screenOptions={{
+                    drawerStyle: {
+                        backgroundColor: themes.colors.primary["600"]
+                    },
+                    drawerActiveBackgroundColor: "transparent",
+                    drawerActiveTintColor: "white",
+                    drawerInactiveTintColor: "white"
+                }}
+            >
+                <Drawer.Screen
+                    name="MainHome"
+                    component={HomeStack}
+                    options={{ headerShown: false, title: "Acasă" }} />
+
+                <Drawer.Screen
+                    name="AppSettings"
+                    component={AppSettings}
+                    options={{ headerShown: false, title: "Setări" }} />
+            </Drawer.Navigator>
+        </NavigationContainer>
+    );
+
+    const MemoizedNavigation = useCallback(() => <NavigationApp/>, []);
+
+    useEffect(() => {
+        (async () => {
+            await setupDatabase(dispatch);
+            setLoadedDatabase(true);
+        })();
+
+        LogBox.ignoreLogs([
+            "We can not support a function callback. See Github Issues for details https://github.com/adobe/react-spectrum/issues/2320",
+            "Error: Please call start before stopping recording"
+        ]);
+    }, []);
+
+    // Load the state of the music player from the database
+    useEffect(() => {
+        if(loadedDatabase && !loadedTrackPlayer && queue.synced) {
+            (async () => {
+                const isSetup = await setupPlayer();
+
+                // Checking if there was a config saved from a previous playback
+                // to load back
+                if(queue.playlistConfigId != -1) {
+                    await loadTracks(queue.orderMap, tracks);
+                    await skipTo(queue.currentIndex, dispatch, false);
+                    await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
+
+                    if (currentConfig.isLooping)
+                        await TrackPlayer.setRepeatMode(RepeatMode.Queue);
+                    else
+                        await TrackPlayer.setRepeatMode(RepeatMode.Off);
+                }
+
+                setLoadedTrackPlayer(isSetup);
+            })();
+        }
+    }, [currentConfig, queue, loadedDatabase]);
+
+    if (!loadedFonts || !loadedDatabase || !loadedTrackPlayer) {
+        return <LoadingPage />
     }
 
     return (
         <>
-            <NavigationContainer>
-                <Drawer.Navigator 
-                    initialRouteName="MainHome" 
-                    drawerContent={(props) => <CustomDrawer {...props}/>} 
-                    screenOptions={{
-                        drawerStyle: {
-                            backgroundColor: themes.colors.primary["600"]
-                        },
-                        drawerActiveBackgroundColor: "transparent",
-                        drawerActiveTintColor: "white"
-                    }}
-                >
-                    <Drawer.Screen
-                        name="MainHome"
-                        component={HomeStack}
-                        options={{ headerShown: false, title: "Acasă" }}/>
-                </Drawer.Navigator>
-            </NavigationContainer>
+            <MemoizedNavigation/>
 
             <MusicPlayer/>
         </>

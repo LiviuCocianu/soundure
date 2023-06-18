@@ -11,6 +11,7 @@ import { artistAdded } from "../redux/slices/artistSlice";
 import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, toggledDynamicSound } from "../redux/slices/queueSlice";
 import { handleCoverURI } from "../functions";
 import { historyOrderSet, setBoolean } from "../redux/slices/playlistConfigSlice";
+import { settingApplied } from "../redux/slices/appSettingsSlice";
 
 
 const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
@@ -503,3 +504,10 @@ export const QueueBridge = {
         }
     }
 };
+
+export const AppSettingsBridge = {
+    applySetting: async (name, value, dispatch) => {
+        await db.update(TABLES.SETTINGS, "value=?", "name=?", [value, name]);
+        dispatch(settingApplied({name, value}));
+    }
+}

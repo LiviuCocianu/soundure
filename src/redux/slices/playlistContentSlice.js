@@ -30,7 +30,6 @@ const playlistContentSlice = createSlice({
         },
         trackPlaylistRelationRemoved(state, action) {
             const val = action.payload;
-            console.log("trackPlaylistRelationRemoved:", val); // TODO debug
             return state.filter(el => ((el.playlistId !== val.playlistId) || (el.trackId !== val.trackId)));
         }
     }

@@ -32,14 +32,12 @@ class Database {
                     title TEXT NOT NULL DEFAULT 'Playlist',
                     description TEXT DEFAULT '',
                     coverURI TEXT,
-                    favorite BOOLEAN DEFAULT 0 `
+                    favorite BOOLEAN DEFAULT 0`
                 ),
                 this.createTable(TABLES.PLAYLIST_CONFIG,
                     `id INTEGER PRIMARY KEY AUTOINCREMENT,
                     orderMap TEXT DEFAULT '[]',
                     isLooping BOOLEAN DEFAULT 0,
-                    isShuffling BOOLEAN DEFAULT 0,
-                    isReversing BOOLEAN DEFAULT 0,
                     playlistId INTEGER NOT NULL,
                     FOREIGN KEY(playlistId) REFERENCES Playlist(id)`
                 ),
@@ -88,7 +86,12 @@ class Database {
                     quote TEXT DEFAULT "${DEFAULT_QUOTE.CONTENT}",
                     author TEXT DEFAULT "${DEFAULT_QUOTE.AUTHOR}",
                     updateDaily BOOLEAN DEFAULT 0`
-                )
+                ),
+                this.createTable(TABLES.SETTINGS,
+                    `id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    name TEXT NOT NULL,
+                    value TEXT`
+                ),
             ]).then(() => {
                 console.log("");
                 console.log("Tables were created successfully!");

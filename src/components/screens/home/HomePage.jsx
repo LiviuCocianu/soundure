@@ -11,6 +11,7 @@ import PlaylistsCategory from './categories/PlaylistsCategory'
 import QuoteBox from './QuoteBox'
 import UploadTrack from '../../modals/UploadTrack'
 import TracksCategory from './categories/TracksCategory'
+import { memo } from 'react'
 
 
 /**
@@ -94,4 +95,4 @@ const HeaderButton = ({ text, icon, onPress }) => (
 )
 
 
-export default HomePage
+export default HomePage;

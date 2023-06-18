@@ -8,9 +8,10 @@ import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, synce
 
 import { PlaylistBridge, QueueBridge, TrackBridge } from "./componentBridge"
 import { createPlaylist, createTrack } from "./shapes"
-import { PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
+import { APP_SETTINGS, PLATFORMS, RESERVED_PLAYLISTS, TABLES } from "../constants"
 import { historyOrderSet, setBoolean } from "../redux/slices/playlistConfigSlice"
 import { PERMISSIONS, RESULTS, check } from "react-native-permissions"
+import { settingApplied } from "../redux/slices/appSettingsSlice"
 
 
 const loadQueueFromDB = async (dispatch) => {
@@ -76,9 +77,6 @@ const createMockupTracks = (count, dispatch) => {
 
 export async function setupDatabase(dispatch) {
     return db.init().then(async () => {
-        // TODO remove createMockupPlaylist when the app is done
-        //await createMockupPlaylist(dispatch);
-
         await db.insertIfNotExists(TABLES.QUOTE, { lastFetch: 0 }, "id=?", [1]);
 
         for(let reserved of RESERVED_PLAYLISTS) {
@@ -133,5 +131,23 @@ export async function setupDatabase(dispatch) {
 
         await db.selectFrom(TABLES.PLAYLIST_CONTENT)
             .then(rows => dispatch(playlistsContentSet(rows)));
+
+        await db.insertIfNotExists(TABLES.SETTINGS, {name: "dynamicMinVolume", value: APP_SETTINGS.DYNAMIC_MIN_VOLUME}, "name=?", ["dynamicMinVolume"]);
+        await db.insertIfNotExists(TABLES.SETTINGS, {name: "dynamicMaxVolume", value: APP_SETTINGS.DYNAMIC_MAX_VOLUME}, "name=?", ["dynamicMaxVolume"]);
+        await db.insertIfNotExists(TABLES.SETTINGS, {name: "dynamicSensitivity", value: APP_SETTINGS.DYNAMIC_SENSITIVITY}, "name=?", ["dynamicSensitivity"]);
+
+        await db.selectFrom(TABLES.SETTINGS, null).then(rows => {
+            for(const row of rows) {
+                switch(row.name) {
+                    case "dynamicMinVolume":
+                    case "dynamicMaxVolume":
+                        dispatch(settingApplied({name: row.name, value: parseFloat(row.value)}));
+                        break;
+                    case "dynamicSensitivity":
+                        dispatch(settingApplied({name: row.name, value: parseInt(row.value)}));
+                        break;
+                }
+            }
+        });
     });
 }

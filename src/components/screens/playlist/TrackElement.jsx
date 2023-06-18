@@ -20,6 +20,10 @@ import TrackSettingsSheet from '../track/TrackSettingsSheet';
 import { handleCoverURI, lng } from '../../../functions';
 import { ARTIST_NAME_PLACEHOLDER, TRACK_EL_HEIGHT } from '../../../constants';
 import { useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { eavesdropOnTrack, resumeFromEavesdrop, singlePlay } from '../../../sound/orderPanel/playFunctions';
+import Toast from 'react-native-root-toast';
+import { toggledEavesdrop } from '../../../redux/slices/queueSlice';
 
 
 const SCREEN_WIDTH = Dimensions.get("screen").width;
@@ -62,7 +66,12 @@ const TrackElement = ({
 }) => {
     const disclose = useDisclose();
 
+    const dispatch = useDispatch();
+    const queue = useSelector(state => state.queue);
+    const tracks = useSelector(state => state.tracks);
+
     const [isSelected, setSelected] = useState(false);
+    const [eavesdrop, setEavesdrop] = useState(false);
 
     const cover = useMemo(() => handleCoverURI(track.coverURI), [track.coverURI]);
 
@@ -78,15 +87,33 @@ const TrackElement = ({
 
     const handlePress = useCallback(() => {
         if (selectionMode) handleSelection(!isSelected);
-    }, [selectionMode, isSelected, handleSelection]);
+        else {
+            if (queue.currentIndex >= 0 && queue.orderMap[queue.currentIndex] == track.id) return;
+            singlePlay(track.id, tracks, dispatch);
+        }
+    }, [selectionMode, isSelected, handleSelection, queue.currentIndex, queue.orderMap, tracks, track.id]);
 
     const handleSettingsButton = useCallback(() => {
         disclose.onOpen();
     }, [disclose]);
 
+    const handleLongPress = useCallback(async () => {
+        dispatch(toggledEavesdrop(true));
+        await eavesdropOnTrack(track.id, tracks);
+    }, [track.id, tracks]);
+
+    const handlePressOut = useCallback(async () => {
+        if(queue.eavesdrop) {
+            dispatch(toggledEavesdrop(false));
+            await resumeFromEavesdrop(queue, tracks);
+        }
+    }, [queue, tracks]);
+
     return (
         <Pressable _pressed={{ opacity: 0.8 }} 
             onPress={handlePress}
+            onLongPress={handleLongPress}
+            onPressOut={handlePressOut}
         >
             <HStack w={ELEMENT_WIDTH} h={TRACK_EL_HEIGHT} mb="1"
                 bg={lng(["primary.700", "gray.900"])}

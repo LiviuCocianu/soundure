@@ -21,12 +21,18 @@ const MarqueeNB = Factory(MarqueeText);
 
 const animationDuration = 600;
 
-// TODO add documentation
+/**
+ * MusicPlayer component
+ * 
+ * @returns {JSX.Element} JSX component
+ */
 const MusicPlayer = () => {
     const dispatch = useDispatch();
 
     const [isPlaying, togglePlayback] = useState(false);
     const [sliderIsVisible, toggleSlider] = useState(false);
+    const [expanded, toggleExpansion] = useState(false);
+    const [primaryColor, setPrimaryColor] = useState("primary.50");
 
     const { position, duration } = useProgress(500);
     const playbackState = usePlaybackState();
@@ -48,18 +54,15 @@ const MusicPlayer = () => {
     const artists = useSelector(state => state.artists);
     const queue = useSelector(state => state.queue);
 
-    const [expanded, toggleExpansion] = useState(false);
-    const [primaryColor, setPrimaryColor] = useState("primary.50");
     const maxH = useMemo(() => expanded ? "20" : "16", [expanded]);
 
     const currentTrack = useMemo(() => {
-        const found = find(tracks, "id", queue.orderMap[queue.currentIndex], {
+        if (queue.eavesdrop) return { title: "Se redă o piesă temporar..", millis: 0 };
+        return find(tracks, "id", queue.orderMap[queue.currentIndex], {
             title: "Coadă de redare goală",
             millis: 0
         });
-        
-        return found;
-    }, [tracks, queue.orderMap, queue.currentIndex]);
+    }, [tracks, queue.orderMap, queue.currentIndex, queue.eavesdrop]);
 
     const cover = useMemo(() => {
         return typeof(currentTrack.coverURI) !== "string"
@@ -68,10 +71,11 @@ const MusicPlayer = () => {
     }, [currentTrack.coverURI]);
 
     const currentTrackArtist = useMemo(() => {
+        if (queue.eavesdrop) return { name: "Coada nu este disponibilă în acest mod" };
         return find(artists, "id", currentTrack.artistId, {
             name: "Se așteaptă redarea unui playlist.."
         });
-    }, [artists, currentTrack]);
+    }, [queue.eavesdrop, artists, currentTrack]);
 
     const sliderColor = useMemo(() => {
         if(isTooDark(primaryColor)) return primaryColor;
@@ -101,18 +105,19 @@ const MusicPlayer = () => {
     }, [currentTrack, queue.currentIndex]);
 
     useEffect(() => {
-        QueueBridge.setCurrentMillis(position * 1000, dispatch);
+        if(!queue.eavesdrop)
+            QueueBridge.setCurrentMillis(position * 1000, dispatch);
 
         if(position >= duration) {
             togglePlayback(false);
         }
-    }, [position, duration]);
+    }, [position, duration, queue.eavesdrop]);
 
     useEffect(() => {
-        if (playbackState !== State.Playing) {
+        if (playbackState !== State.Playing && !queue.eavesdrop) {
             QueueBridge.setCurrentMillis(position * 1000, dispatch);
         }
-    }, [isPlaying]);
+    }, [isPlaying, queue.eavesdrop]);
 
     useTrackPlayerEvents([Event.PlaybackState, Event.PlaybackTrackChanged], async event => {
         if(event.type == Event.PlaybackState) {
@@ -128,25 +133,27 @@ const MusicPlayer = () => {
         toggleExpansion(!expanded);
     }
 
-    const handleProgressFingerUp = async (value) => {
+    const handleProgressFingerUp = useCallback(async (value) => {
         const val = Math.floor(value[0]);
         const oldState = isPlaying;
 
         await TrackPlayer.seekTo(val);
         await QueueBridge.setCurrentMillis(val, dispatch);
 
-        if(!oldState)
+        if (!oldState)
             await TrackPlayer.pause();
-    }
+    }, [isPlaying]);
 
-    const handlePlayPause = async () => {
-        const queue = await TrackPlayer.getQueue();
+    const handlePlayPause = useCallback(async () => {
+        if (!queue.eavesdrop) {
+            const queue = await TrackPlayer.getQueue();
 
-        if(queue.length > 0) {
-            if(playbackState != State.Playing) await TrackPlayer.play();
-            else await TrackPlayer.pause();
+            if (queue.length > 0) {
+                if (playbackState != State.Playing) await TrackPlayer.play();
+                else await TrackPlayer.pause();
+            }
         }
-    }
+    }, [queue, playbackState]);
 
     return (
         <Animated.View
