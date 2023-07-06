@@ -1,5 +1,16 @@
-- Adauga searchbar la OptimizedTrackList
-
 - Muta toate iconitele intr-un fisier JS dedicat
 
-- Adauga optiunea "Reda incepand cu" in panoul cu optiuni de redare
+- Adauga optiunea "Reda incepand cu" in panoul cu optiuni de redare. Utilizatorul va putea alege o piesa
+cu care sa inceapa redarea de fiecare data, indiferent de tipul ordonarii
+
+- Adauga optiunea "Reda ordine recenta" in panoul cu optiuni de redare si modifica "Reda simplu"
+    * "Reda simplu" va reda in aceeasi ordine ca cea afisata in pagina playlist-ului
+    * "Reda ordine recenta" va folosi ordinea mapata din cea mai recenta redare, daca exista
+
+- Permite modificarea descrierii unui playlist
+
+- Permite adaugarea la favorite a unui playlist
+
+- Adauga searchbar la OptimizedTrackList
+
+- Optiunea de a sterge coperta unei piese, ca la playlist

@@ -391,7 +391,7 @@ class Database {
      * @returns {Promise<ResultSet[]>} Resolves with an array of ResultSets for each truncation when done
      */
     truncateAll() {
-        return Promise.all(Array.from(Object.values(TABLES)).map(this.truncate));
+        return Promise.all(Array.from(Object.values(TABLES)).map(table => this.truncate(table)));
     }
 
     /**

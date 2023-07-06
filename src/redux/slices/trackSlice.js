@@ -27,10 +27,19 @@ const trackSlice = createSlice({
         trackRemoved(state, action) {
             const val = action.payload;
             return state.filter(el => el.id !== val.id);
+        },
+        tracksReset(state, action) {
+            return initialState;
         }
     }
 });
 
 
-export const { tracksSet, trackSet, trackAdded, trackRemoved } = trackSlice.actions
+export const { 
+    tracksSet, 
+    trackSet, 
+    trackAdded, 
+    trackRemoved,
+    tracksReset
+ } = trackSlice.actions
 export default trackReducer = trackSlice.reducer

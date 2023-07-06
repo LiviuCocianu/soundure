@@ -22,14 +22,25 @@ const playlistSlice = createSlice({
         playlistAdded(state, action) {
             const val = action.payload;
             state.push(val);
+            return state;
         },
         playlistRemoved(state, action) {
             const val = action.payload;
             return state.filter(el => el.id !== val.id);
+        },
+        playlistReset(state, action) {
+            state = [];
+            return state;
         }
     }
 });
 
 
-export const { playlistsSet, playlistSet, playlistAdded, playlistRemoved } = playlistSlice.actions
+export const { 
+    playlistsSet, 
+    playlistSet, 
+    playlistAdded, 
+    playlistRemoved,
+    playlistReset
+} = playlistSlice.actions
 export default playlistReducer = playlistSlice.reducer

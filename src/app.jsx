@@ -23,8 +23,6 @@ import MusicPlayer from "./components/screens/player/MusicPlayer"
 import { loadTracks, skipTo } from "./sound/orderPanel/playFunctions"
 import themes from "./themes"
 import AppSettings from "./components/screens/drawer/AppSettings"
-import { memo } from "react"
-import { useMemo } from "react"
 import { useCallback } from "react"
 
 
@@ -169,7 +167,7 @@ const App = () => {
 
                 // Checking if there was a config saved from a previous playback
                 // to load back
-                if(queue.playlistConfigId != -1) {
+                if(queue && queue.playlistConfigId != -1) {
                     await loadTracks(queue.orderMap, tracks);
                     await skipTo(queue.currentIndex, dispatch, false);
                     await TrackPlayer.seekTo(Math.floor(queue.currentMillis / 1000));
@@ -192,7 +190,6 @@ const App = () => {
     return (
         <>
             <MemoizedNavigation/>
-
             <MusicPlayer/>
         </>
     );

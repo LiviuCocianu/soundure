@@ -45,13 +45,17 @@ const playlistConfigSlice = createSlice({
             state.historyOrder = data;
             return state;
         },
+        playlistConfigReset(state, action) {
+            return initialState;
+        }
     }
 });
 
 
 export const {
     setBoolean,
-    historyOrderSet
+    historyOrderSet,
+    playlistConfigReset
 } = playlistConfigSlice.actions;
 
 export default playlistConfigReducer = playlistConfigSlice.reducer;

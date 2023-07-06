@@ -57,6 +57,9 @@ const queueSlice = createSlice({
         toggledEavesdrop(state, action) {
             state.eavesdrop = action.payload;
             return state;
+        },
+        queueReset(state, action) {
+            return initialState;
         }
     }
 });
@@ -73,6 +76,7 @@ export const {
     syncedWithDatabase,
     toggledDynamicSound,
     toggledEavesdrop,
+    queueReset
 } = queueSlice.actions;
 
 export default queueReducer = queueSlice.reducer

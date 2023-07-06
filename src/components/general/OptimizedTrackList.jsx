@@ -47,6 +47,7 @@ const OptimizedTrackList = ({
     const tracks = useSelector(state => state.tracks);
     const artists = useSelector(state => state.artists);
 
+    //const ownTracksSynced = useMemo(() => ownTracks.filter(id => find(tracks, "id", id, undefined) != undefined), [tracks]);
     const playlistId = useMemo(() => !playlist ? undefined : playlist.id, [playlist]);
 
     const findTrackInfo = useCallback((trackId) => {
@@ -54,10 +55,12 @@ const OptimizedTrackList = ({
         const artist = find(artists, "id", track.artistId);
 
         return [track, artist];
-    }, [ownTracks, tracks, artists]);
+    }, [tracks, artists]);
     
     const renderElements = useCallback(({ item }) => {
         const [track, artist] = findTrackInfo(item);
+
+        //if (Object.keys(track).length === 0) return undefined;
 
         return (
             <TrackElement
@@ -69,9 +72,9 @@ const OptimizedTrackList = ({
                 allSelected={selection.areAllSelected}
                 selectionHandler={selection.selectionHandler} />
         )
-    }, [playlistId, selection]);
+    }, [tracks, playlistId, selection]);
 
-    const renderMemo = useMemo(() => renderElements, [playlistId, selection]);
+    const renderMemo = useMemo(() => renderElements, [tracks, playlistId, selection]);
 
     return <>
         {
@@ -95,17 +98,6 @@ const OptimizedTrackList = ({
         }
     </>
 }
-
-const propsAreEqual = (prev, next) => (
-    prev.navigation == next.navigation
-    && prev.ownTracks == next.ownTracks
-    && prev.playlist == next.playlist
-    && prev.initialRenderCount == next.initialRenderCount
-    && prev.onInfoPress == next.onInfoPress
-    && prev.selection.enabled == next.selection.enabled
-    && prev.selection.areAllSelected == next.areAllSelected
-    && prev.selection.selectionHandler == next.selectionHandler
-);
 
 
 export default OptimizedTrackList;

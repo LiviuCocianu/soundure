@@ -37,7 +37,7 @@ const propsAreEqual = (prev, next) => (
  * @returns {JSX.Element} JSX component
  */
 const HorizontalCategoryElement = ({
-    title="Titlu playlist",
+    title="",
     onPress,
     coverURI,
     placeholderColor="primary.50"

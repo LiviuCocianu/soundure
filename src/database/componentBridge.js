@@ -1,17 +1,19 @@
 import { Dispatch, AnyAction } from "redux";
 
 import db from "./database";
-import { ARTIST_NAME_PLACEHOLDER, ENV, ORDER_MUTATION_OPTIONS, PLATFORMS, QUOTE_API_URL, TABLES } from "../constants";
+import store from "../redux/store"
+import { APP_SETTINGS, ARTIST_NAME_PLACEHOLDER, ENV, PLATFORMS, QUOTE_API_URL, RESERVED_PLAYLISTS, TABLES } from "../constants";
 import Toast from "react-native-root-toast";
 
 import { trackSet, trackAdded, trackRemoved } from "../redux/slices/trackSlice";
 import { playlistAdded, playlistRemoved, playlistSet } from "../redux/slices/playlistSlice";
-import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved, playlistContentAdded, playlistContentRemoved } from "../redux/slices/playlistContentSlice";
+import { trackRelationsRemoved, playlistRelationsRemoved, trackPlaylistRelationRemoved, playlistContentAdded } from "../redux/slices/playlistContentSlice";
 import { artistAdded } from "../redux/slices/artistSlice";
 import { currentConfigSet, currentIndexSet, currentMillisSet, orderMapSet, toggledDynamicSound } from "../redux/slices/queueSlice";
 import { handleCoverURI } from "../functions";
 import { historyOrderSet, setBoolean } from "../redux/slices/playlistConfigSlice";
 import { settingApplied } from "../redux/slices/appSettingsSlice";
+import { resetReduxState } from "../redux/functions";
 
 
 const updateColumn = (table, id, setAction, { column, value, dispatch }) => {
@@ -26,6 +28,24 @@ const getFixedRow = async (table) => {
     return db.selectFrom(table, null, "id=?", [1]).then(rows => rows[0]);
 };
 
+
+export const resetApp = async (dispatch) => {
+    await db.truncateAll();
+
+    await db.insertIfNotExists(TABLES.QUOTE, { lastFetch: 0 }, "id=?", [1]);
+
+    for (let reserved of RESERVED_PLAYLISTS) {
+        await db.insertIfNotExists(TABLES.PLAYLIST, { title: reserved }, "title=?", [reserved]);
+    }
+
+    await db.insertIfNotExists(TABLES.QUEUE, { currentIndex: 0, playlistConfigId: -1 }, "id=?", [1]);
+
+    await db.insertIfNotExists(TABLES.SETTINGS, { name: "dynamicMinVolume", value: APP_SETTINGS.DYNAMIC_MIN_VOLUME }, "name=?", ["dynamicMinVolume"]);
+    await db.insertIfNotExists(TABLES.SETTINGS, { name: "dynamicMaxVolume", value: APP_SETTINGS.DYNAMIC_MAX_VOLUME }, "name=?", ["dynamicMaxVolume"]);
+    await db.insertIfNotExists(TABLES.SETTINGS, { name: "dynamicSensitivity", value: APP_SETTINGS.DYNAMIC_SENSITIVITY }, "name=?", ["dynamicSensitivity"]);
+
+    resetReduxState(dispatch);
+}
 
 export const TrackBridge = {
     updateColumn: (column, value, trackId, dispatch) => {
@@ -106,19 +126,38 @@ export const TrackBridge = {
         await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=?", [trackId]).then(async () => {
             dispatch(trackRelationsRemoved({ trackId }));
 
-            const row = await getFixedRow(TABLES.QUEUE);
+            // Remove the track from reserved playlists (ex: history)
+            for(reserved of RESERVED_PLAYLISTS) {
+                await db.selectFrom(TABLES.PLAYLIST, ["id"], "title=?", [reserved]).then(async (rows) => {
+                    if(rows.length > 0) {
+                        const isLinked = await PlaylistBridge.isLinkedTo(trackId, rows[0].id);
+    
+                        if(isLinked)
+                            await TrackBridge.deleteFromPlaylist(rows[0].id, trackId, dispatch, false);
+                    }
+                });
+            }
 
+            // Remove from history cache as well
+            if(store.getState().playlistConfig.historyOrder.includes(trackId)) {
+                const newHistOrder = [...store.getState().playlistConfig.historyOrder];
+                newHistOrder.splice(newHistOrder.indexOf(trackId), 1);
+                dispatch(historyOrderSet(newHistOrder));
+            }
+            
             // Remove the track from all configs
             const configs = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["id", "orderMap"]);
-
+            
             for(const config of configs) {
                 let orderMap = JSON.parse(config.orderMap);
-
+                
                 if(orderMap.includes(trackId)) {
                     orderMap = JSON.stringify(orderMap.filter(id => id !== trackId));
                     await db.update(TABLES.PLAYLIST_CONFIG, "orderMap = ?", "id = ?", [orderMap, config.id]);
                 }
             }
+
+            const row = await getFixedRow(TABLES.QUEUE);
 
             // ... then update the queue, if there is a playlist playing
             if(row.playlistConfigId != -1) {
@@ -141,8 +180,8 @@ export const TrackBridge = {
     trackExists: (fileURI) => {
         return db.existsIn(TABLES.TRACK, "fileURI = ?", [fileURI]);
     },
-    deleteFromPlaylist: (playlistId, trackId, dispatch, toast=true) => {
-        db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, playlistId]).then(async () => {
+    deleteFromPlaylist: async (playlistId, trackId, dispatch, toast=true) => {
+        return db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, playlistId]).then(async () => {
             dispatch(trackPlaylistRelationRemoved({ playlistId, trackId }));
 
             const rows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["id", "orderMap"], "playlistId = ?", [playlistId]);
@@ -294,14 +333,7 @@ export const PlaylistBridge = {
                     await db.update(TABLES.PLAYLIST_CONFIG, "orderMap=?", "id=?", [JSON.stringify(orderMap), data.id]);
 
                     dispatch(historyOrderSet(orderMap));
-
-                    //await db.deleteFrom(TABLES.PLAYLIST_CONTENT, "trackId=? AND playlistId=?", [trackId, data.id]);
-                    //dispatch(trackPlaylistRelationRemoved({trackId, playlistId: data.id}));
                 }
-
-                // try {
-                //     await PlaylistBridge.linkTracks(data.id, [trackId], dispatch, true, false);
-                // } catch(e) {}
             }
         }
     }
@@ -402,11 +434,10 @@ export const QueueBridge = {
             }
 
             db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "id=?", [row.playlistConfigId]).then(rows => {
-                const row = rows[0];
-                const orderMapLen = JSON.parse(row.orderMap).length;
-    
+                const orderMapLen = rows.length > 0 ? JSON.parse(rows[0].orderMap).length : 0;
+
                 if (index >= 0 && index < orderMapLen) {
-                    db.update(TABLES.QUEUE, "currentIndex=?", "id=?", [index, 1]).then(rs => {
+                    db.update(TABLES.QUEUE, "currentIndex=?", "id=?", [index, 1]).then((rs) => {
                         dispatch(currentIndexSet(index));
                     });
                 }

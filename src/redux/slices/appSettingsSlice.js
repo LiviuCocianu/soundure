@@ -1,9 +1,10 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { APP_SETTINGS } from "../../constants";
 
 const initialState = {
-    dynamicMinVolume: 0.2,
-    dynamicMaxVolume: 0.8,
-    dynamicSensitivity: 40000
+    dynamicMinVolume: APP_SETTINGS.DYNAMIC_MIN_VOLUME,
+    dynamicMaxVolume: APP_SETTINGS.DYNAMIC_MAX_VOLUME,
+    dynamicSensitivity: APP_SETTINGS.DYNAMIC_SENSITIVITY
 }
 
 const appSettingsSlice = createSlice({
@@ -37,6 +38,9 @@ const appSettingsSlice = createSlice({
             }
 
             return state;
+        },
+        appSettingsReset(state, action) {
+            return initialState;
         }
     }
 });
@@ -44,6 +48,7 @@ const appSettingsSlice = createSlice({
 
 export const {
     settingApplied,
+    appSettingsReset
 } = appSettingsSlice.actions;
 
 export default appSettingsReducer = appSettingsSlice.reducer;

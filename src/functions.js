@@ -191,8 +191,6 @@ export const find = (arr, key, value, def={}) => {
     return def;
 }
 
-export const waitFor = (millis) => new Promise((resolve, reject) => setTimeout(resolve, millis));
-
 /**
  * Checks if the hex color is too dark using Luma
  * 
@@ -232,6 +230,14 @@ export const shuffle = array => {
     return cpy;
 }
 
+
+/**
+ * Performs a simple reversal of the array
+ * 
+ * @param {any[]} array Array of any data type
+ * 
+ * @returns {any[]} The reversed array
+ */
 export const reverse = (array) => {
     let out = [];
 

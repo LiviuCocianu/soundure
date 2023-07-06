@@ -18,10 +18,18 @@ const artistSlice = createSlice({
         artistRemoved(state, action) {
             const val = action.payload;
             return state.filter(el => el.id !== val.id);
+        },
+        artistsReset(state, action) {
+            return initialState;
         }
     }
 });
 
 
-export const { artistsSet, artistAdded, artistRemoved } = artistSlice.actions
+export const { 
+    artistsSet, 
+    artistAdded, 
+    artistRemoved, 
+    artistsReset 
+} = artistSlice.actions
 export default artistReducer = artistSlice.reducer

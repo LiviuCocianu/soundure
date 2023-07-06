@@ -31,6 +31,9 @@ const playlistContentSlice = createSlice({
         trackPlaylistRelationRemoved(state, action) {
             const val = action.payload;
             return state.filter(el => ((el.playlistId !== val.playlistId) || (el.trackId !== val.trackId)));
+        },
+        playlistContentReset(state, action) {
+            return initialState;
         }
     }
 });
@@ -42,6 +45,7 @@ export const {
     playlistContentRemoved,
     trackRelationsRemoved,
     playlistRelationsRemoved,
-    trackPlaylistRelationRemoved
+    trackPlaylistRelationRemoved,
+    playlistContentReset
 } = playlistContentSlice.actions
 export default playlistContentReducer = playlistContentSlice.reducer

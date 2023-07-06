@@ -87,8 +87,9 @@ const PlayerQueue = ({
                     samples.push(data.rawValue);
                 } else {
                     const avg = samples.reduce((a, b) => a + b) / samples.length;
+                    const [min, max, sens] = [appS.dynamicMinVolume, appS.dynamicMaxVolume, appS.dynamicSensitivity];
     
-                    VolumeManager.setVolume(Math.min(invlerp(200, appS.dynamicSensitivity, avg) + appS.dynamicMinVolume, appS.dynamicMaxVolume));
+                    VolumeManager.setVolume(Math.min(invlerp(200, sens, avg) + min, max));
     
                     samples = [];
                 }

@@ -4,7 +4,7 @@ import TrackPlayer from "react-native-track-player";
 import { PlaylistBridge, QueueBridge } from "../../database/componentBridge"
 import { wrap } from "../trackBridge";
 import Toast from "react-native-root-toast";
-import { find, shuffle } from "../../functions";
+import { find, reverse, shuffle } from "../../functions";
 
 
 /**
@@ -97,7 +97,7 @@ const prepareForPlay = async (playlistId, dispatch) => {
 
 export const singlePlay = async (trackId, tracks, dispatch) => {
     QueueBridge.resetReduxState(dispatch);
-    await QueueBridge.setOrderMap([trackId], dispatch, false);
+    await QueueBridge.setOrderMap([trackId], dispatch);
     await QueueBridge.setIndex(0, dispatch);
     await QueueBridge.setCurrentConfig(-2, dispatch);
     await TrackPlayer.reset();
@@ -114,8 +114,9 @@ export const eavesdropOnTrack = async (trackId, tracks) => {
 }
 
 export const resumeFromEavesdrop = async (queue, tracks) => {
+    await TrackPlayer.reset();
+    
     if(queue.playlistConfigId != -1) {
-        await TrackPlayer.reset();
         await loadTracks(queue.orderMap, tracks);
 
         await TrackPlayer.skip(queue.currentIndex);
@@ -170,7 +171,7 @@ export const shuffledPlay = async (playlistId, tracks, dispatch) => {
  */
 export const reversedPlay = async (playlistId, tracks, dispatch) => {
     let orderMap = await prepareForPlay(playlistId, dispatch);
-    orderMap = orderMap.reverse();
+    orderMap = reverse(orderMap);
 
     await PlaylistBridge.History.add(orderMap[0], dispatch);
 

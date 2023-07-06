@@ -27,6 +27,7 @@ import ConfirmationWindow from '../../modals/ConfirmationWindow';
 import { IMAGE_QUALITY } from '../../../constants';
 import { useMemo } from 'react';
 import { simplePlay, singlePlay } from '../../../sound/orderPanel/playFunctions';
+import { useCallback } from 'react';
 
 
 const FeatherNB = Factory(Feather);
@@ -179,10 +180,10 @@ const TrackInfo = memo(({
         }
     }
 
-    const handleTrackPlay = () => {
+    const handleTrackPlay = useCallback(() => {
         if (queue.currentIndex >= 0 && queue.orderMap[queue.currentIndex] == track.id) return;
         singlePlay(track.id, tracks, dispatch);
-    }
+    }, [queue.currentIndex, queue.orderMap, track.id, tracks]);
 
     return (
         <>
