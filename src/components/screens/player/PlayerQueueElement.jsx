@@ -145,7 +145,7 @@ const TrackInfo = memo(({
                         speed={0.5}>{title}</MarqueeNB>
                 </HStack>
 
-                <HStack maxW="80%" alignItems="center">
+                <HStack maxW="73%" alignItems="center">
                     <Text color="gray.400"
                         fontFamily="manrope_l"
                         fontSize="2xs">{duration} • </Text>
@@ -154,7 +154,7 @@ const TrackInfo = memo(({
                         color="gray.400"
                         fontFamily="manrope_r"
                         fontSize="2xs"
-                        speed={0.5}>{artistName}</MarqueeNB>
+                        speed={0.3}>{artistName}</MarqueeNB>
                 </HStack>
             </VStack>
         </>

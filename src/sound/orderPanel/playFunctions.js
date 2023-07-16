@@ -1,5 +1,5 @@
 import { Dispatch, AnyAction } from "redux"
-import TrackPlayer from "react-native-track-player";
+import TrackPlayer, { State } from "react-native-track-player";
 
 import { PlaylistBridge, QueueBridge } from "../../database/componentBridge"
 import { wrap } from "../trackBridge";
@@ -49,8 +49,9 @@ export const updateQueueOrder = async (tracks, orderMap, index, millis, playing,
  * @param {number[]} orderMap An ordered list of track IDs to play
  * @param {object[]} tracks All the tracks in the database
  */
-export const play = async (orderMap, tracks) => {
+export const play = async (orderMap, tracks, dispatch, startWith=0) => {
     await loadTracks(orderMap, tracks);
+    await skipTo(startWith, dispatch, false);
     await TrackPlayer.play();
 }
 
@@ -64,7 +65,7 @@ export const loopBack = async (tracks, dispatch) => {
     const currentPlaylist = await QueueBridge.getCurrentPlaylist();
 
     if (currentPlaylist) {
-        await QueueBridge.setIndex(0, dispatch);
+        await QueueBridge.setIndex(0, dispatch, true);
         await QueueBridge.setCurrentMillis(0, dispatch);
     } else {
         throw new Error("loopBack error: Cannot loop as there is no playlist to loop tracks from");
@@ -79,32 +80,33 @@ export const loopBack = async (tracks, dispatch) => {
  * @param {boolean} play If track should play automatically after skipping to it
  */
 export const skipTo = async (index, dispatch, play=true) => {
-    await QueueBridge.setIndex(index, dispatch);
+    await QueueBridge.setIndex(index, dispatch, true);
     await TrackPlayer.skip(index);
     if(play) await TrackPlayer.play();
 };
 
-const prepareForPlay = async (playlistId, dispatch) => {
+const prepareForPlay = async (playlistId, dispatch, startWith=0) => {
     const row = await PlaylistBridge.getConfig(playlistId);
     const parsedMap = JSON.parse(row.orderMap);
 
     await QueueBridge.setCurrentConfig(row.id, dispatch);
-    await QueueBridge.setIndex(0, dispatch);
+    await QueueBridge.setIndex(startWith, dispatch, true);
     await TrackPlayer.reset();
 
     return parsedMap;
 }
 
-export const singlePlay = async (trackId, tracks, dispatch) => {
+export const singlePlay = async (trackId, tracks, dispatch, overrideOrder=false) => {
     QueueBridge.resetReduxState(dispatch);
-    await QueueBridge.setOrderMap([trackId], dispatch);
-    await QueueBridge.setIndex(0, dispatch);
+
+    await QueueBridge.setOrderMap([trackId], dispatch, overrideOrder);
+    await QueueBridge.setIndex(0, dispatch, false);
     await QueueBridge.setCurrentConfig(-2, dispatch);
     await TrackPlayer.reset();
 
     await PlaylistBridge.History.add(trackId, dispatch);
 
-    await play([trackId], tracks);
+    await play([trackId], tracks, dispatch);
 }
 
 export const eavesdropOnTrack = async (trackId, tracks) => {
@@ -113,7 +115,7 @@ export const eavesdropOnTrack = async (trackId, tracks) => {
     await TrackPlayer.play();
 }
 
-export const resumeFromEavesdrop = async (queue, tracks) => {
+export const resumeFromEavesdrop = async (queue, tracks, preState) => {
     await TrackPlayer.reset();
     
     if(queue.playlistConfigId != -1) {
@@ -122,7 +124,9 @@ export const resumeFromEavesdrop = async (queue, tracks) => {
         await TrackPlayer.skip(queue.currentIndex);
         await TrackPlayer.seekTo(queue.currentMillis / 1000);
 
-        await TrackPlayer.play();
+        if (preState == State.Playing) {
+            await TrackPlayer.play();
+        }
     }
 }
 
@@ -134,13 +138,13 @@ export const resumeFromEavesdrop = async (queue, tracks) => {
  * @param {object[]} tracks All the tracks in the database
  * @param {Dispatch<AnyAction>} dispatch Redux dispatch
  */
-export const simplePlay = async (playlistId, tracks, dispatch) => {
-    const orderMap = await prepareForPlay(playlistId, dispatch);
+export const simplePlay = async (playlistId, tracks, dispatch, startWith=0) => {
+    const orderMap = await prepareForPlay(playlistId, dispatch, startWith);
 
     await PlaylistBridge.History.add(orderMap[0], dispatch);
 
     await QueueBridge.setOrderMap(orderMap, dispatch, false);
-    await play(orderMap, tracks);
+    await play(orderMap, tracks, dispatch, startWith);
 }
 
 /**
@@ -158,7 +162,7 @@ export const shuffledPlay = async (playlistId, tracks, dispatch) => {
     await PlaylistBridge.History.add(orderMap[0], dispatch);
 
     await QueueBridge.setOrderMap(orderMap, dispatch, false);
-    await play(orderMap, tracks);
+    await play(orderMap, tracks, dispatch);
 }
 
 /**
@@ -176,5 +180,5 @@ export const reversedPlay = async (playlistId, tracks, dispatch) => {
     await PlaylistBridge.History.add(orderMap[0], dispatch);
 
     await QueueBridge.setOrderMap(orderMap, dispatch, false);
-    await play(orderMap, tracks);
+    await play(orderMap, tracks, dispatch);
 }

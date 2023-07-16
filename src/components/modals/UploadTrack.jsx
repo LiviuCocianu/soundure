@@ -10,6 +10,7 @@ import {
     FormControl,
     Input,
     Button,
+    Pressable,
 } from 'native-base'
 
 import { useDispatch } from 'react-redux'
@@ -64,9 +65,13 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
     const [sourceOptions, toggleSourceOptions] = useState(false);
     const [errors, setErrors] = useState({});
-    const [keyboardVisible, toggleKeyboardVisible] = useState(false);
 
     const cover = useMemo(() => handleCoverURI(coverURI, defaultCoverURI), [coverURI]);
+
+    const [keyboardVisible, toggleKeyboardVisible] = useState(false);
+    const [modalBottomOffset, setModalBottomOffset] = useState("0");
+    const [titleFocused, toggleTitleFocus] = useState(false);
+    const [artistFocused, toggleArtistFocus] = useState(false);
 
     useEffect(() => {
         const keyboardShow = Keyboard.addListener("keyboardDidShow", () => toggleKeyboardVisible(true));
@@ -77,6 +82,19 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
             keyboardHide.remove();
         }
     }, []);
+
+    useEffect(() => {
+        if(!keyboardVisible) {
+            setModalBottomOffset("0");
+            toggleTitleFocus(false);
+            toggleArtistFocus(false);
+        }
+    }, [keyboardVisible]);
+
+    useEffect(() => {
+        if(titleFocused) setModalBottomOffset("150");
+        else if (artistFocused) setModalBottomOffset("240");
+    }, [titleFocused, artistFocused]);
 
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -151,7 +169,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                 ...err,
                 title: "Denumire mai mică de 3 caractere"
             };
-        } else if (title.length > 64) {
+        } else if (title.length > 128) {
             err = {
                 ...err,
                 title: "Denumire prea lungă"
@@ -214,6 +232,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
         setSourceHelper("");
         setErrors({});
         toggleSourceSelectionBox(false);
+        setModalBottomOffset("0");
 
         closeHandle(false);
     }
@@ -240,6 +259,7 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                 bg="primary.800"
                 borderColor="primary.600"
                 borderWidth="2"
+                mb={modalBottomOffset}
             >
                 <Modal.CloseButton _icon={{ color: "white" }} />
 
@@ -333,7 +353,8 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                                 borderBottomColor="primary.50"
                                 placeholderTextColor="gray.400"
                                 fontFamily="manrope_r"
-                                variant="underlined" />
+                                variant="underlined"
+                                onPressOut={() => toggleTitleFocus(true)} />
 
                             <FormControl.ErrorMessage mt="0">
                                 {'title' in errors ? errors.title : ""}
@@ -348,7 +369,8 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
                                 borderBottomColor="primary.50"
                                 placeholderTextColor="gray.400"
                                 fontFamily="manrope_r"
-                                variant="underlined" />
+                                variant="underlined"
+                                onPressOut={() => toggleArtistFocus(true)} />
 
                             <FormControl.ErrorMessage mt="0">
                                 {'artist' in errors ? errors.artist : ""}

@@ -54,6 +54,8 @@ const MusicPlayer = () => {
     const artists = useSelector(state => state.artists);
     const queue = useSelector(state => state.queue);
 
+    const [eavesdropCover, setEavesdropCover] = useState(require("../../../../assets/images/soundure_unavailable_white.png"));
+
     const maxH = useMemo(() => expanded ? "20" : "16", [expanded]);
 
     const currentTrack = useMemo(() => {
@@ -65,10 +67,11 @@ const MusicPlayer = () => {
     }, [tracks, queue.orderMap, queue.currentIndex, queue.eavesdrop]);
 
     const cover = useMemo(() => {
+        if (queue.eavesdrop) return handleCoverURI(eavesdropCover);
         return typeof(currentTrack.coverURI) !== "string"
             ? require("../../../../assets/images/soundure_unavailable_white.png")
             : handleCoverURI(currentTrack.coverURI);
-    }, [currentTrack.coverURI]);
+    }, [currentTrack.coverURI, queue.eavesdrop, eavesdropCover]);
 
     const currentTrackArtist = useMemo(() => {
         if (queue.eavesdrop) return { name: "Coada nu este disponibilă în acest mod" };
@@ -123,8 +126,14 @@ const MusicPlayer = () => {
         if(event.type == Event.PlaybackState) {
             togglePlayback(event.state === State.Playing);
         } else if (event.type == Event.PlaybackTrackChanged) {
-            if (event.nextTrack) {
-                await QueueBridge.setIndex(event.nextTrack, dispatch);
+            if (event.nextTrack != undefined) {
+                const queued = await TrackPlayer.getQueue();
+
+                if (queued[event.nextTrack]) {
+                    setEavesdropCover(queued[event.nextTrack].artwork);
+                }
+
+                await QueueBridge.setIndex(event.nextTrack, dispatch, true);
             }
         }
     });

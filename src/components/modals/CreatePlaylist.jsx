@@ -1,5 +1,5 @@
-import React, { useState } from 'react'
-import { ImageBackground, Dimensions } from 'react-native'
+import React, { useState, useEffect } from 'react'
+import { ImageBackground, Dimensions, Keyboard } from 'react-native'
 import { 
     Box, 
     FormControl, 
@@ -10,7 +10,8 @@ import {
     TextArea, 
     Button, 
     Factory, 
-    ScrollView 
+    ScrollView, 
+    Pressable
 } from 'native-base'
 
 import * as ImagePicker from 'expo-image-picker'
@@ -47,6 +48,31 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
  
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
+
+    const [keyboardVisible, toggleKeyboardVisible] = useState(false);
+    const [modalBottomOffset, setModalBottomOffset] = useState("0");
+    const [descFocused, toggleDescFocus] = useState(false);
+
+    useEffect(() => {
+        const keyboardShow = Keyboard.addListener("keyboardDidShow", () => toggleKeyboardVisible(true));
+        const keyboardHide = Keyboard.addListener("keyboardDidHide", () => toggleKeyboardVisible(false));
+
+        return () => {
+            keyboardShow.remove();
+            keyboardHide.remove();
+        }
+    }, []);
+
+    useEffect(() => {
+        if (!keyboardVisible) {
+            setModalBottomOffset("0");
+            toggleDescFocus(false);
+        }
+    }, [keyboardVisible]);
+
+    useEffect(() => {
+        if (descFocused) setModalBottomOffset("250");
+    }, [descFocused]);
 
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -98,7 +124,8 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
         setDescription("");
         setCoverStringURI(undefined);
         setCoverObjectURI(initialCoverObjectURI);
-        setErrors({})
+        setErrors({});
+        setModalBottomOffset("0");
 
         closeHandle(false);
     }
@@ -110,6 +137,7 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
                 bg="primary.800" 
                 borderColor="primary.600" 
                 borderWidth="2"
+                mb={modalBottomOffset}
             >
                 <Modal.CloseButton _icon={{ color: "white" }}/>
                 <Box w="100%" h="100%">
@@ -178,7 +206,8 @@ const CreatePlaylist = ({ isOpen, closeHandle }) => {
                                     _focus={{
                                         borderColor: "primary.50"
                                     }}
-                                />  
+                                    onTouchEnd={() => toggleDescFocus(true)}
+                                />
                                 <FormControl.ErrorMessage mt="0">{"description" in errors ? errors.description : ""}</FormControl.ErrorMessage>
                             </FormControl>
 

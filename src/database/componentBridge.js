@@ -426,27 +426,28 @@ export const QueueBridge = {
             }
         });
     },
-    setIndex: async (index, dispatch) => {
-        return getFixedRow(TABLES.QUEUE).then(row => {
-            if (!row.playlistConfigId || row.playlistConfigId == -1) {
-                console.warn("Couldn't set queue index because destination config is not defined. Add a playlist to the queue then try again..");
-                return;
-            }
-
-            db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "id=?", [row.playlistConfigId]).then(rows => {
+    setIndex: async (index, dispatch, overrideIndex=false) => {
+        return getFixedRow(TABLES.QUEUE).then(async row => {
+            if(overrideIndex) {
+                if (!row.playlistConfigId || row.playlistConfigId == -1) {
+                    console.warn("Couldn't set queue index because destination config is not defined. Add a playlist to the queue then try again..");
+                    return;
+                }
+    
+                const rows = await db.selectFrom(TABLES.PLAYLIST_CONFIG, ["orderMap"], "id=?", [row.playlistConfigId]);
                 const orderMapLen = rows.length > 0 ? JSON.parse(rows[0].orderMap).length : 0;
 
                 if (index >= 0 && index < orderMapLen) {
-                    db.update(TABLES.QUEUE, "currentIndex=?", "id=?", [index, 1]).then((rs) => {
-                        dispatch(currentIndexSet(index));
-                    });
+                    await db.update(TABLES.QUEUE, "currentIndex=?", "id=?", [index, 1]);
                 }
-            });
+            }
+
+            dispatch(currentIndexSet(index));
         });
     },
     incrementIndex: async (dispatch) => {
         return getFixedRow(TABLES.QUEUE).then(async row => {
-            await QueueBridge.setIndex(row.currentIndex + 1, dispatch);
+            await QueueBridge.setIndex(row.currentIndex + 1, dispatch, true);
         });
     },
     setCurrentConfig: async (playlistConfigId, dispatch) => {
@@ -488,17 +489,17 @@ export const QueueBridge = {
         return new Promise((resolve, reject) => {
             if(Array.isArray(map)) {
                 getFixedRow(TABLES.QUEUE).then(row => {
-                    if (!row.playlistConfigId || row.playlistConfigId == -1) {
-                        console.warn("Couldn't set order map because destination config is not defined. Add a playlist to the queue then try again..");
-                        return;
-                    }
-    
                     const doTheDispatch = () => {
                         dispatch(orderMapSet(map));
                         resolve();
                     }
     
                     if(updateCurrentConfig) {
+                        if (!row.playlistConfigId || row.playlistConfigId == -1) {
+                            console.warn("Couldn't set order map because destination config is not defined. Add a playlist to the queue then try again..");
+                            return;
+                        }
+
                         db.update(TABLES.PLAYLIST_CONFIG, "orderMap=?", "id=?", [JSON.stringify(map), row.playlistConfigId]).then(doTheDispatch);
                     } else {
                         doTheDispatch();

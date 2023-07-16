@@ -17,13 +17,13 @@ import MarqueeText from 'react-native-marquee'
 import PlatformIcon from '../../general/PlatformIcon';
 import TrackSettingsSheet from '../track/TrackSettingsSheet';
 
-import { handleCoverURI, lng } from '../../../functions';
+import { find, handleCoverURI, lng } from '../../../functions';
 import { ARTIST_NAME_PLACEHOLDER, TRACK_EL_HEIGHT } from '../../../constants';
 import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { eavesdropOnTrack, resumeFromEavesdrop, singlePlay } from '../../../sound/orderPanel/playFunctions';
-import Toast from 'react-native-root-toast';
+import { eavesdropOnTrack, resumeFromEavesdrop, simplePlay, singlePlay, skipTo } from '../../../sound/orderPanel/playFunctions';
 import { toggledEavesdrop } from '../../../redux/slices/queueSlice';
+import TrackPlayer, { State, usePlaybackState } from 'react-native-track-player';
 
 
 const SCREEN_WIDTH = Dimensions.get("screen").width;
@@ -69,9 +69,11 @@ const TrackElement = ({
     const dispatch = useDispatch();
     const queue = useSelector(state => state.queue);
     const tracks = useSelector(state => state.tracks);
+    const playlistsContent = useSelector(state => state.playlistsContent);
+    const playbackState = usePlaybackState();
 
     const [isSelected, setSelected] = useState(false);
-    const [eavesdrop, setEavesdrop] = useState(false);
+    const [preEavesdropPlayback, setPreEavesdropPlayback] = useState(State.Paused);
 
     const cover = useMemo(() => handleCoverURI(track.coverURI), [track.coverURI]);
 
@@ -85,29 +87,39 @@ const TrackElement = ({
         selectionHandler(isSelected, track.id);
     }, [selectionHandler, track]);
 
-    const handlePress = useCallback(() => {
+    const handlePress = useCallback(async () => {
         if (selectionMode) handleSelection(!isSelected);
         else {
             if (queue.currentIndex >= 0 && queue.orderMap[queue.currentIndex] == track.id) return;
-            singlePlay(track.id, tracks, dispatch);
+
+            if(playlistId) {
+                const ownLinks = playlistsContent.filter(link => link.playlistId == playlistId);
+                const ownTracks = ownLinks.map(link => find(tracks, "id", link.trackId));
+                const ownIndex = ownTracks.map(tr => tr.id).indexOf(track.id);
+
+                await simplePlay(playlistId, ownTracks, dispatch, ownIndex);
+            } else {
+                await singlePlay(track.id, tracks, dispatch);
+            }
         }
-    }, [selectionMode, isSelected, handleSelection, queue.currentIndex, queue.orderMap, tracks, track.id]);
+    }, [playlistId, playlistsContent, selectionMode, isSelected, handleSelection, queue.currentIndex, queue.orderMap, tracks, track.id]);
 
     const handleSettingsButton = useCallback(() => {
         disclose.onOpen();
     }, [disclose]);
 
     const handleLongPress = useCallback(async () => {
+        setPreEavesdropPlayback(playbackState);
         dispatch(toggledEavesdrop(true));
         await eavesdropOnTrack(track.id, tracks);
-    }, [track.id, tracks]);
+    }, [track.id, tracks, playbackState]);
 
     const handlePressOut = useCallback(async () => {
         if(queue.eavesdrop) {
             dispatch(toggledEavesdrop(false));
-            await resumeFromEavesdrop(queue, tracks);
+            await resumeFromEavesdrop(queue, tracks, preEavesdropPlayback);
         }
-    }, [queue, tracks]);
+    }, [queue, tracks, preEavesdropPlayback]);
 
     return (
         <Pressable _pressed={{ opacity: 0.8 }} 
@@ -140,9 +152,11 @@ const TrackElement = ({
                         fontSize="md"
                         speed={0.3}>{track.title ? track.title : ""}</MarqueeNB>
 
-                    <Text color={artist.name == ARTIST_NAME_PLACEHOLDER ? "gray.400" : "white"}
+                    <MarqueeNB w={ELEMENT_WIDTH * 0.55}
+                        color={artist.name == ARTIST_NAME_PLACEHOLDER ? "gray.400" : "white"}
                         fontFamily={artist.name == ARTIST_NAME_PLACEHOLDER ? "manrope_li" : "manrope_r"}
-                        fontSize="xs">{artist.name ? artist.name : ""}</Text>
+                        fontSize="xs"
+                        speed={0.3}>{artist.name ? artist.name : ""}</MarqueeNB>
 
                     <HStack space={1} mt="1" alignItems="center">
                         <EntypoNB name="controller-play" color="primary.50">
