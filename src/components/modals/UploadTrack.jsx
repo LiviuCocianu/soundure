@@ -1,5 +1,5 @@
-import React, { useState, Component, useMemo } from 'react'
-import { ImageBackground, Dimensions } from 'react-native'
+import React, { useState, Component, useMemo, useEffect } from 'react'
+import { ImageBackground, Dimensions, Keyboard } from 'react-native'
 import {
     Box,
     Modal,
@@ -64,8 +64,19 @@ const UploadTrack = ({ isOpen, closeHandle }) => {
     const [sourceSelectionBox, toggleSourceSelectionBox] = useState(false);
     const [sourceOptions, toggleSourceOptions] = useState(false);
     const [errors, setErrors] = useState({});
+    const [keyboardVisible, toggleKeyboardVisible] = useState(false);
 
     const cover = useMemo(() => handleCoverURI(coverURI, defaultCoverURI), [coverURI]);
+
+    useEffect(() => {
+        const keyboardShow = Keyboard.addListener("keyboardDidShow", () => toggleKeyboardVisible(true));
+        const keyboardHide = Keyboard.addListener("keyboardDidHide", () => toggleKeyboardVisible(false));
+
+        return () => {
+            keyboardShow.remove();
+            keyboardHide.remove();
+        }
+    }, []);
 
     const handleCoverChoice = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({

@@ -113,9 +113,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace 'io.github.idoomful.Soundure.android'
+    namespace 'com.idoomful.Soundure'
     defaultConfig {
-        applicationId 'io.github.idoomful.Soundure.android'
+        applicationId 'com.idoomful.Soundure'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -126,11 +126,11 @@ android {
     productFlavors {
         production {
             dimension "env"
-            applicationId 'com.soundure'
+            applicationId 'com.idoomful.Soundure'
         }
         development {
             dimension "env"
-            applicationId 'com.soundure.dev'
+            applicationId 'com.idoomful.Soundure'
         }
     }
 

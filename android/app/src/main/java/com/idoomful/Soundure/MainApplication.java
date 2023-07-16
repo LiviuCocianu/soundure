@@ -1,4 +1,4 @@
-package io.github.idoomful.Soundure.android;
+package com.idoomful.Soundure;
 
 import android.app.Application;
 import android.content.res.Configuration;
